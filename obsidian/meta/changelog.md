@@ -37,6 +37,58 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-24 (homepage motion/3D overhaul — Phase 1/Hero)
+
+Second checkpoint of the phased homepage motion/3D overhaul (see Phase 0 below).
+Elevated the existing hero digital-twin scene rather than replacing it:
+
+- **Camera orbit** — `build-hero-scene.ts`'s pointer parallax now drives a true
+  ±15° orbit around the look-at point (spherical coordinates, not just a position
+  offset), and `HeroScene.tsx` reads pointer position from the shared `usePointer`
+  store (Phase 0) via the shared ticker instead of wiring its own `window.pointermove`
+  listener — one fewer app-wide listener, same behaviour.
+- **Scroll parallax** — a new `setScrollProgress` on `HeroSceneHandle`, fed by
+  `useProgressTrigger` (the engine hook, called directly — no extra wrapper element)
+  against the hero's own container rect. As the user scrolls through the hero the
+  camera zooms in and descends toward the geological strata layers already in the
+  scene, while the construction rig and point cloud fade — a "descend into the
+  ground" gesture rather than a literal cross-canvas morph into the separate About
+  section scene (a much bigger feature, out of scope here).
+- **Construction animation** — the crane's jib now swings independently (refactored
+  into its own pivot sub-group); girders "fly in" and scaffolding scales up from
+  nothing over the first ~2.5s.
+- **Lidar pulse** — a ring expands from the scene centre every 3s, matching the
+  existing hero fog (`THREE.FogExp2`, already present — item 16's "atmospheric haze"
+  needed no new code).
+- **Hero heading** (`HeroHeading.tsx`, new) — word-by-word spring entrance via
+  `TextEngine`, split out of the shared `SectionHeading` (which reveals line-by-line
+  and is used by every other section) rather than changing that component's
+  behaviour project-wide. Also a looping shimmer sweep — a separate gradient bar
+  swept via ticker-driven `translateX`, `mix-blend-screen` (not `overlay`, which was
+  tried first and *darkened* the light heading text against the dark background —
+  `screen` only ever brightens, the safe choice for light-on-dark).
+- **Hero subtext** (`HeroSubtext`, same file) — types in letter-by-letter via
+  `TextEngine`'s letter stagger after the heading settles, instead of a hand-rolled
+  `setInterval` typewriter (a custom text-animation component — banned).
+- **Project ticker** (`ProjectTicker.tsx`, new) — continuous marquee of real project
+  names along the hero's bottom edge, doubled-list technique, ticker-driven
+  `translateX` (continuous motion, not a CSS `animation`), pauses on hover, static
+  single list under reduced motion.
+- **Scroll cue** (`ScrollCue.tsx`, new) — bouncing-dot mouse icon, ticker-driven (SVG
+  attribute set via ref, not React state, so it doesn't re-render every frame),
+  fades out via a real spring once the shared scroll signal reports the page has
+  actually scrolled.
+
+`verify.sh` (0 FAIL), `yarn lint`, `yarn build`, and a browser QA pass all came back
+clean — no console errors, ticker loops seamlessly, heading/subtext/shimmer read
+correctly, scroll-through-hero flows into the About section. Not independently
+verified this pass: the exact camera-orbit/zoom trajectory (subtle background
+motion, hard to confirm from screenshots) and true narrow-viewport/touch behaviour
+(the browser automation's `resize_window` didn't produce a real mobile viewport to
+test against) — both ride code paths already proven elsewhere (the pointer-parallax
+lerp pattern, the `SceneViewport` mobile/reduced-motion gate), so risk is low, but
+flagging rather than claiming a check that didn't happen.
+
 ## 2026-08-24 (homepage motion/3D overhaul — Phase 0/Foundation)
 
 Kicked off a large, phased homepage motion/3D overhaul (35-item spec — global cursor

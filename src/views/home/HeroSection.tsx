@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { SectionHeading } from "@/components/common/SectionHeading";
 import { TranslatedText } from "@/components/common/TranslatedText";
 import { Magnetic } from "@/components/common/Magnetic";
 import { brand } from "@/lib/company";
 import { HeroScene } from "@/components/scene/HeroScene";
+import { HeroHeading, HeroSubtext } from "./HeroHeading";
+import { ProjectTicker } from "./ProjectTicker";
+import { ScrollCue } from "./ScrollCue";
 
 /**
  * The page's single `<h1>` lives here — the hero headline.
@@ -24,17 +26,19 @@ export const HeroSection = () => {
       />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-8">
-        <SectionHeading
+        <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+          <TranslatedText text="Civil · Geotechnical · Structural · Telecom" />
+        </p>
+        <HeroHeading
           id="hero-heading"
-          tag="h1"
-          eyebrow="Civil · Geotechnical · Structural · Telecom"
-          heading="Design. Engineering. Advisory."
-          headingClassName="leading-display text-foreground max-w-4xl text-5xl font-medium md:text-7xl"
+          text="Design. Engineering. Advisory."
+          className="leading-display text-foreground max-w-4xl text-5xl font-medium md:text-7xl"
         />
 
-        <p className="text-foreground-muted mt-6 max-w-xl text-lg">
-          {brand.mission}
-        </p>
+        <HeroSubtext
+          text={brand.mission}
+          className="text-foreground-muted mt-6 max-w-xl text-lg"
+        />
 
         <div className="mt-10">
           <Magnetic>
@@ -47,6 +51,9 @@ export const HeroSection = () => {
           </Magnetic>
         </div>
       </div>
+
+      <ProjectTicker />
+      <ScrollCue />
     </section>
   );
 };

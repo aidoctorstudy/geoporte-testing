@@ -5,6 +5,9 @@
 import { useEffect, useRef } from "react";
 import { createHeroScene } from "./build-hero-scene";
 import type { HeroSceneHandle } from "./hero-scene-types";
+import { getPointerSnapshot } from "@/hooks/cursor/use-pointer";
+import { subscribeToTicker } from "@/lib/animation/ticker";
+import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 
 export interface HeroSceneProps {
   className?: string;
@@ -26,12 +29,27 @@ export interface HeroSceneProps {
  */
 export const HeroScene = ({ className, createScene = createHeroScene }: HeroSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<HeroSceneHandle | null>(null);
+
+  // Scroll-driven framing — the container fills the hero section exactly
+  // (`inset-0` on its parent), so its own rect doubles as the section's
+  // scroll-trigger range. Calls the engine's `useProgressTrigger` hook
+  // directly (not the `<SpringTrigger>` component) since there's already a
+  // ref here and no extra wrapper element is wanted.
+  useProgressTrigger({
+    elementRef: containerRef,
+    start: "top top",
+    end: "bottom top",
+    onChange: ({ interpolatedProgress }) =>
+      sceneRef.current?.setScrollProgress?.(interpolatedProgress),
+  });
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const scene = createScene(container);
+    sceneRef.current = scene;
     container.appendChild(scene.canvas);
 
     const reducedMotion = window.matchMedia(
@@ -72,17 +90,22 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
     });
     resizeObserver.observe(container);
 
-    // Mouse-driven parallax — normalized -1..1 from the container's centre.
-    // Skipped entirely under reduced motion, matching the rest of the scene.
-    const handlePointerMove = (event: PointerEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
-      scene.setPointer(x, y);
-    };
-    if (!reducedMotion) {
-      window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    }
+    // Pointer parallax — reads the shared pointer store (one app-wide
+    // `pointermove` listener, see `src/hooks/cursor/use-pointer.ts`) each
+    // ticker tick instead of this component wiring its own `window`
+    // listener; normalized -1..1 from the container's own rect, so this
+    // still works correctly for service-page heroes whose container isn't
+    // full-window. Skipped entirely under reduced motion.
+    const unsubscribePointer = reducedMotion
+      ? null
+      : subscribeToTicker(() => {
+          const pointer = getPointerSnapshot();
+          if (!pointer.hasMoved) return;
+          const rect = container.getBoundingClientRect();
+          const x = ((pointer.x - rect.left) / rect.width) * 2 - 1;
+          const y = ((pointer.y - rect.top) / rect.height) * 2 - 1;
+          scene.setPointer(x, y);
+        }, () => 0);
 
     const intersectionObserver = new IntersectionObserver(
       ([entry]) => {
@@ -108,7 +131,8 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("pointermove", handlePointerMove);
+      unsubscribePointer?.();
+      sceneRef.current = null;
       scene.dispose();
       container.removeChild(scene.canvas);
     };

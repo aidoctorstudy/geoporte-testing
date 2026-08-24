@@ -57,16 +57,27 @@ which drives only `@react-spring/web`/`spring-text-engine` motion.
 a valley terrain, bridge, tunnel, geological strata, borehole/monitoring
 markers, a lidar-style point cloud, a background construction rig (crane,
 girders, scaffolding, all wireframe) and upward-drifting dust particles, all
-built from `three` primitives (no external models). Pointer movement drives a
-small camera-parallax offset (smoothed, never snapped straight to the raw
-event). `build-hero-scene.ts` is the framework-free THREE setup; `HeroScene.tsx`
-is the client leaf that owns the render loop, pausing off-screen
-(`IntersectionObserver`), on tab-hide (`visibilitychange`), and rendering one
-static frame instead of looping — and skipping the `pointermove` listener
-entirely — when `prefers-reduced-motion` is set. `hero-scene-colors.ts` mirrors
-the Neural Monitor Tier-1 tokens in `globals.css` — three.js materials take
-numeric colours directly and can't consume CSS custom properties, so these are
-kept in sync by hand. See ADR-0023 in [[decisions-log]].
+built from `three` primitives (no external models). `build-hero-scene.ts` is the
+framework-free THREE setup; `HeroScene.tsx` is the client leaf that owns the
+render loop, pausing off-screen (`IntersectionObserver`), on tab-hide
+(`visibilitychange`), and rendering one static frame instead of looping — and
+skipping all pointer/scroll reactivity — when `prefers-reduced-motion` is set.
+`hero-scene-colors.ts` mirrors the Neural Monitor Tier-1 tokens in `globals.css`
+— three.js materials take numeric colours directly and can't consume CSS custom
+properties, so these are kept in sync by hand. See ADR-0023 in [[decisions-log]].
+
+Pointer movement drives a true ±15° camera orbit (spherical coordinates around
+the look-at point, smoothed, never snapped straight to the raw event) — `HeroScene`
+reads the shared `usePointer` store (see [[hooks]]) each ticker tick rather than
+wiring its own `pointermove` listener. Scrolling through the hero (via
+`useProgressTrigger`, called directly against the hero's own container rect —
+the container fills the section exactly, so its rect doubles as the trigger
+range) zooms the camera in and descends it toward the strata layers, fading the
+construction rig and point cloud — `HeroSceneHandle.setScrollProgress`. The
+construction rig also animates on its own: the crane's jib swings on an
+independent pivot sub-group, girders fly in and scaffolding scales up from
+nothing over the first ~2.5s, and a ring pulses outward from the scene centre
+every 3s (a lidar sweep). Homepage-motion-overhaul Phase 1 — see [[changelog]].
 
 **Shared viewport renderer** (`src/lib/scene/shared-viewport-renderer.ts` +
 `src/components/scene/SceneViewport.tsx`) — every *other* 3D moment on the
