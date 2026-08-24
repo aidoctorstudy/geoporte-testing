@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-05-21
+updated: 2026-08-24
 ---
 
 # Catalog — Common Components
@@ -88,6 +88,56 @@ It watches the `prefers-reduced-motion` media query and toggles react-spring's
 global `skipAnimation`, so every spring — and `spring-text-engine` — jumps to its
 end state instead of animating. Renders `null`; mounted once in the root layout.
 See [[animation-system]] and [[seo-metadata]].
+
+## Nav — `Nav/`
+
+Fixed, pill-shaped primary navigation, mounted once in the root layout. Lives in
+`src/components/common/Nav/`.
+
+| File | Role |
+|------|------|
+| `Nav.tsx` | Desktop bar — logo, `ServicesDropdown`, secondary links, `LanguageSwitcher`, CTA, mobile toggle |
+| `ServicesDropdown.tsx` | Hover-open services menu (desktop) — CSS-only per ADR-0014, not a spring |
+| `LanguageSwitcher.tsx` | Click-open language dropdown — see [[i18n]] |
+| `MobileMenu.tsx` | Full-screen mobile nav, `<Spring>`-driven open/close |
+| `nav-links.ts` | Primary nav link data — also consumed by `Footer` |
+
+## Footer — `Footer/`
+
+Site footer, mounted once in the root layout after `<main>`. Lives in
+`src/components/common/Footer/`. Renders contact details, the service list,
+`nav-links.ts`, and office locations from `@/lib/company`.
+
+## LanguageDirection — `LanguageDirection.tsx`
+
+`<LanguageDirection>` — a client leaf that syncs `document.documentElement.lang`
+/ `dir` to the language store, flipping RTL for Arabic/Urdu. Renders `null`;
+mounted once in the root layout next to `<ReducedMotion>`. See [[i18n]].
+
+## TranslatedText — `TranslatedText.tsx`
+
+`<TranslatedText text="..." />` — resolves a UI string through `useTranslated`.
+Exists as a component (not a bare hook call) so it can sit inside `.map()`
+lists without breaking the rules of hooks. See [[i18n]].
+
+## SectionHeading — `SectionHeading.tsx`
+
+`<SectionHeading eyebrow heading id tag? headingClassName? />` — the eyebrow +
+`TextEngine` heading pattern repeated across every homepage section, with
+built-in language-switcher translation. See [[i18n]] and [[text-engine]].
+
+## TiltCard — `TiltCard.tsx`
+
+`<TiltCard onActivate aria-label className>` — a card that tilts in 3D toward
+the cursor (`perspective`/`rotateX`/`rotateY`, driven by `@react-spring/web`
+directly — not the vendored `Hover` component, which only does binary
+enter/leave, not a continuous pointer-tracked transform). Renders a
+`role="button"` `div` rather than a real `<button>`: its children (headings,
+paragraphs) aren't valid inside `<button>`'s phrasing-content-only model, so
+it adds `tabIndex`, `onKeyDown` (Enter/Space) and `aria-haspopup="dialog"`
+itself. Tilt is skipped when `(hover: hover) and (pointer: fine)` doesn't
+match (touch devices). Used by `ProjectCard` (`src/views/home/`) to open the
+project detail modal. See ADR-0025 in [[decisions-log]].
 
 ## Skeleton loaders
 

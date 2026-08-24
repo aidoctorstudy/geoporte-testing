@@ -37,6 +37,7 @@ humans and AI agents (Claude Code, Cursor).
 - [[smooth-scroll]] — Lenis integration + scroll store
 - [[component-conventions]] — how to write & place components
 - [[html-semantics]] — semantic, accessible, SEO-correct markup rules
+- [[i18n]] — the nav language switcher (translation, caching, RTL)
 - [[seo-metadata]] — metadata generation & bot detection
 - [[components/animation-springs|Spring components catalog]]
 - [[components/common|Common components catalog]]

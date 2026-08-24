@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/site";
+import { services } from "@/data/mocks/services";
 
 /**
- * Generates `/sitemap.xml`. Currently lists only the home route — add an entry
- * per public route as the site grows (ideally derived from a routes manifest).
+ * Generates `/sitemap.xml`. Add an entry per public route as the site grows
+ * (ideally derived from a routes manifest).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
@@ -14,5 +15,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 1,
     },
+    {
+      url: `${siteConfig.url}/services`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...services.map((service) => ({
+      url: `${siteConfig.url}/services/${service.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
   ];
 }

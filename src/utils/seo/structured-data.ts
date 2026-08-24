@@ -7,6 +7,7 @@
  */
 
 import { siteConfig } from "@/lib/site";
+import type { Service } from "@/data/mocks/services";
 
 /**
  * Organization + WebSite schema for the site root. Emit once, in the root
@@ -32,5 +33,18 @@ export function getSiteStructuredData() {
         publisher: { "@id": `${siteConfig.url}/#organization` },
       },
     ],
+  };
+}
+
+/** Service schema for a service detail page. Emit from the page body via the
+ * same `<script type="application/ld+json">` pattern as `getSiteStructuredData`. */
+export function getServiceStructuredData(service: Service) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.title,
+    description: service.shortDescription,
+    url: `${siteConfig.url}/services/${service.slug}`,
+    provider: { "@id": `${siteConfig.url}/#organization` },
   };
 }

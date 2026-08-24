@@ -1,0 +1,81 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { services } from "@/data/mocks/services";
+import { brand } from "@/lib/company";
+import { TranslatedText } from "@/components/common/TranslatedText";
+import { ServicesDropdown } from "./ServicesDropdown";
+import { MobileMenu } from "./MobileMenu";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+
+const secondaryLinks = [
+  { href: "/about", label: "About Us" },
+  { href: "/projects", label: "Projects" },
+  { href: "/publications", label: "Publications" },
+];
+
+export const Nav = () => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <header className="fixed inset-x-0 top-5 z-50 flex justify-center px-4">
+        <div className="flex w-full max-w-[75rem] items-center justify-between gap-4 rounded-2xl border border-line bg-background-alt/70 px-5 py-3 backdrop-blur-xl">
+          <Link
+            href="/"
+            className="text-[0.9375rem] font-semibold tracking-[0.08em] text-foreground uppercase"
+          >
+            {brand.wordmark}
+          </Link>
+
+          <nav aria-label="Primary">
+            <ul className="hidden items-center gap-7 text-sm md:flex">
+              <ServicesDropdown services={services} />
+              {secondaryLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+                  >
+                    <TranslatedText text={link.label} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="hidden items-center gap-5 md:flex">
+            <LanguageSwitcher />
+            <Link
+              href="/contact"
+              className="shrink-0 rounded-lg bg-accent px-[1.125rem] py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-accent/90"
+            >
+              <TranslatedText text="Contact Us" />
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="flex h-9 w-9 flex-col items-center justify-center gap-[0.3125rem] md:hidden"
+          >
+            <span
+              className={`h-px w-5 bg-foreground transition-transform duration-[var(--duration-fast)] ease-entrance ${open ? "translate-y-[0.34375rem] rotate-45" : ""}`}
+            />
+            <span
+              className={`h-px w-5 bg-foreground transition-opacity duration-[var(--duration-fast)] ease-entrance ${open ? "opacity-0" : "opacity-100"}`}
+            />
+            <span
+              className={`h-px w-5 bg-foreground transition-transform duration-[var(--duration-fast)] ease-entrance ${open ? "-translate-y-[0.34375rem] -rotate-45" : ""}`}
+            />
+          </button>
+        </div>
+      </header>
+
+      <MobileMenu open={open} onNavigate={() => setOpen(false)} services={services} />
+    </>
+  );
+};

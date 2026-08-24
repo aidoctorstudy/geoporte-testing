@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-08-18
+updated: 2026-08-24
 ---
 
 # Decisions Log (ADRs)
@@ -14,6 +14,149 @@ decisions on top, continuing the numbering. Amending an inherited decision is
 fine; write a new ADR that says so rather than editing the old one.
 
 Template: [[templates/adr-note]].
+
+---
+
+## ADR-0026 — Shared viewport renderer skips scenes with NaN geometry; animate the rendered attribute, not a derived one
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** `shared-viewport-renderer.ts`'s render loop now checks each active
+registration's scene for a non-finite `position` attribute value before calling
+`renderer.render()`; a scene that fails the check is skipped (not the whole
+loop) and logged once via `console.error`, not every frame. The Stormwater
+mini-scene (`mini-scenes.ts` → `buildStormwaterFlow`) — the scene that was
+tripping this — no longer derives a `THREE.WireframeGeometry` from its
+`PlaneGeometry` and then indexes into the wireframe's position buffer using
+indices/clones taken from the source plane; it builds its own `BufferGeometry`
+that shares the plane's actual position attribute plus a hand-built grid line
+index, so the buffer being animated is the same buffer being rendered.
+
+**Why.** `WireframeGeometry`'s derived vertex layout doesn't correspond 1:1
+with its source geometry (edges duplicate shared vertices), so the old code's
+per-frame loop — `for (i < wireframe.position.count) { read source.position[i] }`
+— read past the end of the source's (smaller) position array once `i` exceeded
+it, producing `NaN` Y values. Three's automatic frustum-culling bounding-sphere
+computation then hit those NaNs, producing the
+`THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN` console
+error every frame for that card.
+
+**When building.** If a scene builder needs to animate a geometry's vertex
+positions per frame, animate the exact attribute object being rendered — never
+a geometry *derived from* the one being mutated (or vice versa). If you need a
+line/wireframe rendering that still shares a live position buffer with a solid
+mesh, build the line geometry's index yourself against the source geometry's
+own vertex numbering (see `buildPlaneGridIndex` in `mini-scenes.ts`) rather than
+letting `THREE.WireframeGeometry` re-derive one. The render-loop guard is a
+safety net, not a substitute for this — it prevents a bad scene from spamming
+the console or breaking sibling scenes, but the actual visual (a flat/frozen
+mini-scene) still means something is wrong upstream.
+
+---
+
+## ADR-0025 — One shared WebGL context for every mini scene; mouse-tilt via a raw-spring wrapper
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** The homepage's many small 3D moments (8 service-card icons, the
+About geological cross-section, the Stats globe, the Contact terrain) render
+through **one** shared `WebGLRenderer`/canvas (`src/lib/scene/shared-viewport-renderer.ts`),
+not one context per scene — a full-viewport `position: fixed` canvas that
+scissors a rect per registered DOM element every frame. The homepage hero
+keeps its own dedicated context (`HeroScene.tsx`, unchanged) since it is
+full-bleed and benefits from an uncontested renderer. Separately, the project
+cards' cursor-tracked 3D tilt (`TiltCard.tsx`) is built directly on
+`@react-spring/web`'s `useSpring`/`to()`, not the vendored `Hover` component.
+
+**Why.** Browsers cap concurrent WebGL contexts (commonly 8–16); eleven
+simultaneous mini-scenes (8 service icons + cross-section + globe + terrain)
+each with their own context risked silently losing contexts on lower-end
+devices, on top of the GPU/driver overhead of that many live renderers — the
+exact failure mode [[optimize-3d-scene]] warns against. One shared context
+with scissored viewports is the pattern the three.js manual documents for
+this case and costs one GL context regardless of how many mini-scenes exist.
+Separately, `Hover` (`src/components/animation/springs/hover.tsx`) only
+supports a binary enter/leave spring target — it cannot express a transform
+that tracks continuous pointer position within an element, which 3D tilt
+needs. Rather than requesting a change to the protected engine (hard rule
+#2 — `#do-not-modify` without sign-off), `TiltCard` composes the same
+underlying `@react-spring/web` library directly, per the engine note's own
+guidance ("need different behaviour? compose a wrapper instead").
+
+**When building.** A new mini scene is a `ViewportBuilder` (`src/lib/scene/shared-viewport-renderer.ts`
+exports the type) — `(aspect) => { scene, camera, update(elapsed, control), dispose }` —
+registered via `<SceneViewport builder=... />`. `control` is a free-form
+0..1-ish channel: hover intensity via `hoverRef`, or scroll progress fed
+imperatively through the `SceneViewportHandle.setControl()` ref (e.g. from a
+`SpringTrigger`'s `onChange`, which must stay a plain callback — never
+`setState` there, or every scroll tick re-renders the host component).
+Below 768px, or under `prefers-reduced-motion`, `SceneViewport` never mounts
+WebGL — it renders `fallback` (plain CSS) instead, satisfying "simplify 3D on
+mobile" without a second code path per scene. A card/section hosting a scene
+slot must give its own foreground text `relative z-10` (the same convention
+`HeroSection` already uses over its own canvas) since the shared canvas sits
+at a low but explicit `z-index`.
+
+---
+
+## ADR-0024 — Language switcher: server-side translation proxy, client-cached
+
+**Status:** Accepted · 2026-08-23
+
+**Decision.** The nav language switcher (English/Arabic/Urdu/French/Chinese,
+RTL for `ar`/`ur`) translates **nav links, section headings, and button
+labels only** — not full body copy. Translation is a server-side proxy
+(`app/api/translate/route.ts`) to a LibreTranslate instance, called through
+the standard `apiFetch`/`handle()` envelope. The client batches every string
+requested per render tick into one request per language
+(`lib/i18n/translation-queue.ts`) and caches results in a `zustand`
+`persist` store (`hooks/i18n/use-language-store.ts`), keyed by source string
+and language, in `localStorage`.
+
+**Why.** Hard rule #9 / [[api-architecture]] bans the browser calling a
+third-party API directly — a naive client-side LibreTranslate integration
+would violate that on every keystroke of a language switch. Scoping to
+short UI strings (not paragraphs) keeps a single free public MT endpoint
+viable without hitting its rate limits or translating brand/technical terms
+unpredictably. Caching client-side means a string is translated at most once
+per language, ever, across reloads.
+
+**When building.** `useTranslated(text)` / `<TranslatedText text />` for a
+plain string; `<SectionHeading>` for the eyebrow + `TextEngine` heading
+pattern (translation must resolve to a plain string **before** it reaches
+`TextEngine`, since it reads `children` directly rather than rendering
+custom components first). On upstream failure, the string simply stays
+uncached — `useTranslated` keeps returning the English source, no error
+surfaced to the user. Full design: [[i18n]].
+
+---
+
+## ADR-0023 — Hero scene: hand-built three.js, own render loop
+
+**Status:** Accepted · 2026-08-23
+
+**Decision.** The homepage hero's "digital twin" scene (bridge, tunnel,
+geological cutaway, boreholes, point cloud) is hand-authored from `three`
+primitives — no external 3D models, no GetLayers catalog scene. It runs its
+own `requestAnimationFrame` loop, started/stopped by the mounting client
+component (`src/components/scene/HeroScene.tsx`), independent of the shared
+spring `ticker` (`lib/animation/ticker.ts`).
+
+**Why.** The catalog didn't have an engineering "digital twin" concept to
+place — the brief (`getlayers.json`) called for one authored in Scene Lab.
+The shared ticker throttles callbacks to a configurable framerate (default
+100ms) for spring/text-engine motion; a WebGL render loop needs native frame
+timing instead, so it stays outside that system entirely per [[tech-stack]].
+
+**When building.** Colours live in `hero-scene-colors.ts`, manually mirroring
+the Tier-1 tokens in `globals.css` (three.js materials can't consume CSS
+custom properties). The loop pauses via `IntersectionObserver` (off-screen),
+`visibilitychange` (tab hidden), and renders a single static frame instead of
+looping when `prefers-reduced-motion` is set — checked directly via
+`matchMedia`, not react-spring's `useReducedMotion` (that only affects spring
+values, not a raw WebGL loop). Per-service scenes (`sceneTheme` in
+`data/mocks/services.ts`) should follow the same pattern: a pure `build-*.ts`
+setup module + a thin client-leaf wrapper.
 
 ---
 

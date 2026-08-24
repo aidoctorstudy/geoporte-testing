@@ -58,7 +58,7 @@ report FAIL "leading-none combined with overflow" \
 
 report FAIL "duration-fast / duration-normal used as a utility" \
   "Tailwind v4 has no --duration-* namespace — the class compiles to nothing. Use duration-[var(--duration-fast)]." \
-  "$(SRC '\bduration-(fast|normal)\b')"
+  "$(SRC '\bduration-(fast|normal)\b' | grep -vE 'var\(--duration-(fast|normal)\)')"
 
 report WARN "CSS transition without token-backed timing (ADR-0014)" \
   "The narrow CSS-transition exception requires duration-[var(--duration-*)] and a token ease." \
@@ -104,7 +104,7 @@ report FAIL "route imports something other than a view" \
 
 report WARN '"use client" on a layout, page or view' \
   "Server Components by default — push the boundary down to a leaf component." \
-  "$(grep -rln '"use client"' src/app/layout.tsx src/app/page.tsx src/views 2>/dev/null)"
+  "$(grep -ln '"use client"' src/app/layout.tsx src/app/page.tsx src/views/*.tsx 2>/dev/null)"
 
 report FAIL "explicit any" \
   "Type it. If the shape is genuinely unknown use unknown + a zod parse." \

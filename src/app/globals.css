@@ -10,15 +10,39 @@
    Never referenced in markup, never bound into @theme. Rename freely.
    Grammar: --raw-<category>-<name>[-<shade>]
    See obsidian/frontend/design-system.md → "Token naming convention".
+
+   Sourced from the committed GetLayers Style "Neural Monitor"
+   (neural-monitor-style, see getlayers.json) — a dark, instrumented palette
+   where the accent is used as light/glow, never a flat fill.
    --------------------------------------------------------------------------- */
 :root {
   --raw-color-white: #ffffff;
-  --raw-color-neutral-100: #ededed;
-  --raw-color-neutral-900: #171717;
-  --raw-color-neutral-950: #0a0a0a;
+  --raw-color-navy-950: #01040e; /* gl-bg */
+  --raw-color-navy-900: #04122e; /* gl-bg-alt */
+  --raw-color-surface: rgba(255, 255, 255, 0.04); /* gl-surface */
+  --raw-color-surface-raised: rgba(4, 18, 46, 0.6); /* gl-surface-raised */
+  --raw-color-sky-300: #8ecbff; /* gl-ink-muted */
+  --raw-color-azure-600: #1f6ae0; /* gl-accent — Geoporte's real brand blue */
+  --raw-color-azure-300: #70bcff; /* gl-glow */
+  --raw-color-line: rgba(31, 106, 224, 0.28); /* gl-line */
+
+  /* Geological cross-section layers (About section) — four steps of the same
+     navy/azure family, lightest to darkest, so the strata read as one more
+     instrument on the Neural Monitor palette rather than a literal soil-brown
+     illustration. See obsidian/frontend/animation-system.md → hero scene family. */
+  --raw-color-strata-clay: #9fd4ff;
+  --raw-color-strata-rock: #4a8fe0;
+  --raw-color-strata-soil: #2456a8;
+  --raw-color-strata-bedrock: #0f2a5c;
+
+  /* Loaded via Fontshare <link> in layout.tsx — not a next/font/google face,
+     so there is no generated CSS variable to bind to; the stack lives here. */
+  --raw-font-general-sans: "General Sans", ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
 
   --raw-duration-fast: 150ms;
   --raw-duration-normal: 250ms;
+  --raw-duration-slow: 700ms;
 }
 
 /* ---------------------------------------------------------------------------
@@ -27,20 +51,30 @@
    This is the themeable layer: dark mode overrides happen HERE, which is why
    these are separate from the @theme bindings below (see the note there).
    Grammar: --<role>[-<variant>][-<state>]
+
+   This Style is DARK-ONLY by design (an instrumented monitoring surface, not a
+   toggle) — there is deliberately no `prefers-color-scheme` override.
    --------------------------------------------------------------------------- */
 :root {
-  --background: var(--raw-color-white);
-  --foreground: var(--raw-color-neutral-900);
+  --background: var(--raw-color-navy-950);
+  --background-alt: var(--raw-color-navy-900);
+  --surface: var(--raw-color-surface);
+  --surface-raised: var(--raw-color-surface-raised);
+  --foreground: var(--raw-color-white);
+  --foreground-muted: var(--raw-color-sky-300);
+  --accent: var(--raw-color-azure-600);
+  --accent-foreground: var(--raw-color-white);
+  --glow: var(--raw-color-azure-300);
+  --line: var(--raw-color-line);
+
+  --strata-clay: var(--raw-color-strata-clay);
+  --strata-rock: var(--raw-color-strata-rock);
+  --strata-soil: var(--raw-color-strata-soil);
+  --strata-bedrock: var(--raw-color-strata-bedrock);
 
   --duration-fast: var(--raw-duration-fast);
   --duration-normal: var(--raw-duration-normal);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--raw-color-neutral-950);
-    --foreground: var(--raw-color-neutral-100);
-  }
+  --duration-slow: var(--raw-duration-slow);
 }
 
 /* ---------------------------------------------------------------------------
@@ -58,8 +92,20 @@
    --------------------------------------------------------------------------- */
 @theme inline {
   --color-background: var(--background);
+  --color-background-alt: var(--background-alt);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-onest);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-glow: var(--glow);
+  --color-line: var(--line);
+  --color-strata-clay: var(--strata-clay);
+  --color-strata-rock: var(--strata-rock);
+  --color-strata-soil: var(--strata-soil);
+  --color-strata-bedrock: var(--strata-bedrock);
+  --font-sans: var(--raw-font-general-sans);
 
   /* Leading floor for clipped TextEngine reveals — see
      obsidian/frontend/text-engine.md → "Alignment & line-height". */
@@ -71,12 +117,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
 }
 
 @layer base {

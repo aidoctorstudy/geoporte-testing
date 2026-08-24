@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "brief": {
+    "dimensionality": ["3d"],
+    "mood": ["technical", "luxe", "calm"],
+    "tone": ["dark"],
+    "motionEnergy": ["subtle"],
+    "density": ["balanced"]
+  },
+  "styleId": "neural-monitor-style",
+  "tokens": {
+    "gl-bg": "#01040e",
+    "gl-bg-alt": "#04122e",
+    "gl-surface": "rgba(255, 255, 255, 0.04)",
+    "gl-surface-raised": "rgba(4, 18, 46, 0.6)",
+    "gl-ink": "#ffffff",
+    "gl-ink-muted": "#8ecbff",
+    "gl-accent": "#1f6ae0",
+    "gl-accent-ink": "#ffffff",
+    "gl-line": "rgba(31, 106, 224, 0.28)",
+    "gl-glow": "#70bcff",
+    "gl-font-display": "'General Sans', ui-sans-serif, system-ui, sans-serif",
+    "gl-font-body": "'General Sans', ui-sans-serif, system-ui, sans-serif",
+    "gl-font-mono": "'General Sans', ui-sans-serif, system-ui, sans-serif"
+  },
+  "activeTemplateId": null,
+  "placed": [],
+  "notes": "Geoporte — engineering consultancy. Real brand accent is blue, honoring existing geoporte.com.au identity. Custom hero: bespoke bridge/tunnel/geological-cutaway digital-twin scene, authored in Scene Lab (not a catalog scene). 8 service pages planned, each with a bespoke tailored 3D scene: Civil Engineering, Design & Drafting, Geotechnical Engineering, Structural Engineering, Stormwater & Flood Modelling, Project Control Services, Advisory Services, Telecom Services."
+}
