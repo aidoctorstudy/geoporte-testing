@@ -37,6 +37,70 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-24 (homepage motion/3D overhaul — Phase 0/Foundation)
+
+Kicked off a large, phased homepage motion/3D overhaul (35-item spec — global cursor
+effects, global scroll effects, a persistent 3D background, a page-load intro, route
+transitions, plus deep per-section upgrades to come in later phases). This entry is
+Phase 0 — the global systems every later phase builds on:
+
+- **Custom cursor** (`components/common/Cursor/CustomCursor.tsx`) — a glowing dot,
+  a lagging ring, an ambient glow, and a short-lived particle trail while moving
+  fast, all spring/ticker-driven. Fills accent on interactive-element hover, swaps to
+  a crosshair over `data-cursor="canvas"` (the hero scene so far). Hides the native
+  cursor via a new `.cursor-hidden` rule in `globals.css`. Gated off on touch and
+  `prefers-reduced-motion`, and stays hidden until the pointer's first real move (a
+  real bug — the ring/dot briefly rendered at a stale `0,0` before movement — found
+  during browser QA and fixed via a new `hasMoved` flag on the pointer store).
+- **Magnetic buttons** (`components/common/Magnetic.tsx`) — 80px-radius cursor
+  attraction on the Nav and Hero CTAs so far.
+- **Scroll progress bar** (`components/common/ScrollProgressBar.tsx`) + a new
+  **scroll signal** (`hooks/scroll/use-scroll-signal.ts` + `ScrollSignal.tsx`) — the
+  first place in this codebase reading Lenis's own `scroll` event directly (every
+  existing scroll-driven component re-derives progress from `getBoundingClientRect()`
+  per element instead).
+- **Persistent ambient background** (`lib/scene/ambient-background-renderer.ts` +
+  `scene/AmbientBackground.tsx`) — drifting wireframe shapes behind every page,
+  reacting to cursor position and scroll velocity, with a periodic diagonal "lidar
+  pulse." A third standalone WebGL-context pattern alongside the hero and the shared
+  mini-scene renderer — see ADR-0027.
+- **Device tiering** (`lib/scene/device-tier.ts`) — added as a foundation module
+  now that concurrent WebGL work on the homepage is scaling up. See ADR-0027.
+- **Page-load intro** (`components/common/PageLoadIntro.tsx`) — first-visit-only
+  wordmark reveal (via `spring-text-engine`, not a hand-rolled SVG path-trace) that
+  explodes outward into the hero; `localStorage`-gated, skipped under reduced motion.
+- **Route transitions** (`components/common/RouteTransition.tsx`) — slide/fade
+  handoff between pages with an accent sweep bar, as a client leaf wrapping
+  `{children}` so `layout.tsx` itself stays a Server Component.
+
+All new work rides existing primitives rather than adding parallel ones: the shared
+animation ticker (not a new `requestAnimationFrame` loop) for cursor/magnetic
+position updates, `@react-spring/web` directly (the same pattern `ProjectModal.tsx`
+already uses) for anything needing imperative sequencing, and the existing
+mobile/`prefers-reduced-motion` WebGL-skip convention for every new 3D piece.
+
+`verify.sh` (0 FAIL), `yarn lint`, `yarn build`, and a live browser QA pass (Chrome
+extension) all came back clean. Remaining phases (hero, about, services, stats,
+projects, contact, footer) are tracked in the session's implementation plan and land
+as separate checkpointed turns.
+
+## 2026-08-24 (QA pass)
+
+- Ran the full verify/lint/build/qa-verify loop before committing the homepage
+  build (see below) and fixed what it found: arbitrary rem values converted to
+  the standard Tailwind spacing scale in `Nav.tsx`, `MobileMenu.tsx`,
+  `LanguageSwitcher.tsx`, and `ServicesDropdown.tsx` (`px-[1.25rem]` → `px-5`
+  and equivalents — same computed value, no longer a token-rule WARN); the
+  per-category project blocks in `ProjectsSection.tsx` changed from
+  `tag="div"` to `tag="section"` (each has its own `<h3>`, a genuine
+  sectioning match). Deleted `Nav/ServicesMenu.tsx` — an unused duplicate of
+  `ServicesDropdown.tsx` that nothing imported. `yarn lint` and `yarn build`
+  both pass clean; remaining `verify.sh` WARNs are either pre-existing starter
+  baseline files (`Cookie/*`, the contact route's fallback `console.log`) or
+  genuine one-off values the script's own guidance calls out as acceptable
+  (a `max-w-[75rem]` header width, the hamburger icon's sub-pixel translate
+  offsets).
+
 ## 2026-08-24
 
 - Full-page 3D pass across every homepage section — see ADR-0025 in

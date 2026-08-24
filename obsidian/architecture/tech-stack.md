@@ -98,6 +98,27 @@ index into it using indices/clones taken from the source; the derived geometry's
 vertex layout doesn't line up with the source's, so per-vertex updates read/write
 out of bounds and produce NaNs. See ADR-0026 in [[decisions-log]].
 
+**Device tiering** (`src/lib/scene/device-tier.ts`) — one module owning what
+"mobile"/"tablet"/"desktop" means for every 3D scene in this project: `getDeviceTier()`
+by viewport width (same 768px/1024px breakpoints already used elsewhere), and named
+per-tier budgets (DPR clamp, ambient-shape count, whether the ambient background runs
+at all). Added as the homepage's motion/3D overhaul started adding enough concurrent
+WebGL work (a persistent background + elevated per-service scenes + a bigger globe +
+a denser terrain) that per-module hardcoded numbers stopped being tenable — see
+`obsidian/workflows/optimize-3d-scene.md`'s device-tiering guidance and ADR-0027.
+
+**Ambient background** (`src/lib/scene/ambient-background-renderer.ts` +
+`src/components/scene/AmbientBackground.tsx`) — a *third* standalone WebGL-context
+pattern, alongside the hero and the shared viewport renderer above: one singleton,
+always-full-canvas scene (no scissoring — there's only ever one occupant) of slowly
+drifting wireframe shapes (geodesic spheres, octahedrons, toruses, I-beam/hex-bolt
+silhouettes), mounted once from the root layout so it persists across route changes
+(unlike the per-route `HeroScene`). Reads the shared `usePointer`/`useScrollSignal`
+stores (see [[hooks]]) non-reactively each frame — nearby shapes tilt toward the
+cursor, fast scrolling stretches and dims the field — and runs a periodic diagonal
+"lidar pulse" line on its own timer. Device-tier gated; skipped below 768px and under
+`prefers-reduced-motion`, same convention as every other scene here. See ADR-0027.
+
 ## Internationalization
 
 Homepage UI strings (nav links, section headings, button labels) translate at

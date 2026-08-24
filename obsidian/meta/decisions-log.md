@@ -17,6 +17,56 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0027 — A third standalone WebGL context for a persistent ambient background; device tiering added as a foundation module
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** The homepage motion/3D overhaul (a 35-item spec: global cursor/scroll
+effects, a persistent 3D background, a page-load intro, route transitions, and deep
+per-section upgrades — built in phases, this is Phase 0 / Foundation) adds a
+persistent, full-viewport ambient background scene (`src/lib/scene/
+ambient-background-renderer.ts` + `src/components/scene/AmbientBackground.tsx`):
+slowly drifting wireframe shapes, mounted once from the root layout so it survives
+route changes. This is a *third* standalone WebGL-context pattern in the project,
+alongside the per-route `HeroScene` (own context, disposed on navigation) and the
+shared scissored mini-scene renderer (`shared-viewport-renderer.ts`, one context
+multiplexed across many DOM-anchored scenes). The ambient background doesn't fit
+either: it isn't per-route like the hero, and it has exactly one occupant so there's
+nothing to scissor — a single always-full-canvas render loop, standalone, was simpler
+than forcing a "no element = full viewport" mode into the scissoring renderer.
+
+Alongside it, a device-tiering module (`src/lib/scene/device-tier.ts`) was added as
+a foundation piece rather than deferred: `getDeviceTier()` (mobile/tablet/desktop by
+viewport width) plus named per-tier budgets (DPR clamp, ambient-shape count, whether
+the ambient background runs at all). `optimize-3d-scene.md` already called this out
+as "not in the starter, add when a project needs it" — this phase set is the first
+point in the project where it's genuinely needed, since a persistent background +
+(planned, later phases) elevated per-service scenes + a bigger globe + a denser
+terrain can all be concurrent on the homepage.
+
+**Why.** The alternative to a new background renderer was reusing
+`shared-viewport-renderer.ts` with an optional element-less registration that skips
+the scissor/viewport calls. That would have added a conditional branch through code
+whose entire design (`registrations` keyed to DOM elements, per-registration scissor
+rects computed from `getBoundingClientRect()`) assumes scissoring — for one caller
+that never scissors. A new, much smaller module (no registration map, no scissor
+test, one scene) was less code and easier to reason about than bending the existing
+one around a case it wasn't built for. Device budgets as hardcoded numbers scattered
+across the ambient background, the (upcoming) elevated service scenes, the bigger
+globe, and the denser terrain would have meant re-deciding the same tier boundaries
+in four places, with no single spot to tune them from.
+
+**When building.** A new persistent (survives navigation), always-full-viewport 3D
+element belongs in its own singleton module following `ambient-background-renderer.ts`'s
+shape (ref-counted `start`/`stop`, `document.visibilitychange` pause, its own
+`requestAnimationFrame` loop) — not folded into `shared-viewport-renderer.ts`, which
+stays scissoring-only. Any new 3D module's tunable numbers (particle/shape counts, DPR
+clamps, whether it runs at all on a given tier) should read from `getTierBudget()`
+rather than hardcoding — extend `TIER_BUDGETS` in `device-tier.ts` with a new field
+rather than adding a parallel ad-hoc check.
+
+---
+
 ## ADR-0026 — Shared viewport renderer skips scenes with NaN geometry; animate the rendered attribute, not a derived one
 
 **Status:** Accepted · 2026-08-24

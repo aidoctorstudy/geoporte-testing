@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { TranslatedText } from "@/components/common/TranslatedText";
+import { Magnetic } from "@/components/common/Magnetic";
 import { brand } from "@/lib/company";
 import { HeroScene } from "@/components/scene/HeroScene";
 
@@ -14,7 +15,9 @@ export const HeroSection = () => {
       aria-labelledby="hero-heading"
       className="bg-background relative flex min-h-screen items-center overflow-hidden"
     >
-      <HeroScene className="absolute inset-0 h-full w-full" />
+      <div data-cursor="canvas" className="absolute inset-0 h-full w-full">
+        <HeroScene className="h-full w-full" />
+      </div>
       <div
         aria-hidden="true"
         className="from-background via-background/75 to-background/15 absolute inset-0 bg-gradient-to-t"
@@ -34,12 +37,14 @@ export const HeroSection = () => {
         </p>
 
         <div className="mt-10">
-          <Link
-            href="#projects"
-            className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
-          >
-            <TranslatedText text="See Our Projects" />
-          </Link>
+          <Magnetic>
+            <Link
+              href="#projects"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
+            >
+              <TranslatedText text="See Our Projects" />
+            </Link>
+          </Magnetic>
         </div>
       </div>
     </section>

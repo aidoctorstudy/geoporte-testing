@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-05-21
+updated: 2026-08-24
 ---
 
 # Catalog — Hooks
@@ -27,6 +27,18 @@ components — don't call them directly unless extending the engine.
 | Hook | File | Role |
 |------|------|------|
 | `useScroll` | `use-scroll.ts` | Zustand store for Lenis + scroll state — see [[smooth-scroll]] |
+
+## `hooks/cursor/`
+
+| Hook | File | Role |
+|------|------|------|
+| `usePointer` | `use-pointer.ts` | Shared pointer position/velocity store — one `window.pointermove` listener for the whole app (`useSyncExternalStore`, same idiom as `useWindowSize`). Also exports `getPointerSnapshot()`, a non-reactive read for per-frame consumers (ticker callbacks, WebGL render loops) that must not re-subscribe on every pointer move. `isFinePointer` gates cursor-driven effects off on touch (`matchMedia("(hover: hover) and (pointer: fine)")`). `hasMoved` is false until the first real `pointermove` — consumers must stay hidden/inert until it flips true, or they render at the stale `0,0` default (see ADR-0027). |
+
+## `hooks/scroll/`
+
+| Hook | File | Role |
+|------|------|------|
+| `useScrollSignal` | `use-scroll-signal.ts` | Shared whole-page scroll progress/velocity/direction store, bridged from Lenis's own `scroll` event by `<ScrollSignal>` (see [[components/common]]) rather than each consumer re-deriving progress from `getBoundingClientRect()`. Also exports `getScrollSignalSnapshot()` for per-frame consumers. |
 
 ## `hooks/` (root)
 

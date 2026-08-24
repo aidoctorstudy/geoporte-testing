@@ -81,6 +81,79 @@ Mount it once. Props: `baseWidth` (defaults to the largest breakpoint) and
 > `common/` — see [[decisions-log]] ADR-0008. `styled-components` is **not** a
 > project dependency; the scale-down CSS lives in `globals.css` per [[design-system]].
 
+## Homepage motion/3D overhaul globals (Phase 0)
+
+Six new client leaves, all mounted once in the root layout alongside the existing
+headless globals (`AdaptiveGrid`, `ReducedMotion`, `LanguageDirection`) — see
+[[decisions-log]] ADR-0027 for why a persistent ambient background scene needed its
+own renderer, and [[hooks]] for the `usePointer` / `useScrollSignal` stores these
+all read.
+
+### CustomCursor — `Cursor/CustomCursor.tsx`
+
+Replaces the native cursor with a small glowing dot (near-instant tracking) and a
+larger lagging ring (`@react-spring/web`, driven off the shared ticker rather than
+its own `pointermove` listener), plus a soft ambient glow trailing behind both and a
+short-lived particle trail while the pointer moves fast. Swaps to an accent-filled
+expanded ring over `a`, `button`, `[role="button"]`, `[data-cursor-hover]`; swaps to a
+crosshair over anything marked `data-cursor="canvas"` (the hero scene wrapper carries
+this today). Hides the native cursor via a `.cursor-hidden` class toggled on
+`<html>` (see `globals.css` `@layer components` — a plain inherited `cursor: none`
+on `body` doesn't override links/buttons' own `cursor: pointer`, so this needs the
+`!important` + universal-selector rule under the class instead).
+
+Gated off entirely — renders `null`, native cursor stays — on touch
+(`usePointer().isFinePointer`) and under `prefers-reduced-motion`. Also stays hidden
+until the pointer's first real move (`usePointer().hasMoved`); before that its `x`/`y`
+are the `0,0` default, which would otherwise show the cursor stuck in the top-left
+corner. See ADR-0027.
+
+### Magnetic — `Magnetic.tsx`
+
+`<Magnetic>` — wraps a button/CTA with magnetic cursor attraction: drifts up to 15px
+toward the pointer inside an 80px radius, springs back outside it
+(`@react-spring/web`, shared-ticker-driven, reads `getPointerSnapshot()` rather than
+re-subscribing per pointer move). No-ops on touch. Applied to the Nav and Hero CTAs
+so far; more call sites land as later phases touch their sections.
+
+### ScrollSignal — `ScrollSignal.tsx`
+
+Headless (`renders null`) — the single subscription to Lenis's own `scroll` event,
+publishing into the `useScrollSignal` store (see [[hooks]]). Everything that needs
+whole-page scroll progress/velocity/direction (the progress bar, the ambient
+background's scroll-stretch) reads that store instead of each wiring its own Lenis
+listener.
+
+### ScrollProgressBar — `ScrollProgressBar.tsx`
+
+Thin (`h-0.5`) accent line pinned to the top of the viewport, filling left-to-right
+with `useScrollSignal()`'s `progress` via a spring-driven `scaleX`.
+
+### PageLoadIntro — `PageLoadIntro.tsx`
+
+First-visit-only load animation: the wordmark reveals letter-by-letter through
+`spring-text-engine` (not a hand-rolled SVG path-trace — real per-glyph vector
+outlines aren't available for arbitrary web fonts, and the project's hard rule is
+that all text animation goes through the vendored text engine), holds, then the
+overlay explodes outward (`<Spring>`, opacity/scale) as the hero reveals beneath it.
+Gated by a `localStorage` flag (skipped on every return visit) and skipped entirely
+under `prefers-reduced-motion` — no partial/instant substitute, since no motion at
+all is the correct reduced-motion behaviour for a load animation. Locks/unlocks Lenis
+scroll (`useScroll().stop()/start()`) for its ~2.2s duration.
+
+### RouteTransition — `RouteTransition.tsx`
+
+Wraps `{children}` inside `<main>` in the root layout — a `"use client"` leaf so
+`layout.tsx` itself stays a Server Component. The outgoing page slides up and fades
+out, then the incoming page slides up from below into place, with an accent bar
+sweeping across at the handoff. Since Next's App Router swaps `children` to the new
+route's content the instant the pathname changes (there's no "previous page" left to
+animate out by then), the outgoing page is held in local state until its exit
+animation finishes before being swapped for the new `children`. Uses
+`@react-spring/web` directly (imperative `.set()`/`.start()`) for the same reason
+`ProjectModal.tsx` does — the exact snap-then-animate sequencing needs that
+imperative control, not the declarative `Spring` wrapper.
+
 ## ReducedMotion — `reduced-motion.tsx`
 
 `<ReducedMotion>` — a client leaf that calls react-spring's `useReducedMotion()`.

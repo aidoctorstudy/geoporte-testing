@@ -12,6 +12,12 @@ import { AdaptiveGrid } from "@/components/common/grid";
 import { LanguageDirection } from "@/components/common/LanguageDirection";
 import { Nav } from "@/components/common/Nav";
 import { ReducedMotion } from "@/components/common/reduced-motion";
+import { ScrollSignal } from "@/components/common/ScrollSignal";
+import { ScrollProgressBar } from "@/components/common/ScrollProgressBar";
+import { CustomCursor } from "@/components/common/Cursor";
+import { PageLoadIntro } from "@/components/common/PageLoadIntro";
+import { RouteTransition } from "@/components/common/RouteTransition";
+import { AmbientBackground } from "@/components/scene/AmbientBackground";
 import { ScrollLayout } from "@/layouts/scroll-layout";
 
 import "@/app/globals.css";
@@ -46,10 +52,17 @@ export default function RootLayout({
           <AdaptiveGrid />
           <ReducedMotion />
           <LanguageDirection />
+          <ScrollSignal />
+          <AmbientBackground />
+          <CustomCursor />
+          <ScrollProgressBar />
           <LazyCookie />
           <Nav />
-          <main>{children}</main>
+          <main>
+            <RouteTransition>{children}</RouteTransition>
+          </main>
           <Footer />
+          <PageLoadIntro />
         </ScrollLayout>
       </body>
     </html>

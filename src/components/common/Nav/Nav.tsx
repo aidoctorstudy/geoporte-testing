@@ -5,6 +5,7 @@ import { useState } from "react";
 import { services } from "@/data/mocks/services";
 import { brand } from "@/lib/company";
 import { TranslatedText } from "@/components/common/TranslatedText";
+import { Magnetic } from "@/components/common/Magnetic";
 import { ServicesDropdown } from "./ServicesDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -47,12 +48,14 @@ export const Nav = () => {
 
           <div className="hidden items-center gap-5 md:flex">
             <LanguageSwitcher />
-            <Link
-              href="/contact"
-              className="shrink-0 rounded-lg bg-accent px-[1.125rem] py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-accent/90"
-            >
-              <TranslatedText text="Contact Us" />
-            </Link>
+            <Magnetic>
+              <Link
+                href="/contact"
+                className="shrink-0 rounded-lg bg-accent px-[1.125rem] py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-accent/90"
+              >
+                <TranslatedText text="Contact Us" />
+              </Link>
+            </Magnetic>
           </div>
 
           <button

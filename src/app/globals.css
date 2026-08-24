@@ -159,4 +159,12 @@ body {
 }
 
 @layer components {
+  /* Toggled on <html> by CustomCursor while active (fine pointer, motion not
+     reduced) — hides the native cursor everywhere, including over elements
+     that set their own `cursor: pointer` (links/buttons), which a plain
+     inherited `cursor: none` on body would not override. */
+  .cursor-hidden,
+  .cursor-hidden * {
+    cursor: none !important;
+  }
 }
