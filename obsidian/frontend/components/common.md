@@ -141,18 +141,26 @@ under `prefers-reduced-motion` — no partial/instant substitute, since no motio
 all is the correct reduced-motion behaviour for a load animation. Locks/unlocks Lenis
 scroll (`useScroll().stop()/start()`) for its ~2.2s duration.
 
-### RouteTransition — `RouteTransition.tsx`
+### RouteTransitionSweep — `RouteTransitionSweep.tsx`
 
-Wraps `{children}` inside `<main>` in the root layout — a `"use client"` leaf so
-`layout.tsx` itself stays a Server Component. The outgoing page slides up and fades
-out, then the incoming page slides up from below into place, with an accent bar
-sweeping across at the handoff. Since Next's App Router swaps `children` to the new
-route's content the instant the pathname changes (there's no "previous page" left to
-animate out by then), the outgoing page is held in local state until its exit
-animation finishes before being swapped for the new `children`. Uses
-`@react-spring/web` directly (imperative `.set()`/`.start()`) for the same reason
-`ProjectModal.tsx` does — the exact snap-then-animate sequencing needs that
-imperative control, not the declarative `Spring` wrapper.
+Route transitions (item 15) — an accent bar sweeping across the viewport plus a
+brief full-page fade, mounted as a **sibling** of `<main>` in the root layout, not
+a wrapper around it. Reacts only to `usePathname()` changes and never touches,
+wraps, or holds a reference to `children` in any way.
+
+That's a deliberate constraint, not a missed opportunity to animate the actual
+page content sliding in/out. An earlier version (`RouteTransition.tsx`, replaced)
+wrapped `{children}` directly via `useTransition` keyed on pathname, to visually
+slide the real outgoing/incoming content — the literal reading of the spec. It hit
+a genuine, reproducible Next.js 16/Turbopack hazard, found during Phase 2 QA: a
+component wrapping the App Router's live `children` prop that mounts more than one
+independent `@react-spring/web` hook (confirmed down to `useTransition` plus even a
+second, *unused* `useSpring` call) causes Next to silently orphan that subtree into
+a hidden `<template>`, collapsing `<main>` to zero height. See ADR-0029 in
+[[decisions-log]] for the full bisection. Any future route-transition work that
+wants the actual page content to animate should look at the browser's native View
+Transitions API rather than routing `children` through react-spring's transition
+primitives again.
 
 ## ReducedMotion — `reduced-motion.tsx`
 

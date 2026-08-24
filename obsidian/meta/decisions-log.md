@@ -17,6 +17,101 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0029 — Route transitions never wrap the App Router's live `children`; a decoupled overlay instead
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** Item 15 of the homepage motion overhaul (route transitions) is
+implemented as `RouteTransitionSweep.tsx` — an accent sweep bar plus a brief
+full-page fade, mounted as a *sibling* of `<main>` in `layout.tsx`, reacting
+only to `usePathname()` changes. It never touches, wraps, or holds a reference
+to the `children` prop that `layout.tsx` passes to `<main>`. An earlier
+version (`RouteTransition.tsx`, since deleted) wrapped `{children}` directly
+using `@react-spring/web`'s `useTransition` keyed on pathname, to visually
+slide the actual outgoing/incoming page content — the literal interpretation
+of the spec ("outgoing page slides up and fades out … incoming page slides up
+from below").
+
+**Why.** That version hit a genuine, reproducible Next.js 16 (Turbopack)
+hazard, found during Phase 2 QA: a component that wraps the App Router's live
+`children` prop and mounts more than one independent `@react-spring/web` hook
+— confirmed down to `useTransition` plus even a second, *unused* `useSpring`
+call, with no state, no effects, nothing rendered from it — causes Next to
+silently orphan that `children` subtree into a hidden `<template>` element,
+collapsing `<main>` to zero height. The failure looked at first like a WebGL
+scissor bug (a scene rendering outside its card) and, separately, like it
+might be dev-server-only; a clean-server bisection (deleting hooks one at a
+time, testing in a fresh tab, confirming against a `next build && next start`
+run) ruled both out and pinned it to this exact combination. `children` here
+is not a plain React tree — it's the router's own live segment subtree, and
+holding any processed/wrapped version of it across multiple spring-machinery
+hooks in the same component is fragile in a way that doesn't reproduce with
+ordinary JSX.
+
+**When building.** Never pass the root layout's `children` prop through
+`useTransition`, `useSpring`, or any hook combination that could re-render the
+wrapping component independently of a real navigation — render `children`
+directly and undecorated in `<main>`. A route-transition *effect* (sweep bar,
+fade, any other decorative layer) belongs in its own component, driven only by
+`usePathname()`, that never receives or touches `children` — see
+`RouteTransitionSweep.tsx` for the pattern. If a future phase wants the actual
+outgoing/incoming page content to visually animate (not just a covering
+sweep), investigate the browser's native View Transitions API (which Next.js
+has some support for) rather than routing page content through
+`@react-spring/web`'s children-wrapping primitives again.
+
+---
+
+## ADR-0028 — Shared viewport renderer clears a registration's rect on deactivation, not just on unregister
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** `registerViewport()`'s `setActive(false)` path (called by
+`SceneViewport`'s `IntersectionObserver` when a mini-scene's element leaves
+the viewport) now immediately performs a scissored `renderer.clear()` over
+that registration's *current* on-screen rect, via a new
+`clearRegistrationRect()` helper in `shared-viewport-renderer.ts`. Previously
+it only flipped the `active` flag; the render loop already skips inactive
+registrations (`if (!reg.active) return`), so nothing re-clears that
+registration's last-drawn pixels once it goes inactive.
+
+**Why.** `renderer.autoClear` is `false` by design here (ADR-0025) — each
+registration manually clears only its own scissored slice per frame, so N
+mini-scenes share one canvas without wiping each other. That's correct for
+the steady state, but has a gap: once a registration stops being visited by
+the loop, its last frame is never cleared again *by the loop*. In the common
+case this is invisible, because by the time `IntersectionObserver` actually
+fires "left the viewport," the element (and therefore where its last frame
+was drawn) is already off-screen. But `IntersectionObserver` can lag behind a
+*fast* scroll enough that the last frame rendered while still `active` was
+drawn at a rect that's still on-screen — a big wheel flick, a jump-to-section
+link, or (how this was found) a large single `scroll_amount` in an automated
+test. That leaves a frozen, permanently-uncleared fragment of the scene
+sitting at whatever screen position it happened to occupy at that moment —
+found during Phase 2 QA as what looked like a huge geological-cross-section
+box rendering outside its card; a debug overlay marking the card's *actual*
+live rect, compared against the same screenshot after a scroll, proved the
+rendered fragment didn't move with scroll at all, while the real card did —
+the signature of a stale, never-recleared scissor region, not a live
+miscalculation.
+
+The render loop's per-registration body was also wrapped in a `try`/`catch`
+in the same pass (mirroring `ticker.ts`'s existing "isolate failures" pattern,
+documented as intentional there) — a plain `Map.forEach` callback throwing
+aborts the *entire* iteration, silently skipping every registration ordered
+after the throwing one for that frame, which was a real risk while
+bisecting this bug and is worth closing off regardless.
+
+**When building.** A `setActive`/pause API on any future scissor-sharing
+renderer needs to clear-on-deactivate, not just stop-updating-on-deactivate —
+"stopped rendering it" and "no longer showing stale pixels of it" are not the
+same guarantee when clearing is manual per-region. Any per-registration
+callback inside a shared render loop's `forEach`/loop body should be wrapped
+to isolate failures, so one broken scene can't blank out scenes registered
+after it for that frame.
+
+---
+
 ## ADR-0027 — A third standalone WebGL context for a persistent ambient background; device tiering added as a foundation module
 
 **Status:** Accepted · 2026-08-24

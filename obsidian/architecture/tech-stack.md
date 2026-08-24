@@ -109,6 +109,24 @@ index into it using indices/clones taken from the source; the derived geometry's
 vertex layout doesn't line up with the source's, so per-vertex updates read/write
 out of bounds and produce NaNs. See ADR-0026 in [[decisions-log]].
 
+**Guardrail 2:** `setActive(false)` (fired by `SceneViewport`'s
+`IntersectionObserver` when a registration's element leaves the viewport) now
+scissor-clears that registration's current rect before flipping the flag —
+`renderer.autoClear` is off here by design (each registration only clears its
+own scissored slice), so a registration the loop stops visiting was previously
+left with whatever it last drew, on-screen, forever, if the observer happened
+to fire *after* a fast scroll had already moved on. See ADR-0028 in
+[[decisions-log]]. The per-registration render body is also now wrapped in a
+`try`/`catch` — a plain `Map.forEach` callback throwing silently aborts the
+rest of that frame's iteration, so one broken scene could blank out every
+scene registered after it.
+
+`ViewportBuild.update()` takes the registration's live scissor rect as a third
+argument (`(elapsedSeconds, control, rect: DOMRect)`) — most builders ignore
+it; `geological-cross-section.ts` uses it to compute cursor position relative
+to its own panel (via the shared pointer store) for a cursor-tilt effect,
+rather than relative to the whole page.
+
 **Device tiering** (`src/lib/scene/device-tier.ts`) — one module owning what
 "mobile"/"tablet"/"desktop" means for every 3D scene in this project: `getDeviceTier()`
 by viewport width (same 768px/1024px breakpoints already used elsewhere), and named

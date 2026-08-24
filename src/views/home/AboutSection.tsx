@@ -1,8 +1,8 @@
-import { SectionHeading } from "@/components/common/SectionHeading";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { Inview } from "@/components/animation/springs/in-view";
-import { cultureValues, teamComposition } from "@/lib/company";
+import { TranslatedText } from "@/components/common/TranslatedText";
+import { AboutHeading } from "./AboutHeading";
 import { GeologicalCrossSection } from "./GeologicalCrossSection";
+import { TeamPanel } from "./TeamPanel";
 
 export const AboutSection = () => {
   return (
@@ -13,11 +13,12 @@ export const AboutSection = () => {
     >
       <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.2fr_1fr]">
         <div>
-          <SectionHeading
+          <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+            <TranslatedText text="About Geoporte" />
+          </p>
+          <AboutHeading
             id="about-heading"
-            eyebrow="About Geoporte"
-            heading="Complex ground. Complex engineering. Clear decisions."
-            headingClassName="leading-display text-foreground max-w-xl text-3xl font-medium md:text-5xl"
+            className="leading-display text-foreground max-w-xl text-3xl font-medium md:text-5xl"
           />
 
           <Inview
@@ -53,38 +54,7 @@ export const AboutSection = () => {
         >
           <GeologicalCrossSection />
 
-          <aside
-            aria-label="Our team and values"
-            className="border-line bg-surface flex flex-col gap-8 rounded-2xl border p-8"
-          >
-            <div>
-              <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-                <TranslatedText text="Our team" />
-              </h3>
-              <ul className="mt-4 flex flex-col gap-2">
-                {teamComposition.map((role) => (
-                  <li key={role} className="text-foreground text-sm">
-                    {role}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-                <TranslatedText text="What drives us" />
-              </h3>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {cultureValues.map((value) => (
-                  <li
-                    key={value}
-                    className="border-line text-foreground rounded-full border px-3 py-1 text-xs"
-                  >
-                    {value}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
+          <TeamPanel />
         </Inview>
       </div>
     </section>

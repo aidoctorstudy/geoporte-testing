@@ -17,8 +17,12 @@ export interface ViewportBuild {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   /** `control` is a caller-defined 0..1 (or unbounded) value — hover intensity for
-   * service icons, scroll progress for the geological cross-section, etc. */
-  update: (elapsedSeconds: number, control: number) => void;
+   * service icons, scroll progress for the geological cross-section, etc.
+   * `rect` is this registration's live `getBoundingClientRect()` (already computed
+   * every frame for scissoring) — optional third param for scenes that want
+   * cursor-relative effects (tilt toward the pointer) via the shared pointer store
+   * (`@/hooks/cursor/use-pointer`); most builders ignore it. */
+  update: (elapsedSeconds: number, control: number, rect: DOMRect) => void;
   dispose: () => void;
 }
 
@@ -29,7 +33,7 @@ interface Registration {
   build: ViewportBuild;
   active: boolean;
   control: { current: number };
-  warnedInvalidGeometry: boolean;
+  warnedOnce: boolean;
 }
 
 /** True if any mesh/line geometry in the scene has a non-finite position value —
@@ -66,6 +70,38 @@ let pageVisible = true;
 
 const handleVisibility = () => {
   pageVisible = document.visibilityState === "visible";
+};
+
+/** Scissor-clears exactly one registration's current on-screen rect. Used
+ * when a registration goes inactive (element scrolled out of view) so its
+ * last-rendered pixels don't linger as a "ghost" — `renderer.autoClear` is
+ * off (each registration manually clears only its own scissored slice, so N
+ * scenes share one canvas without wiping each other), which means a
+ * registration the render loop stops visiting (its `active` flag false) is
+ * never cleared again by the loop itself. That's invisible in the common
+ * case, where the element has already scrolled off-screen by the time
+ * `IntersectionObserver` fires — but on a fast scroll (a big wheel flick, a
+ * jump-to-section link, or simulated in a test via a large single scroll
+ * delta), the observer can lag behind enough that the *last frame rendered
+ * while still active* was drawn at a rect that's still on-screen, leaving a
+ * frozen, never-cleared fragment of that scene sitting at whatever position
+ * it happened to be — this is what a QA pass caught. */
+const clearRegistrationRect = (element: HTMLElement): void => {
+  if (!renderer) return;
+  const rect = element.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+
+  const dpr = renderer.getPixelRatio();
+  const viewportHeight = window.innerHeight;
+  const x = Math.round(rect.left * dpr);
+  const y = Math.round((viewportHeight - rect.bottom) * dpr);
+  const w = Math.round(rect.width * dpr);
+  const h = Math.round(rect.height * dpr);
+  if (w <= 0 || h <= 0) return;
+
+  renderer.setViewport(x, y, w, h);
+  renderer.setScissor(x, y, w, h);
+  renderer.clear();
 };
 
 const handleResize = () => {
@@ -123,25 +159,35 @@ const loop = (time: number) => {
     renderer!.setScissor(x, y, w, h);
     renderer!.clear();
 
-    const aspect = rect.width / rect.height;
-    if (reg.build.camera.aspect !== aspect) {
-      reg.build.camera.aspect = aspect;
-      reg.build.camera.updateProjectionMatrix();
-    }
-
-    reg.build.update(elapsed, reg.control.current);
-
-    if (sceneHasInvalidGeometry(reg.build.scene)) {
-      if (!reg.warnedInvalidGeometry) {
-        console.error(
-          "[shared-viewport-renderer] Skipping render: scene geometry has NaN position values.",
-        );
-        reg.warnedInvalidGeometry = true;
+    // Isolate failures — one scene's `update()` throwing must not skip
+    // every other registration for this frame (a plain `forEach` callback
+    // throwing aborts the whole iteration, unlike an early `return`).
+    try {
+      const aspect = rect.width / rect.height;
+      if (reg.build.camera.aspect !== aspect) {
+        reg.build.camera.aspect = aspect;
+        reg.build.camera.updateProjectionMatrix();
       }
-      return;
-    }
 
-    renderer!.render(reg.build.scene, reg.build.camera);
+      reg.build.update(elapsed, reg.control.current, rect);
+
+      if (sceneHasInvalidGeometry(reg.build.scene)) {
+        if (!reg.warnedOnce) {
+          console.error(
+            "[shared-viewport-renderer] Skipping render: scene geometry has NaN position values.",
+          );
+          reg.warnedOnce = true;
+        }
+        return;
+      }
+
+      renderer!.render(reg.build.scene, reg.build.camera);
+    } catch (error) {
+      if (!reg.warnedOnce) {
+        console.error("[shared-viewport-renderer] registration update threw:", error);
+        reg.warnedOnce = true;
+      }
+    }
   });
 };
 
@@ -183,13 +229,14 @@ export const registerViewport = ({
     build,
     active: true,
     control: { current: 0 },
-    warnedInvalidGeometry: false,
+    warnedOnce: false,
   };
   registrations.set(id, reg);
   startLoop();
 
   return {
     setActive: (active) => {
+      if (reg.active && !active) clearRegistrationRect(reg.element);
       reg.active = active;
     },
     setControl: (value) => {

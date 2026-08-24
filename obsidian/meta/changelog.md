@@ -37,6 +37,61 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-24 (homepage motion/3D overhaul — Phase 2/About)
+
+Third checkpoint of the phased homepage motion/3D overhaul (see Phase 1/Phase 0
+below). Elevated the About section:
+
+- **Geological cross-section** (`geological-cross-section.ts`) — the camera now
+  pushes down/in toward the strata as scroll progress rises (deepening into the
+  ground rather than sitting static), each layer briefly brightens as the
+  camera's implied depth passes it, a thin borehole drill continuously
+  descends through all four layers on its own timer, and the whole group tilts
+  toward the cursor — reading `rect` (this registration's live scissor rect,
+  now passed as a third `update()` argument, see ADR below) against the shared
+  pointer store rather than the page-global pointer position, so the tilt is
+  relative to the panel itself. `GeologicalCrossSection.tsx`'s layer labels now
+  fly in from the right as the camera reaches each layer during scroll
+  (quantised to "how many layers reached" so it only re-renders on a real
+  threshold crossing).
+- **About heading** (`AboutHeading.tsx`, new) — "Complex ground." slides in
+  from the left, "Complex engineering." from the right, "Clear decisions."
+  fades up, each 200ms after the previous — split out of the shared
+  `SectionHeading` (used by every other section) rather than changing its
+  line-by-line reveal behaviour project-wide.
+- **Team panel** (`TeamPanel.tsx`, new, replacing the inline `<aside>` block
+  in `AboutSection.tsx`) — a real 3D `rotateY` flip on scroll entry
+  (`@react-spring/web` directly, same idiom `TiltCard`'s tilt uses); team
+  roles type themselves in via `spring-text-engine`'s letter stagger with a
+  blinking cursor (ticker-throttled to ~10fps — a blink only needs to *look*
+  like a blink, not track every frame); value tags pop in with a bouncy
+  spring stagger.
+
+**Two real bugs found and fixed during this phase's browser QA** — both
+significant enough to get their own ADRs:
+
+- The shared viewport renderer (`shared-viewport-renderer.ts`) never cleared a
+  registration's last-rendered pixels when it went inactive (only when
+  unregistered) — on a fast scroll, `IntersectionObserver` can lag behind
+  enough that a "ghost" frame of a scene stays frozen on-screen at a stale
+  position. Looked, at first glance, exactly like a WebGL scissor bug (a
+  scene rendering outside its own card); a debug-overlay comparison against
+  scroll proved the rendered fragment wasn't tracking the card's actual live
+  position at all. Fixed with a clear-on-deactivate path. See ADR-0028.
+- An in-progress `RouteTransition.tsx` (Phase 0's item 15, route transitions)
+  wrapped the App Router's live `children` prop with more than one
+  independent `@react-spring/web` hook, which — confirmed via a careful,
+  clean-server bisection — causes Next.js 16/Turbopack to silently orphan
+  that subtree into a hidden `<template>`, collapsing `<main>` to zero
+  height. Replaced with `RouteTransitionSweep.tsx`, a decorative overlay that
+  never touches `children` at all. See ADR-0029.
+
+`verify.sh` (0 FAIL), `yarn lint`, `yarn build`, and a `next build && next
+start` production browser pass (used specifically to rule out dev-server
+streaming noise while chasing the bugs above) all came back clean — repeated
+fast-scroll stress tests (the exact sequence that originally reproduced the
+ghost) show no artifacts, no console errors.
+
 ## 2026-08-24 (homepage motion/3D overhaul — Phase 1/Hero)
 
 Second checkpoint of the phased homepage motion/3D overhaul (see Phase 0 below).

@@ -16,7 +16,7 @@ import { ScrollSignal } from "@/components/common/ScrollSignal";
 import { ScrollProgressBar } from "@/components/common/ScrollProgressBar";
 import { CustomCursor } from "@/components/common/Cursor";
 import { PageLoadIntro } from "@/components/common/PageLoadIntro";
-import { RouteTransition } from "@/components/common/RouteTransition";
+import { RouteTransitionSweep } from "@/components/common/RouteTransitionSweep";
 import { AmbientBackground } from "@/components/scene/AmbientBackground";
 import { ScrollLayout } from "@/layouts/scroll-layout";
 
@@ -58,9 +58,7 @@ export default function RootLayout({
           <ScrollProgressBar />
           <LazyCookie />
           <Nav />
-          <main>
-            <RouteTransition>{children}</RouteTransition>
-          </main>
+          <main>{children}</main>
           <Footer />
           <PageLoadIntro />
         </ScrollLayout>
