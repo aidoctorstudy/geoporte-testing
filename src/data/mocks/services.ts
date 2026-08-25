@@ -472,7 +472,7 @@ export const services: Service[] = [
       "Helping clients effectively manage stormwater and flood risk through innovative solutions, technical expertise and current modelling technology — hydrological, hydraulic and GIS-based approaches, backed by clear regulatory navigation and sophisticated data visualisation.",
     sceneTheme: "flood-inundation-terrain",
     sceneSummary:
-      "A catchment terrain with a rising translucent water-level shader, flood-extent contour rings expanding outward, drainage network lines pulsing with flow direction.",
+      "A catchment terrain under falling rain, a translucent water level rising as you scroll, flood-extent contour rings expanding outward, a branching drainage network pulsing with flow direction from trunk to outlet.",
     capabilityGroups: [
       {
         heading: "Core competencies",
@@ -549,7 +549,7 @@ export const services: Service[] = [
       "Integrated project controls across scheduling, cost management, risk assessment and quality control — optimising project performance, mitigating risk, and ensuring timely, cost-effective delivery through accurate forecasting and transparent stakeholder reporting.",
     sceneTheme: "schedule-network-graph",
     sceneSummary:
-      "An abstract 3D critical-path network — nodes and ribbons forming a Gantt-like lattice in space, an S-curve ribbon sweeping through it, progress markers advancing along the critical path.",
+      "A floating Gantt-bar field — status-coloured bars extending on their own staggered timers along a glowing timeline axis, dependency lines linking consecutive activities, milestone diamonds pulsing along the way, more bars revealing as you scroll.",
     capabilityGroups: [
       {
         heading: "Planning & scheduling",

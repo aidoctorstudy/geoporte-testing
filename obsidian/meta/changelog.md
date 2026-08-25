@@ -37,6 +37,46 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-25 (service detail pages — Phase 3/Stormwater + Project Control hero scenes)
+
+Fourth checkpoint of the 8 service detail pages rebuild — Stormwater & Flood
+Modelling and Project Control Services hero scenes elevated:
+
+- **Stormwater & Flood Modelling** (`build-flood-inundation-terrain-scene.ts`)
+  — the catchment terrain grid is now device-tier-aware (96×76 segments on
+  desktop, 52×40 on tablet — mobile never reaches this builder at all, since
+  `HeroScene` skips WebGL below that breakpoint, so this is really just a
+  tablet/desktop split; a literal 512×512 would be homepage-hero-cutaway
+  scale, more than a full-bleed *service* hero needs), a tier-budgeted
+  falling-rain `Points` system (480 desktop / 220 tablet) resets each drop
+  once it passes below the catchment's low point, the water-level plane now
+  rises with scroll (boosted the same "never reverses" way every other
+  elevated scene's scroll-tie works) instead of a purely ambient sine
+  oscillation, and the drainage network gained one more branching tier for a
+  fuller read.
+- **Project Control Services** (`build-schedule-network-graph-scene.ts`) —
+  replaced the abstract node-lattice/S-curve-ribbon treatment with a proper
+  floating Gantt-bar field: bars (built from the same "translate the geometry
+  by half its length, then scale `x` from the pivot" technique the civil
+  scene's roads use) extend left-to-right on staggered timers, a glowing
+  timeline axis with tick marks runs beneath them, thin dependency lines
+  connect consecutive bars, three milestone diamonds pulse along the axis,
+  and scroll reveals 4 extra bars beyond the 5 that animate in on load, capped
+  at 9 total.
+
+**One deliberate spec deviation, not an oversight:** the prompt's original
+"colour-coded green/amber/red" for bar status is implemented through this
+project's existing navy/azure `HERO_SCENE_COLORS` palette instead of literal
+traffic-light hues — "on track" reads brightest (`glow`), "at risk" reads
+whitest/hottest (`glow` lerped toward `white`), "delayed" reads dimmest
+(`line`). Every other hero scene in this codebase, including ones with just
+as strong a literal-colour case (the structural page's stress analysis,
+which stays blue-to-white rather than blue-to-red), holds to the Neural
+Monitor monochrome-blue identity — introducing true red/green/amber into
+exactly one scene would be a visible, unexplained outlier against the rest
+of the site's 3D work. Documented in the scene file's own header comment for
+whoever next wonders why the bars aren't literally red/amber/green.
+
 ## 2026-08-25 (service detail pages — Phase 2/Geotechnical + Structural hero scenes)
 
 Third checkpoint of the 8 service detail pages rebuild — Geotechnical
