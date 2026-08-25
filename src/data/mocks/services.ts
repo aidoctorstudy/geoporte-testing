@@ -64,7 +64,7 @@ export const services: Service[] = [
       "Geoporte's Civil Design team collaborates with clients, architects, contractors and government entities to deliver designs that emphasise functionality, constructability and well-planning — without compromising safety or economic efficiency. The team brings extensive experience across transport, water and building infrastructure projects.",
     sceneTheme: "corridor-grading",
     sceneSummary:
-      "An elevated corridor of graded earthworks and roadworks — cut-and-fill contour bands, a culvert crossing a floodway, cross-drainage lines resolving out of a topographic point cloud.",
+      "A city construction site building itself — roads growing outward from a centre point, a cable-stay bridge whose cables attach one by one, two tower cranes swinging beams into place, low-poly cars running the finished road segments.",
     capabilityGroups: [
       {
         heading: "Design & Planning",
@@ -159,7 +159,7 @@ export const services: Service[] = [
       "High-quality design and drafting services that adhere to industry standards and best practice. The team pairs experienced civil engineers with CAD specialists, working in industry-leading software — AutoCAD, Civil 3D and Revit — to deliver precise, coordinated documentation as an extension of the client's own project team.",
     sceneTheme: "bim-clash-detection",
     sceneSummary:
-      "A drafting volume where solid geometry dissolves into wireframe and back — clash-detection spheres flare where two models intersect, drawing sheets hover as thin translucent planes.",
+      "A blueprint sheet unrolling into view — its drafting lines drawing themselves on, dimension call-outs and revision-cloud annotations fading in after, individual lines brightening as the cursor passes near them.",
     capabilityGroups: [
       {
         heading: "Services Offered",

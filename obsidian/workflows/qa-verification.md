@@ -1,6 +1,6 @@
 ---
 tags: [workflow, qa, stable]
-updated: 2026-08-18
+updated: 2026-08-25
 ---
 
 # Workflow — QA & Verification
@@ -62,6 +62,37 @@ layer 1 (fixes introduce violations) → repeat until clean.
   checked by inspection.
 - No unit or E2E tests in the project at all. If that changes, this workflow is
   where the gate belongs.
+
+## Browser QA gotchas (Claude-in-Chrome specifically)
+
+Two false alarms hit during the service-pages hero-scene work (see
+[[changelog]] 2026-08-25, Phase 1) are worth checking for *before* concluding
+a WebGL/canvas scene is actually broken:
+
+- **Stale dev-server bundle after editing a file the running `next dev`
+  already served.** Editing a `.ts`/`.tsx` file on disk doesn't guarantee the
+  already-running dev server's Turbopack cache serves the new code on the next
+  navigate — it can keep serving the old compiled chunk. If a scene looks
+  unchanged after an edit, don't assume the edit was wrong first: fetch the
+  loaded JS chunks (`performance.getEntriesByType('resource')`, filter
+  `.js`, `fetch()` each, search for a literal string unique to the new vs. old
+  version — identifiers can survive dev bundling but a JSDoc/comment string is
+  the most reliable) and confirm which version is actually running. If it's
+  stale, kill and restart the dev server process rather than debugging code
+  that was never actually re-served.
+- **The automation tab can report `document.hidden === true` /
+  `visibilityState === "hidden"` permanently** (not actually composited by the
+  OS), which is exactly the condition every WebGL scene in this project is
+  *designed* to pause on (battery-saving, correct behaviour for a real user's
+  backgrounded tab) — so the canvas exists, sized correctly, with a valid
+  context, but never draws a single frame, looking identical to a genuinely
+  broken scene. Check `document.hidden` first when a scene renders nothing.
+  To force a real frame for verification, override the property and redispatch
+  the event from the page console: `Object.defineProperty(document, 'hidden',
+  { get: () => false, configurable: true })` (same for `visibilityState` →
+  `'visible'`), then `document.dispatchEvent(new Event('visibilitychange'))`.
+  Do this *after* the component has mounted, not immediately on navigate — too
+  early and the `visibilitychange` listener isn't attached yet.
 
 ## Related
 

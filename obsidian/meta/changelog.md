@@ -37,6 +37,54 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-25 (service detail pages — Phase 1/Civil + Design & Drafting hero scenes)
+
+Second checkpoint of the 8 service detail pages rebuild — the first two hero
+scenes elevated to their "most impressive version" per the approved plan,
+both rewritten in place (same exported factory names, so
+`service-heroes/index.ts`'s registry needed no changes):
+
+- **Civil Engineering** (`build-corridor-grading-scene.ts`) — replaced with a
+  city-construction narrative: 6 roads grow outward from a centre point (each
+  a box geometry translated so its near edge sits at the pivot, then
+  `scale.x` eased 0→1 — grows from the centre rather than its own midpoint),
+  a cable-stay bridge whose 8 cables fade in one at a time, two tower cranes
+  (independent pivoting jib, a hook that bobs a beam up and down), and two
+  low-poly cars running back and forth along their finished road segments
+  (only once that road's reveal has grown past a length threshold). A
+  load-in "camera pull-back" is faked by easing the whole scene's `scale`
+  down from 1.22× to 1× — the shared `hero-scene-runtime.ts` owns the camera
+  directly, so a builder has no camera reference to animate a real dolly with.
+  A ±20° cursor-driven tilt is layered on top of the runtime's own subtle
+  parallax, and scroll boosts every element's reveal progress on top of
+  its own timer.
+- **Design & Drafting** (`build-bim-clash-detection-scene.ts`) — replaced
+  with a blueprint sheet that unrolls into view (`rotation.x`/`scale.y` eased
+  from near-edge-on/flat to facing the camera), its drafting-line network
+  drawing itself on via a growing `BufferGeometry` draw range on the *same*
+  geometry that's rendered (never a derived one — ADR-0026), dimension
+  arrows and two scalloped "revision cloud" annotations fading in after, and
+  per-vertex cursor-proximity brightening via a live vertex-colour attribute
+  (the pointer, already normalized to the hero's own container rect, is
+  projected onto the blueprint's local plane space each frame).
+
+**One environment-only false alarm during this phase's browser QA, not a code
+bug:** the running dev server was serving a stale Turbopack-cached bundle of
+the *old* scene code after the file rewrite — confirmed by fetching the
+loaded JS chunks and finding old comment text (`"graded corridor"`) still
+present, with none of the new scene's text anywhere in any loaded chunk.
+Restarting the dev server picked up the change immediately (confirmed the
+same way, this time finding the new text and none of the old). Separately,
+the automation browser tab used for this QA reports `document.hidden` as
+permanently `true` (not actually composited/foregrounded) — `HeroScene.tsx`'s
+own visibility-pause logic (by design, to save battery when a tab is
+backgrounded) correctly never starts the render loop in that state, which
+briefly looked like a rendering bug before being traced to the tab's
+visibility state rather than the scene code. Worked around for this session
+by overriding `document.hidden`/`visibilityState` and dispatching a
+`visibilitychange` event from the page console to force a real frame — both
+scenes render correctly once that's done, confirmed via screenshots.
+
 ## 2026-08-25 (service detail pages — Phase 0/Foundation)
 
 First checkpoint of the 8 service detail pages (`/services/<slug>`) rebuild —
