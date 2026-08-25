@@ -636,7 +636,7 @@ export const services: Service[] = [
       "Geoporte's value lies in highly experienced staff who understand geotechnical challenges, operating through an open, collaborative partnership approach — creating innovative, practical solutions that save clients time and money across every project phase.",
     sceneTheme: "advisory-lifecycle-network",
     sceneSummary:
-      "A rotating knowledge-network — connected nodes representing Plan, Design, Build, Operate arranged around a slowly turning core, links brightening as the scroll narrative moves through the project lifecycle.",
+      "A rotating wireframe globe pinned at Geoporte's real project countries, curved arcs radiating from Australia to each with a travelling light, a soft atmosphere glow at the rim, the whole globe zooming in as you scroll.",
     capabilityGroups: [
       {
         heading: "Core advisory capabilities",
@@ -706,7 +706,7 @@ export const services: Service[] = [
       "Surveys, design, build and testing of mobile communications systems across in-building (DAS / Small Cells / Repeaters / Nextivity) and outdoor (Macro / PSN / Small Cells) networks — RF engineering delivered by certified professionals from site survey through commissioning.",
     sceneTheme: "telecom-signal-network",
     sceneSummary:
-      "A transmission tower and in-building node grid — signal-coverage rings expanding as translucent shells, RF paths linking towers to small cells, a slow sweep showing coverage strengthening.",
+      "A transmission tower assembling itself bottom-up, five coverage rings expanding outward on a clear pulse, data streaming up the mast, a connected in-building node lattice that fills in further as you scroll.",
     capabilityGroups: [
       {
         heading: "Core competencies",

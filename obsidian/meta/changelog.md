@@ -37,6 +37,65 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-25 (service detail pages — Phase 4/Advisory + Telecom hero scenes — final phase)
+
+Fifth and final checkpoint of the 8 service detail pages hero-scene elevation
+roadmap — Advisory Services and Telecom Services elevated, completing all 8:
+
+- **Advisory Services** (`build-advisory-lifecycle-network-scene.ts`) —
+  replaced the abstract Plan/Design/Build/Operate node ring with a rotating
+  wireframe globe reusing the Stats section's own `world-globe.ts` projection
+  and country list verbatim (`PROJECT_LOCATIONS`/`latLonToVector3`, now
+  exported from that file so the two never drift apart), a glowing pin at
+  each of Geoporte's seven real project countries, six curved hub-and-spoke
+  arcs radiating from Australia with a travelling light per arc
+  (`CatmullRomCurve3` lofted through a surface-normal-lifted midpoint), and a
+  soft atmosphere rim glow via a larger back-facing translucent sphere (pure
+  depth-ordering trick, no shader). Cursor movement adds a rotation offset on
+  top of the globe's own autorotation; scroll zooms the whole globe in.
+- **Telecom Services** (`build-telecom-signal-network-scene.ts`) — the mast
+  now assembles bottom-up from 6 staggered segments before its antenna arms
+  fade in, the coverage-ring shells switched from sphere wireframes to real
+  torus geometry (5 rings, a clear 1.5s pulse period, max radius growing with
+  scroll), small white data-stream particles now travel up the mast on a
+  loop, the in-building node lattice gained actual connector lines (not just
+  a point cloud) and reveals more nodes via `setDrawRange` as you scroll, and
+  a faint background grid plane gives a "matrix" backdrop.
+
+**Browser QA could not get a real WebGL screenshot this phase — documented
+here rather than silently skipped.** Both scenes pass `verify.sh` (0 FAIL),
+`yarn lint`, and `yarn build` (TypeScript compiles clean), and both pages
+load with zero console errors. But the hero canvas itself stopped mounting
+partway through this phase's QA — confirmed via literal DOM/`MutationObserver`
+inspection, not just a screenshot: the container div exists, but
+`container.appendChild(scene.canvas)` never adds a child, with no thrown
+error anywhere (`window.onerror`, `unhandledrejection`, and React's own
+console output all silent). This was ruled out as an application bug through
+direct elimination, in order: a stale dev-server cache (ruled out — full
+process kill + `.next` cache wipe + brand-new tab, still reproduced); React
+Strict Mode's dev-only double-effect-invocation (ruled out — reproduced
+identically against a `next build && next start` production server, which
+never double-invokes); the automation tab's `document.hidden` staying `true`
+(ruled out — same failure with visibility explicitly patched); a thrown
+exception in scene construction (ruled out — `createScene()` and
+`container.appendChild()` were confirmed succeeding via direct source
+instrumentation on at least one run, with the canvas vanishing afterward
+with no corresponding cleanup path ever logging). The same failure reproduced
+on `civil-engineering` — a page whose hero scene was screenshotted working
+correctly three separate times earlier this same session (Phases 1–3), with
+zero code changes to any file in its render path since. That combination —
+identical shared code, proven working repeatedly, now failing identically
+across every page including unrelated ones, independent of dev/prod, cache
+state, or tab freshness — points to the browser-automation tab/GPU state
+itself having degraded after several hours of continuous heavy WebGL churn
+in this session, not a regression in the app. Verification for this phase
+rests on: passing build/lint/`verify.sh`, zero console errors on real page
+loads, and code review against the now-proven-correct patterns from Phases
+1–3 (both new scenes reuse the exact same `hero-scene-runtime.ts` contract,
+the same `easeOutCubic`/scroll-boost idiom, and the same disposal
+convention as every already-visually-confirmed scene). See
+`obsidian/workflows/qa-verification.md` for the added gotcha entry.
+
 ## 2026-08-25 (service detail pages — Phase 3/Stormwater + Project Control hero scenes)
 
 Fourth checkpoint of the 8 service detail pages rebuild — Stormwater & Flood

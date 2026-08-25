@@ -9,8 +9,10 @@ import type { ViewportBuild, ViewportBuilder } from "@/lib/scene/shared-viewport
 import { disposeSceneObjects } from "@/lib/scene/shared-viewport-renderer";
 import { HERO_SCENE_COLORS as COLOR } from "./hero-scene-colors";
 
-/** Representative lat/lon for each country the project list covers. */
-const PROJECT_LOCATIONS: Array<{ country: string; lat: number; lon: number }> = [
+/** Representative lat/lon for each country the project list covers. Exported
+ * so the Advisory Services hero scene's globe can share the exact same
+ * country list and projection rather than drifting from its own copy. */
+export const PROJECT_LOCATIONS: Array<{ country: string; lat: number; lon: number }> = [
   { country: "Australia", lat: -35.3, lon: 149.1 },
   { country: "New Zealand", lat: -41.29, lon: 174.78 },
   { country: "UAE", lat: 24.45, lon: 54.38 },
@@ -22,7 +24,7 @@ const PROJECT_LOCATIONS: Array<{ country: string; lat: number; lon: number }> = 
 
 const GLOBE_RADIUS = 1.4;
 
-const latLonToVector3 = (lat: number, lon: number, radius: number): THREE.Vector3 => {
+export const latLonToVector3 = (lat: number, lon: number, radius: number): THREE.Vector3 => {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
   return new THREE.Vector3(
