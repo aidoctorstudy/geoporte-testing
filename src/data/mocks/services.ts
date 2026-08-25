@@ -236,7 +236,7 @@ export const services: Service[] = [
       "Geoporte's geotechnical practice is the deepest bench in the firm — full-service solutions across site investigation, ground behaviour, foundation design and slope stabilisation, applied to some of the region's most technically demanding infrastructure. This is the discipline the Geoporte digital twin was built to show: what lies beneath the project.",
     sceneTheme: "geological-digital-twin",
     sceneSummary:
-      "The full digital-twin cutaway — bridge, tunnel and valley corridor, geological strata, boreholes, piles and monitoring instrumentation. The same scene family as the homepage hero, re-framed for this page.",
+      "A cutaway descending through named soil and rock layers — a borehole tube with a core-sampler drill continuously working its way down, floating core samples pulled from a few depths, glowing water veins threading through the lower layers.",
     capabilityGroups: [
       {
         heading: "Ground engineering",
@@ -406,7 +406,7 @@ export const services: Service[] = [
       "Customised, cost-effective structural engineering solutions for the civil infrastructure sector, combining local and international expertise to meet current standards without compromising delivery efficiency. Geoporte works a One Team approach — collaborating directly with clients to develop tailored structural solutions across site development, transportation, utilities and infrastructure.",
     sceneTheme: "structural-fem-analysis",
     sceneSummary:
-      "A structural frame under analysis — a steel/concrete frame mesh that ripples between realistic member and FEM stress-colour wireframe, load-path arrows and deflection ghosting through it.",
+      "A steel frame assembling itself — individual members flying in and connecting one by one with a brief weld-spark flare at each joint, glass facade panels sliding into place once the frame stands, the finished structure turning slowly in space.",
     capabilityGroups: [
       {
         heading: "Core capabilities",

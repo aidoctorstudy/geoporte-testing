@@ -37,6 +37,57 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-25 (service detail pages — Phase 2/Geotechnical + Structural hero scenes)
+
+Third checkpoint of the 8 service detail pages rebuild — Geotechnical
+Engineering and Structural Engineering hero scenes elevated:
+
+- **Geotechnical Engineering** (`build-geological-digital-twin-scene.ts`,
+  new file) — this page previously reused the homepage's `createHeroScene`
+  directly rather than having its own builder (a placeholder from the earlier
+  session that first built the service pages). Replaced with a bespoke
+  descending cutaway through the same four named `STRATA_LAYERS` the About
+  section's geological cross-section uses (clay/weathered rock/residual
+  soil/bedrock — visual continuity with that section, not a new palette), a
+  translucent borehole casing with a core-sampler drill continuously working
+  its way down, four floating core samples pulled from a few depths, and two
+  glowing (`AdditiveBlending`) water veins threading through the lower
+  layers. `service-heroes/index.ts`'s registry now points
+  `geological-digital-twin` at this new builder instead of the homepage
+  scene, and no longer imports `build-hero-scene.ts` at all. Since builders
+  going through `hero-scene-runtime.ts` have no camera reference (the shared
+  runtime owns it), "the camera descending through the layers" is faked the
+  same way Phase 1's civil scene faked its load-in camera pull-back — moving
+  the whole layer stack up past a fixed camera instead of moving the camera
+  down. A slow autonomous descend-then-rise cycle keeps the scene alive with
+  no scroll input; scrolling pushes the depth further than wherever that
+  cycle currently sits, matching the same "scroll boosts, never reverses" idiom
+  Phase 1 established.
+- **Structural Engineering** (`build-structural-fem-analysis-scene.ts`) —
+  replaced the previous stress-colour-dissolve treatment with a proper
+  self-assembling frame: 20 individual members (columns, top beams, two
+  end-bay diagonal braces — generated from the bay grid, not hand-placed)
+  fly in from random off-scene offsets and converge on their real positions
+  with a staggered per-member delay, a short `AdditiveBlending` point burst
+  marks each member's arrival, glass facade panels slide down into place once
+  the slowest member is mostly there, and the completed frame turns slowly
+  once every member has arrived.
+
+**One real bug found and fixed during this phase's own review, before it
+ever reached browser QA:** the structural scene's first draft oriented each
+member once via `Object3D.lookAt()` at construction (so a member's long axis
+lies correctly along its actual start→end direction) but then had
+`update()` call `member.line.rotation.set(...)` every frame to apply the
+fly-in rotation jitter — `rotation.set` replaces the full Euler wholesale, so
+this silently overwrote the `lookAt` orientation back toward identity every
+frame, meaning every member would have settled into the same axis-aligned
+orientation instead of its correct one once assembled. Fixed by capturing
+the `lookAt`-derived orientation as a quaternion once at construction and
+composing it with the (still-Euler-authored, easier to jitter) rotation
+jitter each frame via `THREE.Quaternion.multiply`, using two reused scratch
+`Euler`/`Quaternion` objects across all 20 members rather than allocating new
+ones every frame.
+
 ## 2026-08-25 (service detail pages — Phase 1/Civil + Design & Drafting hero scenes)
 
 Second checkpoint of the 8 service detail pages rebuild — the first two hero

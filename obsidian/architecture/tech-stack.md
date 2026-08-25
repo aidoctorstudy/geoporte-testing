@@ -87,11 +87,14 @@ for free. `hero-scene-runtime.ts` is the shared setup all 8 builders (plus the
 homepage's `build-hero-scene.ts`) go through; its returned handle gained
 `setScrollProgress` (service-pages Phase 0 — see [[changelog]] and ADR-0030 in
 [[decisions-log]]), mirroring the homepage hero's own scroll-reactivity —
-every builder can read scroll progress once it chooses to use it, though as of
-Phase 0 none of the 8 do yet (that lands as each scene is individually
-elevated in a later phase). Geotechnical currently reuses the homepage's
-`createHeroScene` directly rather than having its own builder — a planned
-follow-up replaces that with a bespoke scene once its page gets elevated.
+every builder can read scroll progress once it chooses to use it — civil,
+design & drafting, geotechnical and structural now do (service-pages Phases 1
+and 2), the remaining four land as each is individually elevated in a later
+phase. Geotechnical no longer reuses the homepage's `createHeroScene` — it has
+its own `build-geological-digital-twin-scene.ts` (Phase 2), a descending
+cutaway through the same `STRATA_LAYERS` palette the About section's
+geological cross-section uses. `service-heroes/index.ts` no longer imports
+`build-hero-scene.ts` at all as a result.
 
 Below the mobile device tier, `HeroScene.tsx` skips mounting WebGL entirely
 (for both the homepage hero and every service hero) and renders
