@@ -35,6 +35,29 @@
   --raw-color-strata-soil: #2456a8;
   --raw-color-strata-bedrock: #0f2a5c;
 
+  /* Per-service accent tints (service detail pages) — eight closely-related
+     azure/indigo/cyan variants, each a distinct "instrument" on the same
+     Neural Monitor palette (same technique as --raw-color-strata-* above),
+     never leaving the blue family. Consumed via src/lib/scene/service-accent.ts,
+     which scopes --accent/--glow (Tier 2) to a wrapper per page — see
+     obsidian/meta/decisions-log.md for why Tier 2, not a new Tier 2 role. */
+  --raw-color-service-civil-engineering-accent: #1f6ae0;
+  --raw-color-service-civil-engineering-glow: #70bcff;
+  --raw-color-service-design-and-drafting-accent: #3f5fe0;
+  --raw-color-service-design-and-drafting-glow: #8fa4ff;
+  --raw-color-service-geotechnical-engineering-accent: #1f8ec2;
+  --raw-color-service-geotechnical-engineering-glow: #6fd4f0;
+  --raw-color-service-structural-engineering-accent: #2f52c0;
+  --raw-color-service-structural-engineering-glow: #7f9af0;
+  --raw-color-service-stormwater-and-flood-modelling-accent: #0f8fd0;
+  --raw-color-service-stormwater-and-flood-modelling-glow: #5fe0ff;
+  --raw-color-service-project-control-services-accent: #5a5fe0;
+  --raw-color-service-project-control-services-glow: #a0a8ff;
+  --raw-color-service-advisory-services-accent: #1a5cc8;
+  --raw-color-service-advisory-services-glow: #66a8f0;
+  --raw-color-service-telecom-services-accent: #0ea0e0;
+  --raw-color-service-telecom-services-glow: #4ff0ff;
+
   /* Loaded via Fontshare <link> in layout.tsx — not a next/font/google face,
      so there is no generated CSS variable to bind to; the stack lives here. */
   --raw-font-general-sans: "General Sans", ui-sans-serif, system-ui,

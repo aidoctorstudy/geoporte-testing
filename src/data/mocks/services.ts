@@ -14,6 +14,16 @@ export interface ServiceSubService {
   description: string;
 }
 
+export interface ServiceStat {
+  value: number;
+  /** Appended after the number, e.g. "+" or "%". Defaults to "+" (matches
+   * `StatCounter`'s own default) when omitted. */
+  suffix?: string;
+  /** Prepended before the number, e.g. "$" for "$2B+ project value managed". */
+  prefix?: string;
+  label: string;
+}
+
 export type ServiceSceneTheme =
   | "corridor-grading"
   | "bim-clash-detection"
@@ -33,6 +43,15 @@ export interface Service {
   sceneSummary: string;
   capabilityGroups: ServiceCapabilityGroup[];
   subServices?: ServiceSubService[];
+  /** The 3 headline stats shown on the detail page's overview section. */
+  stats: ServiceStat[];
+  /** The 5-6 step "how we work" process timeline, in order. */
+  processSteps: string[];
+  /** Exactly 6 cards for the detail page's sub-services grid — distinct from
+   * (and a shorter, page-facing complement to) `subServices`/`capabilityGroups`
+   * above, which stay as the deeper, previously-sourced content folded into
+   * the overview section instead. */
+  subServiceGrid: ServiceSubService[];
 }
 
 export const services: Service[] = [
@@ -85,6 +104,51 @@ export const services: Service[] = [
         ],
       },
     ],
+    stats: [
+      { value: 15, label: "Road projects" },
+      { value: 8, label: "Bridges" },
+      { value: 3, suffix: "", label: "Countries" },
+    ],
+    processSteps: [
+      "Brief",
+      "Site Investigation",
+      "Concept Design",
+      "Detailed Design",
+      "Construction Support",
+      "As-Built",
+    ],
+    subServiceGrid: [
+      {
+        title: "Road & Highway Design",
+        description:
+          "Geometric design, pavement structure and intersection layouts for new and upgraded road corridors.",
+      },
+      {
+        title: "Bridge Engineering",
+        description:
+          "Concept through detailed design of bridge structures, from simple culverts to multi-span crossings.",
+      },
+      {
+        title: "Pavement Design",
+        description:
+          "Flexible and rigid pavement design compliant with Austroads and local road authority standards.",
+      },
+      {
+        title: "Traffic & Transport Planning",
+        description:
+          "Traffic modelling, intersection analysis and transport network planning to support development approvals.",
+      },
+      {
+        title: "Civil Infrastructure",
+        description:
+          "Water, sewer and utility reticulation design integrated with the broader civil works package.",
+      },
+      {
+        title: "Drainage Design",
+        description:
+          "Stormwater drainage networks and detention systems sized to manage runoff at the source.",
+      },
+    ],
   },
   {
     slug: "design-and-drafting",
@@ -115,6 +179,51 @@ export const services: Service[] = [
           "Collaborative method — direct alignment with clients and stakeholders",
           "A One Team approach — Geoporte as an extension of your project team",
         ],
+      },
+    ],
+    stats: [
+      { value: 500, label: "Drawings delivered" },
+      { value: 8, suffix: "", label: "Disciplines covered" },
+      { value: 100, suffix: "%", label: "Digital workflow" },
+    ],
+    processSteps: [
+      "Design Brief",
+      "Concept Sketches",
+      "CAD Development",
+      "Review",
+      "Final Drawings",
+      "Revisions",
+    ],
+    subServiceGrid: [
+      {
+        title: "2D CAD Drafting",
+        description:
+          "Precise, coordinated 2D drawings produced in AutoCAD and Civil 3D to construction-ready standard.",
+      },
+      {
+        title: "3D BIM Modelling",
+        description:
+          "Federated 3D models in Revit that catch clashes and coordination issues before they reach site.",
+      },
+      {
+        title: "As-Built Documentation",
+        description:
+          "Accurate as-constructed drawings capturing what was actually built against the design intent.",
+      },
+      {
+        title: "Shop Drawings",
+        description:
+          "Fabrication-level detail drawings for contractors and manufacturers to build directly from.",
+      },
+      {
+        title: "Coordination Drawings",
+        description:
+          "Multi-discipline overlay drawings resolving clashes between structural, civil and services.",
+      },
+      {
+        title: "Specification Writing",
+        description:
+          "Technical specifications that translate design intent into enforceable contract documentation.",
       },
     ],
   },
@@ -242,6 +351,51 @@ export const services: Service[] = [
           "Feasibility studies, site reconnaissance and geohazard evaluation ahead of investment.",
       },
     ],
+    stats: [
+      { value: 200, label: "Boreholes supervised" },
+      { value: 50, label: "Site investigations" },
+      { value: 7, suffix: "", label: "Countries" },
+    ],
+    processSteps: [
+      "Desk Study",
+      "Field Investigation",
+      "Lab Testing",
+      "Analysis",
+      "Report",
+      "Design Recommendations",
+    ],
+    subServiceGrid: [
+      {
+        title: "Site Investigations",
+        description:
+          "Drilling, sampling and in-situ testing programs planned and supervised to characterise ground conditions.",
+      },
+      {
+        title: "Laboratory Testing",
+        description:
+          "Soil and rock testing to determine the engineering properties driving foundation and earthworks design.",
+      },
+      {
+        title: "Foundation Design",
+        description:
+          "Shallow and deep foundation design matched to the ground conditions and structural loads.",
+      },
+      {
+        title: "Slope Stability Analysis",
+        description:
+          "Assessing natural and engineered slopes and designing stabilisation where the factor of safety falls short.",
+      },
+      {
+        title: "Ground Improvement",
+        description:
+          "Dynamic compaction, vibro-replacement and surcharging design to strengthen weak or variable ground.",
+      },
+      {
+        title: "Retaining Wall Design",
+        description:
+          "Sheet piled, diaphragm, bored pile and gravity retaining wall design for permanent and temporary works.",
+      },
+    ],
   },
   {
     slug: "structural-engineering",
@@ -263,6 +417,50 @@ export const services: Service[] = [
           "Site Planning and Grading — layout optimisation, earthwork calculations and drainage design",
           "Construction Documentation — construction drawings, quantity takeoffs and material specifications",
         ],
+      },
+    ],
+    stats: [
+      { value: 100, label: "Structures designed" },
+      { value: 30, label: "Years combined experience" },
+      { value: 0, suffix: "", label: "Structural failures" },
+    ],
+    processSteps: [
+      "Architectural Brief",
+      "Structural Concept",
+      "Analysis & Design",
+      "Documentation",
+      "Construction Support",
+    ],
+    subServiceGrid: [
+      {
+        title: "Building Structural Design",
+        description:
+          "Structural systems for new buildings, from concept framing through detailed documentation.",
+      },
+      {
+        title: "Industrial Structures",
+        description:
+          "Structural design for industrial facilities, plant support structures and heavy equipment foundations.",
+      },
+      {
+        title: "Retaining Structures",
+        description:
+          "Structural design of retaining walls and earth-retention systems coordinated with the geotechnical model.",
+      },
+      {
+        title: "Facade Engineering",
+        description:
+          "Structural support systems for building facades, glazing and cladding.",
+      },
+      {
+        title: "Structural Assessments",
+        description:
+          "Condition assessments and capacity checks of existing structures against current loading codes.",
+      },
+      {
+        title: "Peer Review",
+        description:
+          "Independent structural design review providing assurance before construction proceeds.",
       },
     ],
   },
@@ -295,6 +493,51 @@ export const services: Service[] = [
           "Climate Change Adaptation",
           "Emergency Response Planning",
         ],
+      },
+    ],
+    stats: [
+      { value: 80, label: "Flood studies" },
+      { value: 5, suffix: "", label: "Software platforms" },
+      { value: 3, suffix: "", label: "Countries" },
+    ],
+    processSteps: [
+      "Catchment Analysis",
+      "Hydrological Modelling",
+      "Hydraulic Modelling",
+      "Risk Assessment",
+      "Design",
+      "Reporting",
+    ],
+    subServiceGrid: [
+      {
+        title: "Stormwater Management Plans",
+        description:
+          "Catchment-wide stormwater strategies balancing flood risk, water quality and development yield.",
+      },
+      {
+        title: "Flood Risk Assessment",
+        description:
+          "Flood extent, depth and hazard mapping to inform planning, design and emergency response.",
+      },
+      {
+        title: "Drainage Network Design",
+        description:
+          "Underground stormwater network design sized against current design storm standards.",
+      },
+      {
+        title: "MUSIC Modelling",
+        description:
+          "Water quality treatment train modelling using the MUSIC platform to meet stormwater quality targets.",
+      },
+      {
+        title: "TUFLOW/HEC-RAS Modelling",
+        description:
+          "2D/1D hydraulic modelling of catchments and waterways using industry-standard TUFLOW and HEC-RAS platforms.",
+      },
+      {
+        title: "Water Sensitive Urban Design",
+        description:
+          "Integrated stormwater treatment and reuse design embedded into the urban landscape.",
       },
     ],
   },
@@ -339,6 +582,51 @@ export const services: Service[] = [
         ],
       },
     ],
+    stats: [
+      { value: 50, label: "Projects controlled" },
+      { value: 2, prefix: "$", suffix: "B+", label: "Project value managed" },
+      { value: 99, suffix: "%", label: "On-time delivery" },
+    ],
+    processSteps: [
+      "Project Setup",
+      "Baseline Schedule",
+      "Monitoring",
+      "Reporting",
+      "Change Control",
+      "Closeout",
+    ],
+    subServiceGrid: [
+      {
+        title: "Project Scheduling",
+        description:
+          "Baseline and progressively updated project schedules built in Primavera P6.",
+      },
+      {
+        title: "Cost Management",
+        description:
+          "Cost breakdown structures, baseline budgets and ongoing cost tracking against approved scope.",
+      },
+      {
+        title: "Risk Management",
+        description:
+          "Structured risk identification, assessment and mitigation planning across the project lifecycle.",
+      },
+      {
+        title: "Change Management",
+        description:
+          "Formal change control processes keeping scope, cost and schedule impacts visible and approved.",
+      },
+      {
+        title: "Progress Reporting",
+        description:
+          "Regular dashboard and narrative reporting keeping stakeholders aligned on project status.",
+      },
+      {
+        title: "Earned Value Analysis",
+        description:
+          "S-curve generation and schedule/cost performance indices tracking delivery against baseline.",
+      },
+    ],
   },
   {
     slug: "advisory-services",
@@ -362,6 +650,51 @@ export const services: Service[] = [
           "Geotechnical & Foundation Engineering — soil mechanics and subsurface investigation",
           "Asset Management — optimising infrastructure performance through maintenance strategy",
         ],
+      },
+    ],
+    stats: [
+      { value: 7, suffix: "", label: "Countries" },
+      { value: 27, label: "Landmark projects" },
+      { value: 15, label: "Years experience" },
+    ],
+    processSteps: [
+      "Scope Definition",
+      "Data Gathering",
+      "Analysis",
+      "Expert Review",
+      "Report",
+      "Presentation",
+    ],
+    subServiceGrid: [
+      {
+        title: "Technical Due Diligence",
+        description:
+          "Independent technical assessment of engineering risk ahead of acquisition or investment decisions.",
+      },
+      {
+        title: "Expert Witness",
+        description:
+          "Independent expert opinion and reporting to support dispute resolution and litigation.",
+      },
+      {
+        title: "Peer Review",
+        description:
+          "Independent review of design and analysis, providing assurance before construction proceeds.",
+      },
+      {
+        title: "Feasibility Studies",
+        description:
+          "Early-stage viability assessment weighing technical, cost and programme considerations.",
+      },
+      {
+        title: "Risk Advisory",
+        description:
+          "Identifying and advising on engineering and delivery risk across the project lifecycle.",
+      },
+      {
+        title: "Procurement Advisory",
+        description:
+          "Guidance on procurement strategy and contractor selection for complex infrastructure delivery.",
       },
     ],
   },
@@ -393,6 +726,51 @@ export const services: Service[] = [
           "Site Planning and Grading",
           "Construction Documentation",
         ],
+      },
+    ],
+    stats: [
+      { value: 200, label: "Sites surveyed" },
+      { value: 5, suffix: "", label: "Telecom providers" },
+      { value: 3, suffix: "", label: "Countries" },
+    ],
+    processSteps: [
+      "Site Survey",
+      "Structural Assessment",
+      "Design",
+      "Authority Approval",
+      "Construction",
+      "Testing & Commissioning",
+    ],
+    subServiceGrid: [
+      {
+        title: "Tower Structural Assessment",
+        description:
+          "Structural capacity assessment of existing towers ahead of new equipment loading.",
+      },
+      {
+        title: "Site Surveys",
+        description:
+          "Detailed site and structural surveys supporting telecom design and approvals.",
+      },
+      {
+        title: "RF Planning Support",
+        description:
+          "Engineering support for RF coverage planning across macro, small cell and in-building networks.",
+      },
+      {
+        title: "Construction Management",
+        description:
+          "On-site construction oversight through installation, testing and commissioning.",
+      },
+      {
+        title: "As-Built Documentation",
+        description:
+          "Accurate as-constructed records of installed telecom infrastructure.",
+      },
+      {
+        title: "Compliance Reporting",
+        description:
+          "Documentation and reporting to meet carrier and regulatory compliance requirements.",
       },
     ],
   },

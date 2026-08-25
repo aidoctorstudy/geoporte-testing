@@ -4,10 +4,13 @@
 
 import { useEffect, useRef } from "react";
 import { createHeroScene } from "./build-hero-scene";
+import { HeroFallback } from "./HeroFallback";
 import type { HeroSceneHandle } from "./hero-scene-types";
 import { getPointerSnapshot } from "@/hooks/cursor/use-pointer";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
+import { useWindowWidth } from "@/hooks/use-window-size";
+import { getDeviceTier } from "@/lib/scene/device-tier";
 
 export interface HeroSceneProps {
   className?: string;
@@ -30,6 +33,11 @@ export interface HeroSceneProps {
 export const HeroScene = ({ className, createScene = createHeroScene }: HeroSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HeroSceneHandle | null>(null);
+  const width = useWindowWidth();
+  // `width === 0` is the pre-hydration/SSR snapshot (see `useWindowSize`) —
+  // treated as "not mobile yet" so the real check runs once the client has
+  // actually measured the viewport, matching `SceneViewport`'s own guard.
+  const isMobile = width > 0 && getDeviceTier(width) === "mobile";
 
   // Scroll-driven framing — the container fills the hero section exactly
   // (`inset-0` on its parent), so its own rect doubles as the section's
@@ -45,6 +53,12 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
   });
 
   useEffect(() => {
+    // WebGL never mounts below the mobile breakpoint — `HeroFallback` renders
+    // instead (see the JSX below), matching `SceneViewport`'s existing
+    // mini-scene convention. This also means resizing from a wide viewport
+    // down to mobile doesn't tear down a running scene — it never started.
+    if (isMobile) return;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -143,10 +157,8 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      aria-hidden="true"
-      className={className}
-    />
+    <div ref={containerRef} aria-hidden="true" className={className}>
+      {isMobile && <HeroFallback className="h-full w-full" />}
+    </div>
   );
 };

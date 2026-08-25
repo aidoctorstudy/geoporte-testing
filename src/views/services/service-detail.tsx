@@ -3,10 +3,13 @@ import { notFound } from "next/navigation";
 import { services, getServiceBySlug } from "@/data/mocks/services";
 import { generateMetadata as buildMetadata } from "@/utils/seo/generate-page-metadata";
 import { getServiceStructuredData } from "@/utils/seo/structured-data";
+import { getServiceAccentStyle } from "@/lib/scene/service-accent";
 import { ServiceHero } from "./ServiceHero";
 import { ServiceOverview } from "./ServiceOverview";
-import { ServiceCapabilities } from "./ServiceCapabilities";
-import { ServiceSubServices } from "./ServiceSubServices";
+import { ServiceSubServiceGrid } from "./ServiceSubServiceGrid";
+import { ServiceProcess } from "./ServiceProcess";
+import { ServiceRelatedProjects } from "./ServiceRelatedProjects";
+import { ServiceCta } from "./ServiceCta";
 
 interface ServiceDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -39,15 +42,20 @@ export async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   if (!service) notFound();
 
   return (
-    <>
+    // The per-service accent tint is a scoped CSS custom-property override —
+    // the sanctioned Tier-2 theming mechanism (design-system.md rule 3), see
+    // decisions-log.md.
+    <div style={getServiceAccentStyle(service.slug)}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(getServiceStructuredData(service)) }}
       />
       <ServiceHero service={service} />
       <ServiceOverview service={service} />
-      <ServiceCapabilities groups={service.capabilityGroups} />
-      {service.subServices && <ServiceSubServices subServices={service.subServices} />}
-    </>
+      <ServiceSubServiceGrid subServices={service.subServiceGrid} />
+      <ServiceProcess steps={service.processSteps} />
+      <ServiceRelatedProjects serviceSlug={service.slug} />
+      <ServiceCta serviceTitle={service.title} />
+    </div>
   );
 }

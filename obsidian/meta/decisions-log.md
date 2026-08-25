@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # Decisions Log (ADRs)
@@ -14,6 +14,96 @@ decisions on top, continuing the numbering. Amending an inherited decision is
 fine; write a new ADR that says so rather than editing the old one.
 
 Template: [[templates/adr-note]].
+
+---
+
+## ADR-0032 — Service pages: curated service→project category map instead of a per-project field
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** The Related Projects section on each service detail page filters
+`projects` (`src/data/mocks/projects.ts`) through a small hand-curated
+`SERVICE_PROJECT_CATEGORIES: Record<string, ProjectCategory[]>` map
+(`src/data/mocks/service-project-map.ts`) — each service slug lists the 1–3
+existing `ProjectCategory` values ("Transport", "Built Environment", "Energy,
+Resources & Water") it's relevant to. No new field was added to `Project`.
+
+**Why.** `Project` has no service linkage today, only that 3-value `category`
+and a loose free-text `sector`. Adding a `relatedServiceSlugs: string[]` to
+all 26 existing projects is real per-record data entry with no source
+document to check it against (unlike `category`/`sector`, which trace back to
+the live site) — it would be 26 judgment calls invented for this feature
+alone, versus 8 (one per service). The category axis is coarse but already
+real, sourced data; curating which categories map to which service is a
+single small decision per service instead.
+
+**When building.** If a project ever needs finer-grained service tagging than
+category can express (e.g. a Transport project that's really civil-only, not
+also structural), extend the map's value type rather than reaching for a new
+`Project` field first — the map can hold richer matching logic (a slug
+allowlist/denylist per category) without touching the 26 project records. Only
+add a real per-project field if the category-based filter starts producing
+visibly wrong matches in practice.
+
+---
+
+## ADR-0031 — Service hero fallback closes a pre-existing mobile-WebGL gap in the shared `HeroScene`
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** `HeroScene.tsx` (shared by the homepage hero and all 8 service
+detail page heroes) now skips mounting WebGL entirely below the `mobile`
+device tier (`getDeviceTier` < 768px, `device-tier.ts`) and renders a new
+`HeroFallback.tsx` instead — a CSS-scoped radial gradient whose glow pulses
+via a looping `useSpring` (real spring physics, not `@keyframes`). It reads
+`--accent`/`--glow` from whatever scope it's rendered in, so it automatically
+picks up a service page's per-service tint (ADR-0030) with no props.
+
+**Why.** This was written as part of the service-pages "mobile replaces 3D
+hero with a CSS version" requirement, but `HeroScene` is the *shared*
+component — before this change, it had no mobile skip at all, unlike
+`SceneViewport` (the mini-scene component), which already had this
+convention. Every full-bleed hero, including the homepage's, was mounting a
+full WebGL context on mobile with no budget guard beyond DPR clamping. Fixing
+it at the shared-component level closes that gap everywhere at once rather
+than duplicating a skip check in 8 separate hero builders.
+
+**When building.** Any new full-bleed WebGL section should route through
+`HeroScene` (or follow its skip-below-mobile + fallback pattern directly)
+rather than mounting a renderer unconditionally — `SceneViewport` and
+`HeroScene` are now the two places this convention lives; a third bespoke
+full-bleed scene should match them, not reintroduce the old gap.
+
+---
+
+## ADR-0030 — Per-service accent tint via scoped Tier-2 CSS custom-property overrides
+
+**Status:** Accepted · 2026-08-24
+
+**Decision.** Each service detail page wraps its content in a single element
+(`service-detail.tsx`) whose inline `style` sets `--accent`/`--glow` — the
+project's existing Tier-2 role names — to that service's own Tier-1
+primitives (`--raw-color-service-<slug>-accent` / `-glow`, 8 new pairs added
+to `globals.css`, all close navy/azure/cyan variants, none leaving the blue
+family). `getServiceAccentStyle(slug)` (`src/lib/scene/service-accent.ts`)
+produces that inline style. No new Tier-2 role names were invented and no
+`@theme` binding changed — every existing utility that already resolves
+through `--color-accent`/`--color-glow` (`bg-accent`, `text-glow`, the hero
+scenes' pointer-glow colour, `HeroFallback`, `Magnetic`'s CTA button, etc.)
+picks up the per-page tint automatically, with zero changes to the components
+themselves.
+
+**Why.** `design-system.md`'s token rule 3 already documents Tier 2 as "the
+themeable layer" — the layer runtime theming is meant to override. This is
+the first project feature to actually exercise that rule; per-service tinting
+is a textbook case (same information architecture, one variable dimension),
+not a new mechanism bolted on.
+
+**When building.** Reach for this same pattern — a scoped wrapper overriding
+Tier-2 custom properties — for any future "same layout, different accent per
+instance" need (a future light mode would use the identical technique at the
+document root). Never invent a new Tier-2 role name to carry a per-instance
+variant; override the existing one in a narrower scope instead.
 
 ---
 

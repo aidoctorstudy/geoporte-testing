@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # Tech Stack
@@ -78,6 +78,35 @@ construction rig also animates on its own: the crane's jib swings on an
 independent pivot sub-group, girders fly in and scaffolding scales up from
 nothing over the first ~2.5s, and a ring pulses outward from the scene centre
 every 3s (a lidar sweep). Homepage-motion-overhaul Phase 1 — see [[changelog]].
+
+**Service hero scenes** (`src/components/scene/service-heroes/`) — each of the
+8 `/services/<slug>` pages passes its own scene factory into the shared
+`HeroScene.tsx` (via `SERVICE_HERO_SCENES`, keyed by slug), so they get the
+same render loop, pause/resize/reduced-motion handling as the homepage hero
+for free. `hero-scene-runtime.ts` is the shared setup all 8 builders (plus the
+homepage's `build-hero-scene.ts`) go through; its returned handle gained
+`setScrollProgress` (service-pages Phase 0 — see [[changelog]] and ADR-0030 in
+[[decisions-log]]), mirroring the homepage hero's own scroll-reactivity —
+every builder can read scroll progress once it chooses to use it, though as of
+Phase 0 none of the 8 do yet (that lands as each scene is individually
+elevated in a later phase). Geotechnical currently reuses the homepage's
+`createHeroScene` directly rather than having its own builder — a planned
+follow-up replaces that with a bespoke scene once its page gets elevated.
+
+Below the mobile device tier, `HeroScene.tsx` skips mounting WebGL entirely
+(for both the homepage hero and every service hero) and renders
+`HeroFallback.tsx` instead — a `useSpring`-driven pulsing radial-gradient glow
+that reads `--accent`/`--glow` from its CSS scope, so it automatically shows a
+service page's own tint with no props. See ADR-0031 in [[decisions-log]].
+
+**Per-service accent tint** (`src/lib/scene/service-accent.ts`) — each service
+page wraps its content in an element whose inline style overrides the
+existing `--accent`/`--glow` Tier-2 custom properties to that service's own
+Tier-1 primitives (`--raw-color-service-<slug>-accent`/`-glow` in
+`globals.css`), so every component already styled through `bg-accent`/
+`text-glow`/etc. — including the hero scenes' own pointer-glow colouring —
+picks up a per-page tint with no component changes. See ADR-0030 in
+[[decisions-log]].
 
 **Shared viewport renderer** (`src/lib/scene/shared-viewport-renderer.ts` +
 `src/components/scene/SceneViewport.tsx`) — every *other* 3D moment on the

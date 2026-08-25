@@ -7,10 +7,12 @@ export interface StatCounterProps {
   value: number;
   label: string;
   suffix?: string;
+  /** Prepended before the number, e.g. "$" for "$2B+". */
+  prefix?: string;
 }
 
 /** Spring count-up, triggered once the stat scrolls into view. */
-export const StatCounter = ({ value, label, suffix = "+" }: StatCounterProps) => {
+export const StatCounter = ({ value, label, suffix = "+", prefix = "" }: StatCounterProps) => {
   const [setNode, inView] = useDynamicInView({ threshold: 0.4 });
   const { number } = useSpring({
     number: inView ? value : 0,
@@ -23,7 +25,7 @@ export const StatCounter = ({ value, label, suffix = "+" }: StatCounterProps) =>
       className="flex flex-col items-center text-center md:items-start md:text-left"
     >
       <animated.span className="text-foreground text-5xl font-medium md:text-6xl">
-        {number.to((n) => `${Math.round(n)}${suffix}`)}
+        {number.to((n) => `${prefix}${Math.round(n)}${suffix}`)}
       </animated.span>
       <span className="text-foreground-muted mt-3 text-sm tracking-[0.16em] uppercase">
         {label}

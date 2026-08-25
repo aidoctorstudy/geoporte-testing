@@ -1,0 +1,53 @@
+import { SectionHeading } from "@/components/common/SectionHeading";
+import { Inview } from "@/components/animation/springs/in-view";
+import { TranslatedText } from "@/components/common/TranslatedText";
+
+export interface ServiceProcessProps {
+  steps: string[];
+}
+
+/** The "how we work" process timeline (item 4 of the service page spec) — a
+ * numbered step sequence with a connecting line, each step staggering in on
+ * scroll. Step count varies per service (5 or 6), so the grid is driven by
+ * `steps.length` rather than a fixed column count. */
+export const ServiceProcess = ({ steps }: ServiceProcessProps) => {
+  return (
+    <section
+      aria-labelledby="service-process-heading"
+      className="bg-background-alt/40 border-line border-y py-16 md:py-24"
+    >
+      <div className="mx-auto max-w-6xl px-6 md:px-8">
+        <SectionHeading id="service-process-heading" eyebrow="How we work" heading="Our process" />
+
+        <ol
+          className={`relative mt-16 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:gap-6 ${
+            steps.length === 6 ? "lg:grid-cols-6" : "lg:grid-cols-5"
+          }`}
+        >
+          <div
+            aria-hidden="true"
+            className="border-line absolute top-4 right-0 left-0 hidden border-t lg:block"
+          />
+          {steps.map((step, index) => (
+            <Inview
+              key={step}
+              tag="li"
+              mode="once"
+              from={{ opacity: 0, y: 20 }}
+              to={{ opacity: 1, y: 0 }}
+              delayIn={index * 100}
+              className="relative flex flex-col gap-3"
+            >
+              <span className="bg-accent text-accent-foreground relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+                {index + 1}
+              </span>
+              <p className="text-foreground text-sm font-medium">
+                <TranslatedText text={step} />
+              </p>
+            </Inview>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+};

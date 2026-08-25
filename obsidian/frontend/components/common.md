@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # Catalog — Common Components
@@ -235,6 +235,37 @@ async component must mirror its final layout with one of these
 > [!note]
 > `components/ui/` (design-system primitives) does not exist yet — create it when
 > the first primitive is added. See [[folder-structure]].
+
+## Service detail page sections — `src/views/services/`
+
+The 6-section structure every `/services/<slug>` page renders (service-pages
+Phase 0 — see [[changelog]] and [[decisions-log]] ADR-0030/0031/0032), assembled
+by `service-detail.tsx`. `ServiceHero` (pre-existing) + `ServiceOverview`
+(extended in place) aren't listed again here — see [[tech-stack]] for the hero
+scene plumbing and the duotone photo treatment respectively.
+
+| Component | Role |
+|-----------|------|
+| `ServiceStats.tsx` | Wraps the existing `StatCounter` (`src/views/home/`, now with an optional `prefix` prop for values like "$2B+") in a 3-stat row |
+| `ServiceSubServiceGrid.tsx` | 6-card grid, local `SubServiceCard` with `@react-spring/web`-driven hover-tilt (not `TiltCard` — these cards aren't clickable) |
+| `ServiceProcess.tsx` | Numbered process-step timeline; 5 vs 6 steps switches a static `lg:grid-cols-5`/`lg:grid-cols-6` (Tailwind needs literal class strings, not an interpolated count) |
+| `ServiceRelatedProjects.tsx` | Filters real `projects.ts` data through the curated `SERVICE_PROJECT_CATEGORIES` map (`src/data/mocks/service-project-map.ts`), capped at 6, reuses the existing `ProjectCard`/`ProjectModal` unchanged |
+| `ServiceCta.tsx` | Magnetic CTA linking to `/contact`, heading text templated as "Ready to start your `<service>` project?" |
+
+> [!note] `#todo`
+> `/contact` doesn't exist as its own route yet — it's really the homepage's
+> `#contact` anchor section. This CTA matches the same (pre-existing) pattern
+> `Nav`/`Footer` already use; not fixed here, flagged for whenever `/contact`
+> becomes a real route.
+
+### HeroFallback — `src/components/scene/HeroFallback.tsx`
+
+`<HeroFallback className>` — the mobile substitute for `HeroScene`'s WebGL
+canvas (below the mobile device tier — see [[tech-stack]] and [[decisions-log]]
+ADR-0031): a slowly pulsing radial-gradient glow via a looping `useSpring`,
+reading `--accent`/`--glow` from whatever CSS scope it renders in, so it shows
+each service page's own tint automatically. Matches `SceneViewport`'s existing
+mobile-fallback convention for mini scenes.
 
 ## Related
 

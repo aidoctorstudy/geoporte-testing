@@ -24,8 +24,16 @@ export interface HeroSceneFraming {
 export interface HeroSceneBuild {
   scene: THREE.Scene;
   /** Runs every animated frame. `pointer` is the smoothed -1..1 position
-   * (stays 0,0 until `setPointer` is ever called). */
-  update: (elapsedSeconds: number, pointer: { x: number; y: number }) => void;
+   * (stays 0,0 until `setPointer` is ever called); `scrollProgress` is the
+   * smoothed 0..1 scroll position through the hero's own viewport range
+   * (stays 0 until `setScrollProgress` is ever called — `HeroScene.tsx` calls
+   * it automatically via `useProgressTrigger`, so every builder gets it for
+   * free without wiring anything itself). */
+  update: (
+    elapsedSeconds: number,
+    pointer: { x: number; y: number },
+    scrollProgress: number,
+  ) => void;
   dispose: () => void;
 }
 
@@ -54,10 +62,16 @@ export const createHeroSceneRuntime = (
   let pointerTargetY = 0;
   let pointerX = 0;
   let pointerY = 0;
+  let scrollTarget = 0;
+  let scrollProgress = 0;
 
   const setPointer = (x: number, y: number) => {
     pointerTargetX = Math.max(-1, Math.min(1, x));
     pointerTargetY = Math.max(-1, Math.min(1, y));
+  };
+
+  const setScrollProgress = (progress: number) => {
+    scrollTarget = Math.max(0, Math.min(1, progress));
   };
 
   const renderStatic = () => {
@@ -67,12 +81,13 @@ export const createHeroSceneRuntime = (
   const renderFrame = (elapsedSeconds: number) => {
     pointerX += (pointerTargetX - pointerX) * 0.04;
     pointerY += (pointerTargetY - pointerY) * 0.04;
+    scrollProgress += (scrollTarget - scrollProgress) * 0.06;
 
     camera.position.x = px + Math.sin(elapsedSeconds * 0.04) * 1.1 * driftScale + pointerX * 1.2;
     camera.position.y = py + Math.sin(elapsedSeconds * 0.07) * 0.25 * driftScale - pointerY * 0.5;
     camera.lookAt(lx, ly + pointerY * 0.25, lz);
 
-    update(elapsedSeconds, { x: pointerX, y: pointerY });
+    update(elapsedSeconds, { x: pointerX, y: pointerY }, scrollProgress);
 
     renderer.render(scene, camera);
   };
@@ -89,5 +104,13 @@ export const createHeroSceneRuntime = (
     renderer.dispose();
   };
 
-  return { renderStatic, renderFrame, resize, setPointer, dispose, canvas };
+  return {
+    renderStatic,
+    renderFrame,
+    resize,
+    setPointer,
+    setScrollProgress,
+    dispose,
+    canvas,
+  };
 };

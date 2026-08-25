@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-08-24
+updated: 2026-08-25
 ---
 
 # Changelog
@@ -36,6 +36,56 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-08-25 (service detail pages — Phase 0/Foundation)
+
+First checkpoint of the 8 service detail pages (`/services/<slug>`) rebuild —
+every page now renders the full 6-section structure (hero → overview+stats →
+sub-services grid → process timeline → related projects → CTA) with real
+data and real photography. Hero scenes themselves keep their existing (modest)
+visuals in this phase, now scroll-reactive and mobile-safe — elevating each
+scene to its "most impressive" bespoke version is later phases' work.
+
+- **`services.ts` data** extended (not replaced) with `stats: ServiceStat[]`
+  (3 per service), `processSteps: string[]` (5–6 per service), and
+  `subServiceGrid: ServiceSubService[]` (6 per service) for all 8 services —
+  the existing `capabilityGroups`/`subServices` fields (geotechnical's 16-entry
+  breakdown included) are untouched and now render folded into the new
+  Overview section rather than dropped.
+- **5 new section components** in `src/views/services/`: `ServiceStats.tsx`
+  (wraps the existing `StatCounter`, now with an optional `prefix` prop for
+  "$2B+"), `ServiceSubServiceGrid.tsx` (6-card grid, spring hover-tilt),
+  `ServiceProcess.tsx` (numbered timeline), `ServiceRelatedProjects.tsx`
+  (filters real `projects.ts` data via the new `SERVICE_PROJECT_CATEGORIES`
+  map, see ADR-0032, reuses the existing `ProjectCard`/`ProjectModal`
+  unchanged), `ServiceCta.tsx` (magnetic CTA linking to `/contact`).
+  `service-detail.tsx` reordered to this 6-section structure.
+- **Per-service accent tint** — 8 new Tier-1 colour primitives
+  (`--raw-color-service-<slug>-accent`/`-glow`) plus
+  `getServiceAccentStyle()`, scoping the existing `--accent`/`--glow` Tier-2
+  roles per page. See ADR-0030.
+- **Real photography** — one photo per service downloaded from the live
+  geoporte.com.au into `public/assets/services/`, composited into the
+  Overview section as a duotone-treated top band (grayscale + accent
+  multiply-blend + top/bottom fade), not used as a literal hero image.
+- **Mobile hero fallback** — `HeroScene.tsx` now skips WebGL entirely below
+  the mobile device tier and renders a new spring-driven `HeroFallback.tsx`
+  gradient instead, closing a gap that also existed (unnoticed) on the
+  homepage hero. See ADR-0031.
+- **`hero-scene-runtime.ts`** gained `setScrollProgress`, mirroring the
+  homepage hero's own scroll-reactivity addition — every service hero scene
+  can now read scroll progress once its builder chooses to use it (not yet
+  exercised by any of the 8 current builders; that's later phases' work).
+
+**One real bug found and fixed during this phase's browser QA:** the initial
+`ServiceOverview` background treatment used one gradient overlay spanning the
+entire (tall) section, which — because even its `via` stop was 85%-opaque —
+made the photo nearly invisible everywhere except a thin midpoint band.
+Confirmed via `javascript_tool` that the image itself had loaded correctly
+(`naturalWidth`/`complete` both fine), ruling out a broken asset before
+concluding it was a pure CSS visibility bug. Fixed by confining the photo to
+a fixed-height top band with its own top/bottom fade gradients instead of one
+overlay across the whole section — verified via browser screenshot afterward.
 
 ## 2026-08-24 (homepage motion/3D overhaul — Phase 2/About)
 
