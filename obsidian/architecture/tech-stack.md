@@ -49,6 +49,11 @@ No `framer-motion`, no CSS transitions/keyframes. See [[animation-system]] and
 | `@types/three` | `^0.185.4` | Type definitions |
 
 Added per project (ADR-0020 pattern) via GetLayers Scene Lab — see [[decisions-log]].
+No separate packages for `three/examples/jsm/*` (`GLTFLoader`, `DRACOLoader`,
+`EffectComposer`, `UnrealBloomPass`, `OrbitControls`, etc.) — they ship inside
+the `three` package itself and are imported by subpath; the cinematic Earth
+globe (see the "Cinematic Earth globe" entry below) is what first exercises
+that surface in this project.
 Scenes are self-contained modules with their own `requestAnimationFrame` loop
 (mounted from a client-leaf React component), separate from the spring `ticker`,
 which drives only `@react-spring/web`/`spring-text-engine` motion.
@@ -202,6 +207,29 @@ stores (see [[hooks]]) non-reactively each frame — nearby shapes tilt toward t
 cursor, fast scrolling stretches and dims the field — and runs a periodic diagonal
 "lidar pulse" line on its own timer. Device-tier gated; skipped below 768px and under
 `prefers-reduced-motion`, same convention as every other scene here. See ADR-0027.
+
+**Cinematic Earth globe** (`src/components/scene/build-planet-scene.ts` +
+`PlanetBackground.tsx`) — a *fourth* standalone WebGL-context pattern, same
+persistent-singleton shape as the ambient background above (mounted once,
+never tears down on navigation), layered behind it at `z-index: -1` (ambient
+background's own `z-index: 0` unchanged). Ported from GetLayers' "Ascend"
+template — day/night city-lights shader, ocean shimmer, three drifting
+cloud shells, atmosphere halo, starfield, golden radar-ping land markers,
+plus a glowing accent-blue pin layer at Geoporte's seven real project
+countries (reusing `world-globe.ts`'s exported `PROJECT_LOCATIONS`/
+`latLonToVector3`). The first scene in this codebase to use
+`EffectComposer`/`UnrealBloomPass` (three composers — torus-layer /
+bloom-layer / final composite via `THREE.Layers`) — see ADR-0034 for why
+that's a deliberate exception to the Phase 0 bloom-free decision, not a
+reversal of it, and for the two `three` API fixes required to port the
+template's pinned `three@0.143.0` source onto this project's actual
+`three@0.185.1` without touching the shared dependency version
+(`WebGL1Renderer`→`WebGLRenderer`, `sRGBEncoding`→`outputColorSpace`).
+Scroll choreography reads `getScrollSignalSnapshot().progress` (see
+[[hooks]]) instead of a raw `window.scrollY` read. Draco decoder
+self-hosted at `public/draco/`, GLB/texture assets at
+`public/assets/planet/`. Device-tier gated the same as every other scene
+here — mobile skip, tier-based DPR clamp and star/atmo/marker counts.
 
 ## Internationalization
 

@@ -19,6 +19,7 @@ import { PageLoadIntro } from "@/components/common/PageLoadIntro";
 import { PerformanceWarningToast } from "@/components/common/PerformanceWarningToast";
 import { RouteTransitionSweep } from "@/components/common/RouteTransitionSweep";
 import { AmbientBackground } from "@/components/scene/AmbientBackground";
+import { PlanetBackground } from "@/components/scene/PlanetBackground";
 import { ScrollLayout } from "@/layouts/scroll-layout";
 
 import "@/app/globals.css";
@@ -54,6 +55,12 @@ export default function RootLayout({
           <ReducedMotion />
           <LanguageDirection />
           <ScrollSignal />
+          {/* Planet mounts first — its canvas is pinned to z-index: -1 in
+              build-planet-scene.ts regardless of mount order, but this JSX
+              order documents the intended stack: planet furthest back,
+              AmbientBackground's wireframe shapes in front of it, both
+              behind real page content. */}
+          <PlanetBackground />
           <AmbientBackground />
           <CustomCursor />
           <ScrollProgressBar />

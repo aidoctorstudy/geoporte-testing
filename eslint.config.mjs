@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Static assets, never application source — the Draco decoder
+    // (public/draco/) is the first real .js ever placed under public/, which
+    // is what exposed this gap: eslint-config-next normally ignores public/
+    // by default, but the override above replaced that default list instead
+    // of extending it.
+    "public/**",
   ]),
   {
     rules: {

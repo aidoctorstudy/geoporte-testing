@@ -17,6 +17,80 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0034 — Cinematic Earth globe: ported to the existing `three` version, `EffectComposer`/bloom introduced for the first time, layered with (not replacing) the ambient background
+
+**Status:** Accepted · 2026-08-26
+
+**Decision.** `build-planet-scene.ts` ports GetLayers' "Ascend" template's
+planet scene (`initPlanet`) into this project as a fourth persistent,
+app-lifetime WebGL background — same ref-counted singleton category as
+`ambient-background-renderer.ts`, mounted alongside it (not replacing it)
+in `layout.tsx`, at `z-index: -1` (one step behind ambient background's
+existing `z-index: 0`, left untouched). Three explicit, deliberate
+departures from what this project has done until now:
+
+1. **`three` itself was never touched**, even though the template pins
+   `three@0.143.0`. Confirmed directly against the installed
+   `three@0.185.1` (`node -e "require('three')"` plus `require.resolve`
+   against every `three/examples/jsm/...` path the scene imports) that
+   exactly two APIs the template uses no longer exist —
+   `THREE.WebGL1Renderer` and `THREE.sRGBEncoding` — and every other API
+   (`EffectComposer`, `UnrealBloomPass`, `GLTFLoader`, `DRACOLoader`,
+   `OrbitControls`, etc.) resolves unchanged. Fixed those two
+   (`WebGLRenderer` instead of `WebGL1Renderer`;
+   `renderer.outputColorSpace = THREE.SRGBColorSpace` instead of
+   `outputEncoding = sRGBEncoding`) and ported everything else verbatim,
+   rather than downgrading the shared dependency — a downgrade would have
+   risked breaking every one of the 8 service hero scenes, the homepage
+   hero, the ambient background, and the shared viewport renderer, all
+   written against the current API.
+2. **`EffectComposer`/`UnrealBloomPass` enter this codebase for the first
+   time.** The Phase 0 cross-cutting decision for the service-pages roadmap
+   explicitly kept this project bloom-free ("No `EffectComposer`/bloom pass
+   exists anywhere in this codebase... keeps bundle size, render cost, and
+   risk down") — this scene is a deliberate, explicit exception to that,
+   not a quiet reversal of it. The reasoning for staying bloom-free
+   elsewhere stands; this one scene needed the canonical template's own
+   three-composer pipeline (torus-layer / bloom-layer / final composite via
+   `THREE.Layers`) to read as the template's own cinematic look, and porting
+   a working pipeline is a smaller risk than re-deriving an equivalent
+   glow effect from this project's existing `AdditiveBlending` technique.
+3. **Layered with `AmbientBackground`, not replacing it** — the user's own
+   explicit choice after being shown the trade-off (two always-on
+   full-screen WebGL contexts, on top of whatever per-route hero scene a
+   page also has). Tier-gated the same way every other scene in this
+   project already is (mobile skip, `getTierBudget(width).dprClamp`,
+   reduced star/atmo/marker counts on tablet) precisely because that cost
+   is real and accepted, not because it's free.
+
+**Why (the rest).** Pulled the actual template via the GetLayers plugin
+(`getlayers_search`/`getlayers_source`) rather than improvising a "cinematic
+Earth" from a written description — a real, working ~400-line scene, not a
+guess at one. Scroll choreography reads from this project's own
+`getScrollSignalSnapshot().progress` (Lenis-smoothed, already built for
+exactly this — "WebGL loops," per its own doc comment) instead of the
+template's raw `window.scrollY` read, removing a duplicate scroll-fraction
+calculation rather than adding one. The Draco decoder is self-hosted in
+`public/draco/` rather than the template's own `gstatic.com` CDN reference —
+the user's explicit choice, matching this project's all-local-assets
+convention and the `optimize-3d-scene` skill's guidance against a CDN
+decoder on the critical path. A second marker layer — glowing accent-blue
+pins at Geoporte's seven real project countries — reuses `PROJECT_LOCATIONS`/
+`latLonToVector3`, already exported from `world-globe.ts` this session for
+the Advisory Services hero scene, rather than a third copy of that data.
+
+**When building.** If a future scene needs bloom/post-processing too, this
+is now precedent that it's available in the codebase — but the Phase 0
+reasoning for defaulting to `AdditiveBlending`-only glow still applies to
+everything else; reach for a real composer only when a scene's own source
+material (like this one) already depends on one. If `AmbientBackground` and
+the planet ever prove visually or perceptibly too much running together,
+that's the same trade-off flagged and accepted here — revisit by asking
+whether to disable ambient background specifically on routes the planet
+already dominates, not by silently dropping either.
+
+---
+
 ## ADR-0033 — Low-performance detection: static hardware hints + measured hero-scene fps, no persistence
 
 **Status:** Accepted · 2026-08-26

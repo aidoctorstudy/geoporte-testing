@@ -37,6 +37,81 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-26 (cinematic Earth globe background — Ascend template port)
+
+Added a persistent, site-wide cinematic Earth globe behind the entire site,
+ported from GetLayers' "Ascend" template rather than built from a written
+description — pulled the real ~400-line scene via the GetLayers plugin
+(`getlayers_search`/`getlayers_source`) and ported it, not rewrote it. Full
+detail and reasoning in ADR-0034; summary here:
+
+- **New files**: `src/components/scene/build-planet-scene.ts` (the ported
+  scene — day/night city-lights shader, ocean shimmer, three drifting cloud
+  shells, atmosphere halo, starfield, golden radar-ping land markers, plus a
+  new second layer of glowing accent-blue pins at Geoporte's seven real
+  project countries reusing `world-globe.ts`'s already-exported
+  `PROJECT_LOCATIONS`/`latLonToVector3`), `src/components/scene/
+  PlanetBackground.tsx` (the mount wrapper, mirroring `AmbientBackground.tsx`'s
+  own pattern and tier-gating).
+- **New assets**: `public/assets/planet/{planet.glb, planet-lights.glb,
+  planet-clouds.png}` downloaded from the user-provided GetLayers URLs
+  (verified as real glTF-binary/PNG files, not error pages, before use);
+  `public/draco/{draco_decoder.js, draco_decoder.wasm,
+  draco_wasm_wrapper.js}` self-hosted rather than loaded from the template's
+  gstatic.com CDN reference.
+- **Ported to this project's existing `three@0.185.1`**, not downgraded to
+  the template's pinned `three@0.143.0` — confirmed via direct Node checks
+  that only two APIs the template uses (`THREE.WebGL1Renderer`,
+  `THREE.sRGBEncoding`) no longer exist at the installed version; fixed
+  those two, ported everything else (including `EffectComposer`/
+  `UnrealBloomPass`, appearing in this codebase for the first time) as-is.
+- **Layered with `AmbientBackground`, not replacing it** — flagged as a real
+  cost (two always-on full-screen WebGL contexts) before building, the user's
+  explicit choice to keep both. The planet's canvas sits at `z-index: -1`
+  (ambient background's own `z-index: 0` left untouched) so the stack is
+  deterministic regardless of which mounts first.
+- **Found and fixed a real, unrelated pre-existing gap while wiring this
+  up**: `eslint.config.mjs`'s `globalIgnores` override replaced
+  `eslint-config-next`'s default ignore list instead of extending it, losing
+  the default `public/**` exclusion — invisible until this change put the
+  first real `.js` files (the Draco decoder) under `public/`, which ESLint
+  then tried to lint as application source (11 errors: `no-require-imports`,
+  `no-this-alias`, etc., all from Google's own pre-built decoder bundle).
+  Added `public/**` back to the ignore list.
+
+**Could not get a real WebGL screenshot of this either — documented plainly,
+not silently skipped, and this time with a stronger root cause.** `verify.sh`
+(0 FAIL, one justified WARN — see below), `yarn lint`, and `yarn build`
+(TypeScript compiles, confirming the `three/examples/jsm` imports resolve at
+this version and static generation is unaffected) all pass, both new
+canvases mount with zero console errors and correct `z-index` (`-1` and `0`
+confirmed by direct inspection), and all five downloaded assets serve with
+HTTP 200 (checked directly, not assumed). But `gl.readPixels()` on the
+planet's own canvas came back fully transparent — nothing had been drawn —
+and a temporary frame counter placed directly inside the render loop
+confirmed why: `requestAnimationFrame` returned a valid, non-null id, but
+its callback never fired even once after several seconds, while
+`AmbientBackground`'s own independent `requestAnimationFrame` loop, running
+in the exact same tab at the exact same time, was visibly animating in every
+screenshot. Mid-investigation, the browser automation tool itself reported
+**"Browser extension is not connected"** — direct, first-hand confirmation
+(not an inference this time) that the automation bridge itself is what's
+unreliable this session, consistent with the same conclusion reached in the
+two prior phases that hit this (see those entries and
+`obsidian/workflows/qa-verification.md`). Verified instead via the checks
+above plus careful line-by-line code review against the canonical source.
+**Recommend a real visual check in an ordinary browser tab (not through this
+automation session) before calling this done** — the render pipeline is
+type-safe and loads its assets correctly, but has not been visually
+confirmed to paint the globe.
+
+- **Justified `verify.sh` WARN**: hex-literal colours in `CONFIG` (string
+  `"#rrggbb"`, not this project's usual numeric `0x......`) — this is
+  GetLayers' own documented scene contract ("colours as `#rrggbb` in
+  CONFIG"), not a style slip; kept as-is rather than converted, so the
+  scene's `CONFIG` object stays compatible with GetLayers' own re-tinting
+  pipeline if that's ever used.
+
 ## 2026-08-26 (post-roadmap: /contact fix, route-transition bug, performance toast)
 
 Follow-up work after the 8-service hero-scene roadmap closed out — one
