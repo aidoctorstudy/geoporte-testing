@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Changelog
@@ -36,6 +36,73 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-08-26 (service detail pages — Phase 5/perf pass, optional)
+
+The optional perf pass offered at the end of the hero-scene elevation
+roadmap, run through the `optimize-3d-scene` skill per hard rule 13. Audited
+first (the skill's own §0 — never optimise blind) via a grep across every
+`setPixelRatio`/`requestAnimationFrame`/`Points` call site in `src/components/
+scene/` and `src/lib/scene/`, then fixed the one real, measured gap:
+
+- **DPR clamp was hardcoded to a flat `2` in three of four WebGL renderer
+  construction sites** (`build-hero-scene.ts` — the homepage hero,
+  `service-heroes/hero-scene-runtime.ts` — all 8 service hero scenes, and
+  `shared-viewport-renderer.ts` — every mini scene: service-card icons, the
+  About geological cross-section, the Stats globe, the Contact terrain) —
+  ignoring `device-tier.ts`'s own tier-based `dprClamp` budget (mobile 1,
+  tablet 1.5, desktop 2) entirely. Only `ambient-background-renderer.ts` read
+  it correctly. Since mobile never mounts WebGL for any of these (all four
+  renderers sit behind a mobile skip already), the fix's only real-world
+  effect is tablet: 2× → 1.5×, a 43.75% fragment-count reduction there for no
+  visible quality loss on this project's unlit, hard-edged wireframe/line
+  aesthetic. All three now call `getTierBudget(width).dprClamp` — the same
+  function `ambient-background-renderer.ts` already used successfully — read
+  once at construction (the shared-viewport renderer's `handleResize` never
+  touched pixel ratio to begin with, so this doesn't change that).
+
+**Everything else in the skill's priority order was audited and explicitly
+not pursued, with reasoning, rather than silently skipped or rushed in without
+verification:**
+
+- **Per-tier particle/geometry counts (§7) for the 7 hero scenes that don't
+  have them yet** (only the stormwater scene, from Phase 3, tiers its counts).
+  The remaining scenes' particle systems are modest by three.js standards
+  (civil's 900-point cloud is the largest) — real, but lower value than the
+  DPR fix, and higher effort (touches all 7 files). Deferred, not dropped.
+- **Per-tier frame-rate budgeting (§5)** — currently every hero scene renders
+  every tick regardless of tier. Genuinely worth doing, but the fix lives
+  inside `HeroScene.tsx`'s render loop, a shared file already the subject of
+  extensive, ultimately environment-not-code debugging in Phase 4 (see that
+  entry) — not touching it again without a reliable way to visually verify
+  the change first.
+- **Bot/crawler poster fallback (§1)** — a matching `is-bot.ts` utility
+  already exists in this starter (unused, dead code) but wiring it up would
+  flip every route that renders a hero scene from static (`○`) to dynamic
+  (`ƒ`) prerendering, per the skill's own stated trade-off — a real cost to
+  every page's build output for a marginal SEO gain (modern crawlers execute
+  JS reasonably well, and these scenes are `aria-hidden` decoration behind
+  real content, not blocking it). Not pursued without the poster assets this
+  would also require.
+- **Lights (§8), GPU-driven transforms (§9), asset compression (§12), iOS
+  resize/flicker (§13)** — not applicable: this project has no real-time
+  lights anywhere (everything is unlit `MeshBasicMaterial`/`LineBasicMaterial`
+  by design), no textures/geometry assets in the procedural scenes, object
+  counts are all in the dozens-to-low-hundreds (GPU-driven transforms would be
+  solving a problem this project doesn't have at this scale), and mobile
+  already skips WebGL entirely (the iOS URL-bar-resize class of bug can't
+  occur if the canvas never mounts there).
+- **Precompute/prewarm during a loader (§3)** — this project has no
+  scene-compile-gated loading screen (`PageLoadIntro` is a wordmark reveal,
+  not a WebGL-readiness gate); adding one would be new UX, not a fix, and out
+  of scope for an optional perf pass.
+
+**Could not visually confirm this fix in-browser** — the same automation-tab
+hero-canvas-mounting issue from Phase 4 (see that entry) is still present in
+this session. Verified instead via `verify.sh` (0 FAIL), `yarn lint`, `yarn
+build` (TypeScript compiles clean, static generation unaffected), zero
+console errors on real page loads, and the fix reusing a call already proven
+correct in `ambient-background-renderer.ts`.
 
 ## 2026-08-25 (service detail pages — Phase 4/Advisory + Telecom hero scenes — final phase)
 

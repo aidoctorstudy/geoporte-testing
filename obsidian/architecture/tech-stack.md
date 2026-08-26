@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Tech Stack
@@ -167,6 +167,12 @@ at all). Added as the homepage's motion/3D overhaul started adding enough concur
 WebGL work (a persistent background + elevated per-service scenes + a bigger globe +
 a denser terrain) that per-module hardcoded numbers stopped being tenable — see
 `obsidian/workflows/optimize-3d-scene.md`'s device-tiering guidance and ADR-0027.
+`dprClamp` is read from here by all four WebGL renderer-construction sites in
+this project (the homepage hero, the shared service-hero runtime, the shared
+viewport renderer, and the ambient background) — a perf-pass audit (see
+[[changelog]] 2026-08-26) found the first three had drifted to a hardcoded
+flat `2` instead, only the ambient background reading the tier budget
+correctly; fixed to read `getTierBudget(width).dprClamp` in all four.
 
 **Ambient background** (`src/lib/scene/ambient-background-renderer.ts` +
 `src/components/scene/AmbientBackground.tsx`) — a *third* standalone WebGL-context

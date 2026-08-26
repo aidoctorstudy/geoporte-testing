@@ -12,6 +12,7 @@
  * small scenes threaded through the rest of the page.
  */
 import * as THREE from "three";
+import { getTierBudget } from "./device-tier";
 
 export interface ViewportBuild {
   scene: THREE.Scene;
@@ -123,7 +124,12 @@ const ensureRenderer = (): THREE.WebGLRenderer => {
   canvasEl = canvas;
 
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Tier-based, not a flat 2x — see the identical fix in
+  // `service-heroes/hero-scene-runtime.ts`. Read once here (construction-time
+  // only, matching every other per-tier value in this project) rather than on
+  // every `handleResize` — a device doesn't change tier mid-session.
+  const { dprClamp } = getTierBudget(window.innerWidth);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.autoClear = false;
   renderer.setScissorTest(true);
   renderer.setSize(window.innerWidth, window.innerHeight, false);

@@ -12,12 +12,13 @@
  */
 import * as THREE from "three";
 import { HERO_SCENE_COLORS as COLOR } from "./hero-scene-colors";
+import { getTierBudget } from "@/lib/scene/device-tier";
 import type { HeroSceneHandle } from "./hero-scene-types";
 
-/** Optional camera re-framing for a scene reused on more than one page (e.g.
- * the geotechnical service page reuses this scene family "re-framed" per its
- * `sceneSummary` in `data/mocks/services.ts`) — defaults reproduce the
- * original homepage hero framing exactly. */
+/** Optional camera re-framing — unused today (this scene is homepage-only
+ * since the geotechnical service page got its own bespoke builder), kept as
+ * an override point rather than hardcoding the homepage framing inline;
+ * defaults reproduce the original homepage hero framing exactly. */
 export interface HeroSceneFraming {
   cameraPosition?: [number, number, number];
   cameraLookAt?: [number, number, number];
@@ -364,8 +365,11 @@ export const createHeroScene = (
     antialias: true,
     alpha: true,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Tier-based, not a flat 2x — see the identical fix in
+  // `service-heroes/hero-scene-runtime.ts`.
   const { clientWidth, clientHeight } = container;
+  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
   const group = new THREE.Group();

@@ -8,6 +8,7 @@
  * scenes".
  */
 import * as THREE from "three";
+import { getTierBudget } from "@/lib/scene/device-tier";
 import type { HeroSceneHandle } from "../hero-scene-types";
 
 export interface HeroSceneFraming {
@@ -52,8 +53,12 @@ export const createHeroSceneRuntime = (
 
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Tier-based, not a flat 2x — a tablet-width container previously still got
+  // a desktop-grade DPR clamp here (unlike the ambient background and mobile
+  // hero fallback, which already read this budget correctly).
   const { clientWidth, clientHeight } = container;
+  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
   const { scene, update, dispose: disposeContent } = build();
