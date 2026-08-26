@@ -7,6 +7,7 @@
  */
 import * as THREE from "three";
 import { HERO_SCENE_COLORS as COLOR } from "../hero-scene-colors";
+import { getDeviceTier } from "@/lib/scene/device-tier";
 import { disposeSceneObjects } from "@/lib/scene/shared-viewport-renderer";
 import { createHeroSceneRuntime } from "./hero-scene-runtime";
 import type { HeroSceneHandle } from "../hero-scene-types";
@@ -208,8 +209,7 @@ const buildCar = (roadIndex: number, phase: number): BuiltCar => {
   return { mesh, roadIndex, phase };
 };
 
-const buildTopographicPointCloud = (): THREE.Points => {
-  const count = 900;
+const buildTopographicPointCloud = (count: number): THREE.Points => {
   const positions = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
     positions[i * 3] = (Math.random() - 0.5) * 20;
@@ -238,6 +238,11 @@ export const createCorridorGradingScene = (container: HTMLElement): HeroSceneHan
     container,
     { cameraPosition: [6.5, 3.8, 9.5], cameraLookAt: [0, 0.6, -1] },
     () => {
+      // Mobile never reaches this builder (HeroScene skips WebGL below that
+      // tier) — this is really just a tablet/desktop split, same as the
+      // stormwater scene's terrain/rain counts.
+      const pointCount = getDeviceTier(container.clientWidth) === "desktop" ? 900 : 450;
+
       const scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(COLOR.background, 0.045);
 
@@ -261,7 +266,7 @@ export const createCorridorGradingScene = (container: HTMLElement): HeroSceneHan
       const cars = CAR_ROAD_INDICES.map((roadIndex, i) => buildCar(roadIndex, i * Math.PI));
       cars.forEach((car) => roads[car.roadIndex].pivot.add(car.mesh));
 
-      const points = buildTopographicPointCloud();
+      const points = buildTopographicPointCloud(pointCount);
       scene.add(points);
 
       const update = (elapsedSeconds: number, pointer: { x: number; y: number }, scrollProgress: number) => {

@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import { HERO_SCENE_COLORS as COLOR } from "../hero-scene-colors";
 import { PROJECT_LOCATIONS, latLonToVector3 } from "../world-globe";
+import { getDeviceTier } from "@/lib/scene/device-tier";
 import { disposeSceneObjects } from "@/lib/scene/shared-viewport-renderer";
 import { createHeroSceneRuntime } from "./hero-scene-runtime";
 import type { HeroSceneHandle } from "../hero-scene-types";
@@ -76,8 +77,8 @@ const buildArc = (from: THREE.Vector3, to: THREE.Vector3, phase: number): Arc =>
   return { curve, line, dot, phase };
 };
 
-const buildRimGlow = (): THREE.Mesh => {
-  const geometry = new THREE.SphereGeometry(RIM_RADIUS, 32, 24);
+const buildRimGlow = (widthSegments: number, heightSegments: number): THREE.Mesh => {
+  const geometry = new THREE.SphereGeometry(RIM_RADIUS, widthSegments, heightSegments);
   const mesh = new THREE.Mesh(
     geometry,
     new THREE.MeshBasicMaterial({
@@ -98,6 +99,12 @@ export const createAdvisoryLifecycleNetworkScene = (container: HTMLElement): Her
     container,
     { cameraPosition: [0, 0.9, 7.2], cameraLookAt: [0, 0, 0] },
     () => {
+      // Sphere segment counts drive the wireframe's line count directly —
+      // mobile never reaches this builder, so this is a tablet/desktop split.
+      const isDesktop = getDeviceTier(container.clientWidth) === "desktop";
+      const [globeWidthSeg, globeHeightSeg] = isDesktop ? [32, 22] : [18, 12];
+      const [rimWidthSeg, rimHeightSeg] = isDesktop ? [32, 24] : [16, 12];
+
       const scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(COLOR.background, 0.04);
 
@@ -105,7 +112,7 @@ export const createAdvisoryLifecycleNetworkScene = (container: HTMLElement): Her
       globeGroup.rotation.x = 0.15;
       scene.add(globeGroup);
 
-      const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 22);
+      const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, globeWidthSeg, globeHeightSeg);
       const globe = new THREE.LineSegments(
         new THREE.WireframeGeometry(sphereGeometry),
         new THREE.LineBasicMaterial({ color: COLOR.line, transparent: true, opacity: 0.3 }),
@@ -113,7 +120,7 @@ export const createAdvisoryLifecycleNetworkScene = (container: HTMLElement): Her
       globeGroup.add(globe);
       sphereGeometry.dispose();
 
-      globeGroup.add(buildRimGlow());
+      globeGroup.add(buildRimGlow(rimWidthSeg, rimHeightSeg));
 
       const points = PROJECT_LOCATIONS.map(({ lat, lon }) => latLonToVector3(lat, lon, GLOBE_RADIUS));
       const pins = points.map((point, i) => buildPin(point, i));

@@ -24,6 +24,14 @@ export interface TierBudget {
   ambientShapeCount: number;
   /** Whether the custom cursor spawns a particle trail while moving fast. */
   particleTrailEnabled: boolean;
+  /** Minimum gap (ms) `HeroScene.tsx` enforces between rendered WebGL
+   * frames — `0` means every rAF tick. These scenes are fill-bound, not
+   * motion-bound (slow ambient drift), so a capped tablet frame rate is hard
+   * to see and a real battery/GPU saving. Comparison in the render loop is
+   * strict `<`, so the budget here matches the frame rate it actually
+   * produces (unlike a `<=` check, which measures a few fps under the
+   * nominal number — see obsidian/workflows/optimize-3d-scene.md §5). */
+  heroFrameIntervalMs: number;
 }
 
 const TIER_BUDGETS: Record<DeviceTier, TierBudget> = {
@@ -32,18 +40,21 @@ const TIER_BUDGETS: Record<DeviceTier, TierBudget> = {
     ambientBackgroundEnabled: false,
     ambientShapeCount: 0,
     particleTrailEnabled: false,
+    heroFrameIntervalMs: 1000 / 30,
   },
   tablet: {
     dprClamp: 1.5,
     ambientBackgroundEnabled: true,
     ambientShapeCount: 8,
     particleTrailEnabled: false,
+    heroFrameIntervalMs: 1000 / 45,
   },
   desktop: {
     dprClamp: 2,
     ambientBackgroundEnabled: true,
     ambientShapeCount: 18,
     particleTrailEnabled: true,
+    heroFrameIntervalMs: 0,
   },
 };
 

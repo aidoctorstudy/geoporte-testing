@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Catalog — Common Components
@@ -161,6 +161,19 @@ a hidden `<template>`, collapsing `<main>` to zero height. See ADR-0029 in
 wants the actual page content to animate should look at the browser's native View
 Transitions API rather than routing `children` through react-spring's transition
 primitives again.
+
+## PerformanceWarningToast — `PerformanceWarningToast.tsx`
+
+`<PerformanceWarningToast>` — mounted once in the root layout, alongside
+`RouteTransitionSweep`. A dismissible bottom-left notice ("Some 3D elements
+have been simplified for your device's performance."), shown once per page
+lifetime the first time either a static hardware hint
+(`navigator.hardwareConcurrency`/`deviceMemory` ≤ 4, checked once on mount)
+or a measured hero-scene frame-rate drop below 30fps fires — both come from
+`src/lib/scene/performance-monitor.ts`. Mirrors `Cookie/CookieBanner.tsx`'s
+`useTransition` mount/unmount idiom (same spring config), bottom-left instead
+of bottom-right, self-dismissing after 8s or via its own × button rather than
+store-driven. See ADR-0033 in [[decisions-log]].
 
 ## ReducedMotion — `reduced-motion.tsx`
 

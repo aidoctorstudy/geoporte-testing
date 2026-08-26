@@ -37,6 +37,71 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-08-26 (post-roadmap: /contact fix, route-transition bug, performance toast)
+
+Follow-up work after the 8-service hero-scene roadmap closed out — one
+pre-existing dead-link gap, one real bug found during research, and a new
+feature:
+
+- **`/contact` links fixed** — every CTA site-wide (`Nav.tsx`,
+  `MobileMenu.tsx`, `Footer.tsx` ×2, `ServiceCta.tsx`) linked to `/contact`,
+  which was never a real route; the actual contact UI is `ContactSection.tsx`,
+  mounted as a `#contact` anchor on the homepage. All five now link to
+  `/#contact`. Verified end-to-end in-browser: clicking through from a
+  service detail page navigates to the homepage and lands scrolled to the
+  section. Flagged but **not** fixed: `/about`, `/projects`, `/publications`
+  are also linked from the nav/mobile menu with no matching routes — a larger,
+  pre-existing gap outside this session's scope.
+- **Real bug found and fixed: `RouteTransitionSweep` was never rendered.**
+  `layout.tsx` imported it but the component was never placed in the actual
+  JSX tree — the entire route-transition sweep feature (built earlier this
+  session, ADR-0029) has been dead code since it was written. One-line fix:
+  added `<RouteTransitionSweep />` as the sibling of `<main>` its own design
+  already calls for.
+- **New: `PerformanceWarningToast.tsx`** — a dismissible bottom-left notice
+  ("Some 3D elements have been simplified for your device's performance."),
+  shown once per page lifetime if either a static hardware hint
+  (`navigator.hardwareConcurrency`/`deviceMemory` ≤ 4) or a measured
+  hero-scene frame-rate drop below 30fps fires. New
+  `src/lib/scene/performance-monitor.ts` module backs both checks — see
+  ADR-0033 for why this is a new module rather than an extension of
+  `device-tier.ts`. Mirrors `CookieBanner`'s spring/mount-unmount idiom
+  (`useTransition`, same tension/friction), bottom-left instead of
+  bottom-right, self-dismissing (8s or the × button) rather than
+  store-driven. Verified end-to-end in-browser: renders with the exact
+  requested copy, correct position/styling, dismiss button fades it out via
+  the spring's own leave transition (confirmed via computed `opacity`, not
+  just DOM presence — `useTransition` keeps a leaving element mounted
+  briefly during its own fade), and the static check correctly stays silent
+  on a real 24-core/32GB machine (no false positive).
+- **`HeroScene.tsx` gained tier-based frame-rate throttling** — `device-tier.ts`'s
+  `TierBudget` gained a `heroFrameIntervalMs` field (mobile 1000/30 — moot,
+  mobile skips WebGL entirely; tablet 1000/45; desktop `0`, unthrottled). The
+  render loop's throttle comparison is strict `<`, not `<=`, so the budgeted
+  number matches the frame rate it actually produces (the
+  `optimize-3d-scene` skill's own §5 note on why a `<=` check measures a few
+  fps under its stated budget). This was the deferred Phase-5 item that
+  needed another pass through `HeroScene.tsx` — done together with the
+  toast's fps-reporting wire-up (`reportHeroSceneFrame`, called from the same
+  loop) to minimize separate edits to this shared file.
+- **Per-tier particle/geometry counts added where they actually mattered** —
+  civil's topographic point cloud (900 desktop / 450 tablet), advisory's
+  globe + rim-glow sphere segment counts (32×22/32×24 desktop → 18×12/16×12
+  tablet), telecom's shared ring-shell torus tubular segments (48 desktop /
+  24 tablet). The other 4 scenes without tiering (design & drafting,
+  geotechnical, structural, project control) were assessed and left as-is —
+  their object counts are already in the dozens, not the hundreds, so tiering
+  them would add complexity for negligible gain.
+
+All of the above verified end-to-end in a real browser this time (not just
+build/lint/verify.sh) — the automation environment issue from Phases 4–5
+appears to have been specific to that browser tab's accumulated state rather
+than a persistent host-level problem; a fresh tab this session mounted
+canvases and rendered normally for the toast/link work, though the *hero
+canvas* specifically (WebGL) still did not mount reliably in this session's
+tabs, so the tier-based particle-count/frame-throttle changes above are still
+verified via code review + build/lint/verify.sh rather than a screenshot.
+
 ## 2026-08-26 (service detail pages — Phase 5/perf pass, optional)
 
 The optional perf pass offered at the end of the hero-scene elevation

@@ -50,7 +50,7 @@ export const Nav = () => {
             <LanguageSwitcher />
             <Magnetic>
               <Link
-                href="/contact"
+                href="/#contact"
                 className="shrink-0 rounded-lg bg-accent px-[1.125rem] py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-accent/90"
               >
                 <TranslatedText text="Contact Us" />

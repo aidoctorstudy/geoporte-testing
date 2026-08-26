@@ -173,6 +173,23 @@ viewport renderer, and the ambient background) — a perf-pass audit (see
 [[changelog]] 2026-08-26) found the first three had drifted to a hardcoded
 flat `2` instead, only the ambient background reading the tier budget
 correctly; fixed to read `getTierBudget(width).dprClamp` in all four.
+`TierBudget` also carries `heroFrameIntervalMs` (`HeroScene.tsx`'s render loop
+throttle — `0` on desktop, real throttling only on tablet, since mobile never
+mounts WebGL at all) and per-scene particle/segment counts read directly by
+individual `service-heroes/build-*.ts` builders where the count is large
+enough to matter (civil's point cloud, the stormwater terrain/rain from
+Phase 3, advisory's globe sphere segments, telecom's ring-shell torus
+segments) rather than a generic field on `TierBudget` itself, since each
+scene's "what counts as large" differs.
+
+**Performance monitoring** (`src/lib/scene/performance-monitor.ts`, new) —
+backs `PerformanceWarningToast.tsx` (see [[components/common]]): a static
+hardware check (`navigator.hardwareConcurrency`/the non-standard
+`deviceMemory`, ≤ 4) plus a measured check (the rolling average of frames
+actually rendered by `HeroScene.tsx`'s own loop dropping below 30fps over a
+3s window, `reportHeroSceneFrame` called from that same loop). Deliberately a
+separate module from `device-tier.ts` rather than an extension of it — see
+ADR-0033 in [[decisions-log]] for why.
 
 **Ambient background** (`src/lib/scene/ambient-background-renderer.ts` +
 `src/components/scene/AmbientBackground.tsx`) — a *third* standalone WebGL-context

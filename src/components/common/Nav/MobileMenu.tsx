@@ -17,7 +17,7 @@ const primaryLinks = [
   { href: "/about", label: "About Us" },
   { href: "/projects", label: "Projects" },
   { href: "/publications", label: "Publications" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#contact", label: "Contact" },
 ];
 
 export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {

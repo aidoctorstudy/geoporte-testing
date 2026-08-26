@@ -10,7 +10,8 @@ import { getPointerSnapshot } from "@/hooks/cursor/use-pointer";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { useWindowWidth } from "@/hooks/use-window-size";
-import { getDeviceTier } from "@/lib/scene/device-tier";
+import { getDeviceTier, getTierBudget } from "@/lib/scene/device-tier";
+import { reportHeroSceneFrame } from "@/lib/scene/performance-monitor";
 
 export interface HeroSceneProps {
   className?: string;
@@ -70,13 +71,28 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
+    // Read once at mount, not on every frame — a device doesn't change tier
+    // mid-session. `0` on desktop means "render every tick" (see the loop
+    // below); only tablet is actually throttled, since mobile never reaches
+    // this effect at all.
+    const { heroFrameIntervalMs } = getTierBudget(width);
+
     let rafId: number | null = null;
     let inView = true;
     let start: number | null = null;
+    let lastRenderTime = 0;
 
     const loop = (time: number) => {
       if (start === null) start = time;
-      scene.renderFrame((time - start) / 1000);
+      if (time - lastRenderTime >= heroFrameIntervalMs) {
+        lastRenderTime = time;
+        scene.renderFrame((time - start) / 1000);
+        // Real achieved render rate, not the raw rAF tick rate — feeds the
+        // low-performance toast (`performance-monitor.ts`). A throttled
+        // tablet hitting its own budget isn't "slow"; a scene of any tier
+        // that can't keep up with its own budget is.
+        reportHeroSceneFrame(time);
+      }
       rafId = requestAnimationFrame(loop);
     };
 

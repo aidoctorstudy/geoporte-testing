@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Decisions Log (ADRs)
@@ -14,6 +14,48 @@ decisions on top, continuing the numbering. Amending an inherited decision is
 fine; write a new ADR that says so rather than editing the old one.
 
 Template: [[templates/adr-note]].
+
+---
+
+## ADR-0033 — Low-performance detection: static hardware hints + measured hero-scene fps, no persistence
+
+**Status:** Accepted · 2026-08-26
+
+**Decision.** `PerformanceWarningToast.tsx` shows a dismissible bottom-left
+notice the first time either signal fires: a static hardware check
+(`navigator.hardwareConcurrency <= 4` or the non-standard, Chromium-only
+`navigator.deviceMemory <= 4`, read once on mount) or a measured render-rate
+check (the rolling average of actually-rendered frames from `HeroScene.tsx`'s
+own loop dropping below 30fps over a 3-second window, after a 2-second warm-up
+grace period so a scene's own load-in animation doesn't read as device
+struggle). Both live in a new `src/lib/scene/performance-monitor.ts` module.
+Once either fires, it fires once for the page's lifetime — no re-arming, no
+`localStorage` persistence across page loads.
+
+**Why.** This is new territory — `device-tier.ts`'s tiering is viewport-width
+only, deliberately (ADR-0027 chose a device-tier module over per-component
+`navigator` checks precisely because viewport width is what every existing
+tier decision — DPR, particle counts, ambient background — actually needed).
+A toast reacting to raw device capability is a genuinely different question
+("is this hardware struggling *right now*") than "which tier's budget should
+this component use," so it doesn't belong bolted onto `device-tier.ts`.
+Real FPS measurement has to live in `HeroScene.tsx`'s own native
+`requestAnimationFrame` loop (not the shared spring ticker, which already
+throttles its own subscribers and would measure its own throttle, not the
+GPU) — see that file's existing comments on why WebGL frame timing can't
+come from the ticker. No persistence was a deliberate choice, not an
+oversight: this is a one-time, session-scoped notice ("some elements were
+simplified"), not a setting: a returning visitor on the same slow device
+should be able to see it again and dismiss it again, not have it permanently
+suppressed by a stale flag from a different browsing session.
+
+**When building.** Any future per-instance "is this device coping" check
+should read from `performance-monitor.ts`'s exports rather than re-deriving
+`navigator.hardwareConcurrency`/`deviceMemory` inline — same reasoning
+`device-tier.ts` itself gives for centralizing tier numbers. If a scene other
+than the main hero ever needs to feed the fps signal too (a mini scene via
+the shared viewport renderer, say), extend `reportHeroSceneFrame`'s call
+sites rather than duplicating the rolling-window logic.
 
 ---
 

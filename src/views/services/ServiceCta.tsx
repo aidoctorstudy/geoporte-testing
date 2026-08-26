@@ -8,7 +8,8 @@ export interface ServiceCtaProps {
 }
 
 /** The closing CTA (item 6 of the service page spec) — a magnetic button
- * linking to `/contact`, matching the homepage footer's CTA row pattern. */
+ * linking to the homepage's `#contact` section, matching the homepage
+ * footer's CTA row pattern. */
 export const ServiceCta = ({ serviceTitle }: ServiceCtaProps) => {
   return (
     <section
@@ -25,7 +26,7 @@ export const ServiceCta = ({ serviceTitle }: ServiceCtaProps) => {
 
         <Magnetic>
           <Link
-            href="/contact"
+            href="/#contact"
             className="bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase transition-colors duration-[var(--duration-fast)] ease-entrance"
           >
             <TranslatedText text="Contact Us" />

@@ -16,6 +16,7 @@ import { ScrollSignal } from "@/components/common/ScrollSignal";
 import { ScrollProgressBar } from "@/components/common/ScrollProgressBar";
 import { CustomCursor } from "@/components/common/Cursor";
 import { PageLoadIntro } from "@/components/common/PageLoadIntro";
+import { PerformanceWarningToast } from "@/components/common/PerformanceWarningToast";
 import { RouteTransitionSweep } from "@/components/common/RouteTransitionSweep";
 import { AmbientBackground } from "@/components/scene/AmbientBackground";
 import { ScrollLayout } from "@/layouts/scroll-layout";
@@ -61,6 +62,8 @@ export default function RootLayout({
           <main>{children}</main>
           <Footer />
           <PageLoadIntro />
+          <RouteTransitionSweep />
+          <PerformanceWarningToast />
         </ScrollLayout>
       </body>
     </html>

@@ -21,7 +21,7 @@ export const Footer = () => {
             </h2>
           </div>
           <Link
-            href="/contact"
+            href="/#contact"
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex shrink-0 items-center justify-center rounded-full px-7 py-3 text-sm font-medium"
           >
             <TranslatedText text="Contact Us" />
@@ -102,7 +102,7 @@ export const Footer = () => {
               ))}
               <li>
                 <Link
-                  href="/contact"
+                  href="/#contact"
                   className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                 >
                   <TranslatedText text="Contact" />

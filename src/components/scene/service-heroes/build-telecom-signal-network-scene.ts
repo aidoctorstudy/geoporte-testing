@@ -9,6 +9,7 @@
  */
 import * as THREE from "three";
 import { HERO_SCENE_COLORS as COLOR } from "../hero-scene-colors";
+import { getDeviceTier } from "@/lib/scene/device-tier";
 import { disposeSceneObjects } from "@/lib/scene/shared-viewport-renderer";
 import { createHeroSceneRuntime } from "./hero-scene-runtime";
 import type { HeroSceneHandle } from "../hero-scene-types";
@@ -67,8 +68,10 @@ const RING_PULSE_PERIOD_S = 1.5;
  * to simulate expansion — the same "scale a unit ring" trick the stormwater
  * scene's flood-extent rings use, but a real 3D torus lying flat around the
  * tower rather than a flat circle. */
-const buildRingShells = (): { shells: RingShell[]; geometry: THREE.TorusGeometry } => {
-  const geometry = new THREE.TorusGeometry(1, 0.012, 8, 48);
+const buildRingShells = (
+  tubularSegments: number,
+): { shells: RingShell[]; geometry: THREE.TorusGeometry } => {
+  const geometry = new THREE.TorusGeometry(1, 0.012, 8, tubularSegments);
   const shells = Array.from({ length: RING_COUNT }, (_, i) => {
     const mesh = new THREE.Mesh(
       geometry,
@@ -202,6 +205,11 @@ export const createTelecomSignalNetworkScene = (container: HTMLElement): HeroSce
     container,
     { cameraPosition: [3, 2.2, 6.8], cameraLookAt: [1.5, 1, 0] },
     () => {
+      // Ring tube segment count drives triangle count directly (one shared
+      // geometry across all 5 shells) — mobile never reaches this builder,
+      // so this is a tablet/desktop split.
+      const tubularSegments = getDeviceTier(container.clientWidth) === "desktop" ? 48 : 24;
+
       const scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(COLOR.background, 0.045);
 
@@ -216,7 +224,7 @@ export const createTelecomSignalNetworkScene = (container: HTMLElement): HeroSce
       const arms = buildAntennaArms();
       arms.forEach((arm) => towerGroup.add(arm));
 
-      const { shells, geometry: ringGeometry } = buildRingShells();
+      const { shells, geometry: ringGeometry } = buildRingShells(tubularSegments);
       shells.forEach(({ mesh }) => towerGroup.add(mesh));
 
       const dataStream = buildDataStream();
