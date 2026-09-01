@@ -508,14 +508,15 @@ ADR-0049.
 ### HeroFallback — `src/components/scene/HeroFallback.tsx`
 
 `<HeroFallback className>` — the default substitute for `HeroScene`'s WebGL
-canvas on the mobile/low-power device tier (below 768px, or any width with
-`navigator.hardwareConcurrency <= 4` as of ADR-0056 — see [[tech-stack]] and
-[[decisions-log]] ADR-0031): a slowly pulsing radial-gradient glow via a
-looping `useSpring`, reading `--accent`/`--glow` from whatever CSS scope it
-renders in, so it shows each service page's own tint automatically. Matches
-`SceneViewport`'s existing mobile-fallback convention for mini scenes. Used
-for the homepage hero and every service-page hero that isn't one of the 9
-fixed-full-page background routes below.
+canvas on the low-power device tier (`isLowPowerDevice()` — a capability
+check on cores/memory/mobile-UA, independent of viewport width as of
+ADR-0078; not a raw width breakpoint — see [[tech-stack]] and
+[[decisions-log]] ADR-0031, ADR-0078): a slowly pulsing radial-gradient glow
+via a looping `useSpring`, reading `--accent`/`--glow` from whatever CSS
+scope it renders in, so it shows each service page's own tint automatically.
+Matches `SceneViewport`'s existing low-power-fallback convention for mini
+scenes. Used for the homepage hero and every service-page hero that isn't
+one of the 9 fixed-full-page background routes below.
 
 ### SceneFallbackGradient — `src/components/scene/SceneFallbackGradient.tsx`
 

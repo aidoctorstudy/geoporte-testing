@@ -1,22 +1,29 @@
 /**
  * Device tiering — one module owning what "mobile"/"tablet"/"desktop" means
- * for the WebGL work this project carries, and the per-tier budgets (DPR
- * clamp, shape/particle counts, whether the ambient background runs at all).
- * Every new 3D module reads its numbers from here instead of hardcoding them
- * inline. See obsidian/workflows/optimize-3d-scene.md — "device tiering, not
- * in the starter, add when a project needs it."
+ * for the WebGL work this project carries, and the per-tier *budgets* (DPR
+ * clamp, shape/particle counts, hero frame-rate cap). Every new 3D module
+ * reads its numbers from here instead of hardcoding them inline. See
+ * obsidian/workflows/optimize-3d-scene.md — "device tiering, not in the
+ * starter, add when a project needs it."
  *
- * Breakpoints match the ones already in use elsewhere (`SceneViewport`'s
- * default `mobileBreakpoint`, `springsConfig.mobileWidth` = 768).
+ * Breakpoints match the ones already in use elsewhere
+ * (`springsConfig.mobileWidth` = 768).
  *
- * A device is also treated as "mobile" tier — every WebGL scene disabled,
- * CSS/spring fallback shown instead — whenever the fuller 4-tier capability
- * system in `performance-tier.ts` resolves to "low" (hardwareConcurrency,
- * deviceMemory, mobile UA and screen width, plus any session-persisted
- * downgrade — see ADR-0058, which superseded this file's own narrower
- * hardwareConcurrency-only check from ADR-0056), regardless of viewport
- * width: a low-power desktop or a wide-screen tablet with a weak CPU pays
- * the same fill-rate tax as a phone. Guarded behind the same
+ * IMPORTANT — `getDeviceTier`'s "mobile" result is a *budget* tier only (DPR,
+ * particle counts, frame rate), driven purely by viewport width. It is NOT a
+ * "should WebGL mount" signal, and no scene should treat it as one — a
+ * capable phone (e.g. iPhone 15 Pro Max) is narrow-width "mobile" tier for
+ * budget purposes, but still mounts full WebGL (see ADR-0078, which reversed
+ * ADR-0056/0058/0060's "narrow width = no WebGL" convention). The actual
+ * "skip WebGL, show the CSS/spring fallback" decision belongs to
+ * `isLowPowerDevice()` alone — a capability check (hardwareConcurrency,
+ * deviceMemory, mobile UA, session-persisted downgrade — see
+ * `performance-tier.ts`'s `detectPerformanceTier`) that is independent of
+ * screen width: a low-power desktop or a wide-screen tablet with a weak CPU
+ * pays the same fill-rate tax as a weak phone, while a narrow-but-capable
+ * phone pays none of it. Every scene mount site (`HeroScene`,
+ * `PlanetBackground`, `AmbientBackground`, `SceneViewport`) calls
+ * `isLowPowerDevice()` directly for that decision, guarded behind the same
  * `viewportWidth > 0` check every caller already uses to detect "not yet
  * measured on the client" (see `isLowPowerDevice`'s own comment) —
  * `navigator`/`localStorage` are available synchronously on the client from
@@ -36,19 +43,16 @@ export type DeviceTier = "mobile" | "tablet" | "desktop";
 const MOBILE_MAX_WIDTH = 768;
 const TABLET_MAX_WIDTH = 1024;
 
-/** Exported for `SceneViewport.tsx`, whose `mobileBreakpoint` prop lets a
- * caller override the width threshold — it ORs this in separately rather
- * than delegating to `getDeviceTier` outright, so a custom breakpoint still
- * combines with the low-power check instead of losing it. Every other
- * consumer should go through `getDeviceTier`/`getTierBudget` instead. */
+/** The single "should this device mount WebGL at all" signal — capability
+ * only, independent of viewport width. See this file's top comment. */
 export const isLowPowerDevice = (): boolean => getOrDetectTier() === "low";
 
 export interface TierBudget {
   /** Clamp applied to `window.devicePixelRatio` for any renderer on this tier. */
   dprClamp: number;
-  /** Whether the persistent ambient background scene mounts at all. */
-  ambientBackgroundEnabled: boolean;
-  /** How many drifting wireframe shapes the ambient background builds. */
+  /** How many drifting wireframe shapes the ambient background builds
+   * (whether the scene mounts at all is `isLowPowerDevice()`, not this
+   * tier — see this file's top comment). */
   ambientShapeCount: number;
   /** Whether the custom cursor spawns a particle trail while moving fast. */
   particleTrailEnabled: boolean;
@@ -64,22 +68,19 @@ export interface TierBudget {
 
 const TIER_BUDGETS: Record<DeviceTier, TierBudget> = {
   mobile: {
-    dprClamp: 1,
-    ambientBackgroundEnabled: false,
-    ambientShapeCount: 0,
+    dprClamp: 1.5,
+    ambientShapeCount: 6,
     particleTrailEnabled: false,
     heroFrameIntervalMs: 1000 / 30,
   },
   tablet: {
     dprClamp: 1.5,
-    ambientBackgroundEnabled: true,
     ambientShapeCount: 8,
     particleTrailEnabled: false,
     heroFrameIntervalMs: 1000 / 45,
   },
   desktop: {
     dprClamp: 2,
-    ambientBackgroundEnabled: true,
     ambientShapeCount: 18,
     particleTrailEnabled: true,
     heroFrameIntervalMs: 0,

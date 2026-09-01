@@ -37,6 +37,45 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-09-01 (3D scenes were not rendering on mobile — width-based WebGL skip replaced with a capability-only gate)
+
+Bug report: on a real iPhone 15 Pro Max, every WebGL scene sitewide was
+missing — Earth globe, homepage hero wireframe, Geotechnical FEA scene, every
+service-page hero, ambient background, all `SceneViewport` mini-scenes. Per
+[[decisions-log]] ADR-0078 (amends ADR-0056, ADR-0058, ADR-0060, ADR-0031).
+
+- Root cause: `getDeviceTier` treated any viewport `< 768px` as `"mobile"`
+  tier, and `detectPerformanceTier` separately floored any mobile-UA device
+  under that width to the "low" capability tier regardless of real
+  cores/memory (Safari never exposes `deviceMemory`) — so every phone,
+  including flagships, was gated the same as end-of-life hardware.
+- Fix: `isLowPowerDevice()` (capability only — `hardwareConcurrency`,
+  `deviceMemory`, mobile UA, session-persisted downgrade; independent of
+  viewport width) is now the sole "skip WebGL, show CSS fallback" signal,
+  called directly by `HeroScene`, `GeotechnicalFeaScene`, `PlanetBackground`,
+  `AmbientBackground`, `SceneViewport`. `getDeviceTier`'s width-based
+  `"mobile"` tier is now budget-only (DPR clamp, particle/shape counts, hero
+  frame cap) — never a mount/skip condition.
+- A real capability floor stays: < 6 cores or < 4GB RAM on a mobile UA (< 4
+  cores/4GB on desktop) still resolves to "low" and still gets the CSS
+  fallback, so genuinely weak/old Android hardware doesn't crash or
+  thermal-throttle.
+- Kept/tuned performance optimizations: `TIER_BUDGETS.mobile.dprClamp` 1 →
+  1.5; ambient background and the Earth globe now mount at mobile width with
+  reduced counts (`ambientShapeCount` 0 → 6; new `TIER_COUNTS.mobile` in
+  `build-planet-scene.ts`, 350/80/15 stars/atmo/markers) instead of being
+  fully disabled; the mobile-width 30fps hero frame cap is unchanged.
+- `SceneViewport`'s unused `mobileBreakpoint` prop (no caller ever set it)
+  removed.
+- `yarn lint` / `yarn build` clean. Verified the tier logic against synthetic
+  device profiles (iPhone 15 Pro Max, mid/low Android, iPad, a desktop
+  resized narrow) — capable devices now mount WebGL at phone widths, a
+  genuinely low-spec Android profile still falls back. Live on-device/browser
+  verification was not possible this session (Chrome extension not
+  connected) — re-check on the actual iPhone before calling this closed.
+- Desktop behaviour untouched: desktop-width tiering, DPR clamp, particle
+  counts and frame budgets are unchanged.
+
 ## 2026-09-01 (Language switcher and the whole i18n stack removed — site is English-only)
 
 Explicit user direction: remove the nav language switcher and every i18n

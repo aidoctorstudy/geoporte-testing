@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { startAmbientBackground } from "@/lib/scene/ambient-background-renderer";
 import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
-import { getTierBudget } from "@/lib/scene/device-tier";
+import { getTierBudget, isLowPowerDevice } from "@/lib/scene/device-tier";
 import { useWindowWidth } from "@/hooks/use-window-size";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 
@@ -17,12 +17,13 @@ import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 /**
  * Mounts the persistent ambient background scene (drifting wireframe shapes,
  * items 11–13 of the homepage motion spec) once at the app root, alongside
- * the other headless globals in `layout.tsx`. Device-tier gated — skipped on
- * mobile and under `prefers-reduced-motion`, the same convention every other
- * WebGL scene in this project already follows. Renders nothing itself; the
+ * the other headless globals in `layout.tsx`. Gated on device *capability*
+ * (`isLowPowerDevice()`) and `prefers-reduced-motion` — not on viewport
+ * width; a capable phone still gets the shapes, just fewer of them via
+ * `getTierBudget(width).ambientShapeCount`. Renders nothing itself; the
  * scene's canvas is appended straight to `document.body` by
  * `ambient-background-renderer.ts`, same technique as the shared mini-scene
- * renderer.
+ * renderer. See ADR-0078.
  */
 export const AmbientBackground = (): null => {
   const width = useWindowWidth();
@@ -30,7 +31,7 @@ export const AmbientBackground = (): null => {
   const budget = getTierBudget(width);
   const enabled =
     width > 0 &&
-    budget.ambientBackgroundEnabled &&
+    !isLowPowerDevice() &&
     !isReducedMotion() &&
     !isGlassBackgroundRoute(pathname);
 

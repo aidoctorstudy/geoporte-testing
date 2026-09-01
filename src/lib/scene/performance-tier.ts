@@ -28,9 +28,11 @@ export interface TierParticleBudget {
   /** Clamp applied to `window.devicePixelRatio` — this one IS wired,
    * through `device-tier.ts`'s existing `TierBudget.dprClamp`. */
   dprClamp: number;
-  /** WebGL never mounts at all on this tier (already true via the
-   * existing `HeroScene.tsx` mobile gate once `isLowPowerDevice()`
-   * reports true for it). */
+  /** WebGL never mounts at all on this tier — every scene (`HeroScene`,
+   * `PlanetBackground`, `AmbientBackground`, `SceneViewport`) gates its own
+   * mount on `isLowPowerDevice()` reporting true, i.e. this tier being
+   * "low". Capable mobile devices resolve to "medium"/"high" instead (see
+   * `detectPerformanceTier`, ADR-0078) and mount WebGL like any other tier. */
   webglDisabled: boolean;
 }
 
@@ -57,13 +59,7 @@ const readSignals = () => {
   const nav = typeof navigator !== "undefined" ? (navigator as NavigatorWithMemory) : null;
   const cores = nav && typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
   const memory = nav && typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
-  const width =
-    typeof screen !== "undefined" && screen.width
-      ? screen.width
-      : typeof window !== "undefined"
-        ? window.innerWidth
-        : 0;
-  return { cores, memory, isMobile: isMobileUserAgent(), width };
+  return { cores, memory, isMobile: isMobileUserAgent() };
 };
 
 /**
@@ -72,20 +68,23 @@ const readSignals = () => {
  * browser) default to 4/4, the medium/low boundary — a conservative middle
  * ground rather than assuming either extreme.
  *
- * The brief's own tier-3 description ("modern laptops, high-end phones
- * like iPhone 14+") conflicts with its explicit "MOBILE SPECIFIC" forcing
- * rules, which never assign anything above "medium" to a mobile UA
- * regardless of cores/memory. Followed the forcing rules here as the
- * operationally precise half of the spec — flagged, not silently picked,
- * see ADR-0058.
+ * Mobile devices are judged on actual `cores`/`memory` signals, the same as
+ * desktop — not auto-floored to "low" purely for being under the mobile
+ * width/UA check (ADR-0078 removed that forcing rule: it was catching every
+ * phone, including high-end ones like iPhone 14+/15 Pro, since Safari never
+ * exposes `deviceMemory` and `width < 768` is true for essentially all
+ * phones in portrait). A phone's GPU/thermal envelope is still weaker than a
+ * desktop's at the same core count, so the ceiling for a mobile UA is capped
+ * at "high" rather than reaching "ultra".
  */
 export const detectPerformanceTier = (): PerformanceTier => {
-  const { cores, memory, isMobile, width } = readSignals();
+  const { cores, memory, isMobile } = readSignals();
   const c = cores ?? 4;
   const m = memory ?? 4;
 
   if (isMobile) {
-    if (c < 6 || m < 4 || width < 768) return "low";
+    if (c < 6 || m < 4) return "low";
+    if (c >= 8 && m >= 6) return "high";
     return "medium";
   }
 

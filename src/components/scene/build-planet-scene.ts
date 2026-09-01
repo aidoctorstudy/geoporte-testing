@@ -78,13 +78,16 @@ const CONFIG = {
 
 /** The only counts that scale by device tier — every other CONFIG value is a
  * fixed art-direction choice, not a performance budget. Desktop matches the
- * canonical template's own numbers exactly; tablet is roughly halved. */
+ * canonical template's own numbers exactly; tablet is roughly halved, mobile
+ * roughly halved again (see ADR-0078 — capable phones now mount this scene
+ * too, so it needs its own budget rather than never being reached). */
 interface PlanetTierCounts {
   starCount: number;
   atmoCount: number;
   markerCount: number;
 }
-const TIER_COUNTS: Record<"tablet" | "desktop", PlanetTierCounts> = {
+const TIER_COUNTS: Record<"mobile" | "tablet" | "desktop", PlanetTierCounts> = {
+  mobile: { starCount: 350, atmoCount: 80, markerCount: 15 },
   tablet: { starCount: 700, atmoCount: 160, markerCount: 30 },
   desktop: { starCount: 1400, atmoCount: 320, markerCount: 60 },
 };
@@ -187,7 +190,7 @@ const firstMesh = (obj: THREE.Object3D): THREE.Mesh | null => {
 
 export interface PlanetBackgroundOptions {
   dprClamp: number;
-  tier: "tablet" | "desktop";
+  tier: "mobile" | "tablet" | "desktop";
 }
 
 /** Module-level singleton state — ref-counted, same pattern as

@@ -12,7 +12,7 @@ import type { HeroSceneHandle } from "./hero-scene-types";
 import { CONSTRUCTION_STAGES, RESULT_MODES } from "./geotechnical-fea/constants";
 import type { ResultMode } from "./geotechnical-fea/constants";
 import { useWindowWidth } from "@/hooks/use-window-size";
-import { getDeviceTier } from "@/lib/scene/device-tier";
+import { isLowPowerDevice } from "@/lib/scene/device-tier";
 
 export interface GeotechnicalFeaSceneProps {
   className?: string;
@@ -27,14 +27,15 @@ export interface GeotechnicalFeaSceneProps {
  * — rendered as a real, accessible sibling of `<HeroScene>`'s own
  * `aria-hidden` canvas container, not inside it.
  *
- * The control panel is hidden below the mobile breakpoint, matching
+ * The control panel is hidden on the low-power tier, matching
  * `HeroScene.tsx`'s own internal gating there (no WebGL scene mounts, so
- * `onSceneReady` never fires and the buttons would otherwise sit inert).
+ * `onSceneReady` never fires and the buttons would otherwise sit inert) — not
+ * on mobile width per se; a capable phone gets the real scene and panel.
  */
 export const GeotechnicalFeaScene = ({ className }: GeotechnicalFeaSceneProps) => {
   const sceneRef = useRef<GeotechnicalFeaSceneHandle | null>(null);
   const width = useWindowWidth();
-  const isMobile = width > 0 && getDeviceTier(width) === "mobile";
+  const skipWebgl = width > 0 && isLowPowerDevice();
 
   const [stageIndex, setStageIndex] = useState(0);
   const [resultMode, setResultModeState] = useState<ResultMode>("none");
@@ -65,7 +66,7 @@ export const GeotechnicalFeaScene = ({ className }: GeotechnicalFeaSceneProps) =
     <div className={`relative ${className ?? ""}`}>
       <HeroScene className="h-full w-full" createScene={createGeotechnicalFeaHeroScene} onSceneReady={handleSceneReady} fallback={<FeaFallback />} />
 
-      {!isMobile && (
+      {!skipWebgl && (
         <div className="border-line-engineering bg-surface-engineering/92 pointer-events-auto absolute inset-x-2 bottom-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border px-3 py-2 text-[11px] backdrop-blur-sm">
           <div className="flex items-center gap-1">
             <button

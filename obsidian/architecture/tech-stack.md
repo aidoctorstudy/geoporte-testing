@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-08-29
+updated: 2026-09-01
 ---
 
 # Tech Stack
@@ -463,16 +463,19 @@ page reusing `ContactForm` and the real `offices`/`contact` data from
 the homepage. `ContactForm.tsx` gained an optional phone field
 (`/api/contact/route.ts`'s zod schema updated to match). See ADR-0057.
 
-Below the mobile device tier, `HeroScene.tsx` skips mounting WebGL entirely
-(for both the homepage hero and every service hero) and renders a
-`fallback` instead — an optional prop, defaulting to `HeroFallback.tsx` (a
-`useSpring`-driven pulsing radial-gradient glow that reads `--accent`/
-`--glow` from its CSS scope, so it automatically shows a service page's own
-tint with no props). See ADR-0031 in [[decisions-log]]. "Mobile device
-tier" also includes any device (any viewport width) whose capability
-resolves to "low" on the 4-tier system in `performance-tier.ts` — see
-"Device tiering" below; this superseded ADR-0056's narrower
-`hardwareConcurrency <= 4`-only check one turn later, in ADR-0058.
+On the low-power device tier — `isLowPowerDevice()` in `performance-tier.ts`
+resolving to `"low"`, a *capability* check (cores/memory/mobile-UA), not a
+viewport-width one — `HeroScene.tsx` skips mounting WebGL entirely (for both
+the homepage hero and every service hero) and renders a `fallback` instead —
+an optional prop, defaulting to `HeroFallback.tsx` (a `useSpring`-driven
+pulsing radial-gradient glow that reads `--accent`/`--glow` from its CSS
+scope, so it automatically shows a service page's own tint with no props).
+See ADR-0031 (original) and **ADR-0078**, which reversed this and every
+other scene's "narrow viewport = no WebGL" behaviour: a capable phone (e.g.
+iPhone 15 Pro Max) now mounts the real scene, at the mobile-width *budget*
+tier's tighter DPR/frame-rate numbers, not the CSS fallback. Only a device
+whose capability genuinely resolves to "low" (< 6 cores or < 4GB RAM on a
+mobile UA, < 4 cores/4GB on desktop) still gets the fallback.
 
 Each of the 9 dedicated full-page `*Background.tsx` wrappers overrides
 that default with its own `<SceneFallbackGradient gradient>`
@@ -512,9 +515,12 @@ shared canvas — the technique the three.js manual documents for "multiple
 canvases, one WebGL context". `SceneViewport` is the React wrapper: it
 registers on mount, pauses via `IntersectionObserver`, exposes a
 `setControl(value)` imperative handle (hover intensity for the service icons,
-scroll progress for the geological cross-section), and — below 768px or under
+scroll progress for the geological cross-section), and — on the low-power
+device tier (`isLowPowerDevice()`, capability-only) or under
 `prefers-reduced-motion` — never mounts WebGL at all, rendering a plain CSS
-`fallback` instead. Scene builder modules: `mini-scenes.ts` (empty as of
+`fallback` instead. As of ADR-0078 this is no longer width-gated; the
+`mobileBreakpoint` prop that used to add a raw `< 768px` skip has been
+removed (no caller ever set it). Scene builder modules: `mini-scenes.ts` (empty as of
 ADR-0054 — all 8 service icons are now dedicated `HeroScene` cards, see
 `ServiceCard.tsx`'s `DEDICATED_CARD_SCENES` above, keyed by
 `service.slug`; the map is kept as the registration point for a future
@@ -551,27 +557,31 @@ to its own panel (via the shared pointer store) for a cursor-tilt effect,
 rather than relative to the whole page.
 
 **Device tiering** (`src/lib/scene/device-tier.ts`) — one module owning what
-"mobile"/"tablet"/"desktop" means for every 3D scene in this project: `getDeviceTier()`
-by viewport width (same 768px/1024px breakpoints already used elsewhere), and named
-per-tier budgets (DPR clamp, ambient-shape count, whether the ambient background runs
-at all). Added as the homepage's motion/3D overhaul started adding enough concurrent
-WebGL work (a persistent background + elevated per-service scenes + a bigger globe +
-a denser terrain) that per-module hardcoded numbers stopped being tenable — see
-`obsidian/workflows/optimize-3d-scene.md`'s device-tiering guidance and ADR-0027.
-As of ADR-0056 (superseded one turn later by ADR-0058, below),
-`getDeviceTier` also returns `"mobile"` for any viewport width when the
-device is capability-constrained (exported separately as
-`isLowPowerDevice()` for `SceneViewport.tsx`, which ORs it into its own
-independent, per-call-overridable breakpoint check rather than delegating
-outright) — a low-core desktop or a wide tablet with a weak CPU now gets
-exactly the same "WebGL never mounts" treatment a phone already got, with
-zero additional wiring in any of the module's existing consumers
-(`HeroScene`, `AmbientBackground`, `PlanetBackground`, every `TierBudget`
-reader). Guarded behind the same `viewportWidth > 0` check every caller
-already used to detect "not yet measured on the client" — `navigator`/
-`localStorage` are available synchronously on the client before hydration
-completes, so checking them unconditionally would make the tier disagree
-between the server-rendered HTML and the client's first paint.
+"mobile"/"tablet"/"desktop" means for every 3D scene's *budget* (DPR clamp,
+ambient-shape count, hero frame-rate cap) by viewport width (same
+768px/1024px breakpoints already used elsewhere). Added as the homepage's
+motion/3D overhaul started adding enough concurrent WebGL work (a persistent
+background + elevated per-service scenes + a bigger globe + a denser
+terrain) that per-module hardcoded numbers stopped being tenable — see
+`obsidian/workflows/optimize-3d-scene.md`'s device-tiering guidance and
+ADR-0027.
+
+As of ADR-0078 (amending ADR-0056/ADR-0058's original design), this
+"mobile"/`"tablet"`/`"desktop"` result is **budget-only** — it no longer
+doubles as the "should WebGL mount" signal. That signal is
+`isLowPowerDevice()` alone: a pure capability check
+(`hardwareConcurrency`/`deviceMemory`/mobile-UA, from `performance-tier.ts`)
+independent of viewport width, called directly by every scene mount site
+(`HeroScene`, `GeotechnicalFeaScene`, `PlanetBackground`,
+`AmbientBackground`, `SceneViewport`). A low-core desktop or a wide tablet
+with a weak CPU still gets the "WebGL never mounts" fallback; a narrow but
+capable phone (the case ADR-0056/0058 got wrong — every phone was width-
+forced into this regardless of actual hardware) no longer does. Guarded
+behind the same `viewportWidth > 0` check every caller already used to
+detect "not yet measured on the client" — `navigator`/`localStorage` are
+available synchronously on the client before hydration completes, so
+checking them unconditionally would make the tier disagree between the
+server-rendered HTML and the client's first paint.
 
 **4-tier performance/capability system** (`src/lib/scene/
 performance-tier.ts` + `src/hooks/performance/use-performance-tier.tsx`,
@@ -605,8 +615,9 @@ viewport renderer, and the ambient background) — a perf-pass audit (see
 flat `2` instead, only the ambient background reading the tier budget
 correctly; fixed to read `getTierBudget(width).dprClamp` in all four.
 `TierBudget` also carries `heroFrameIntervalMs` (`HeroScene.tsx`'s render loop
-throttle — `0` on desktop, real throttling only on tablet, since mobile never
-mounts WebGL at all) and per-scene particle/segment counts read directly by
+throttle — `0` on desktop, 45fps on tablet, 30fps at mobile width; as of
+ADR-0078 mobile width does reach this loop, for any device that isn't
+capability-`"low"`) and per-scene particle/segment counts read directly by
 individual `service-heroes/build-*.ts` builders where the count is large
 enough to matter (civil's point cloud, the stormwater terrain/rain from
 Phase 3, advisory's globe sphere segments, telecom's ring-shell torus
@@ -638,8 +649,11 @@ silhouettes), mounted once from the root layout so it persists across route chan
 (unlike the per-route `HeroScene`). Reads the shared `usePointer`/`useScrollSignal`
 stores (see [[hooks]]) non-reactively each frame — nearby shapes tilt toward the
 cursor, fast scrolling stretches and dims the field — and runs a periodic diagonal
-"lidar pulse" line on its own timer. Device-tier gated; skipped below 768px and under
-`prefers-reduced-motion`, same convention as every other scene here. Also route-gated
+"lidar pulse" line on its own timer. Capability-gated (`isLowPowerDevice()`)
+and skipped under `prefers-reduced-motion`, same convention as every other
+scene here — as of ADR-0078, mobile width alone no longer skips it; a
+capable phone gets a reduced shape count (`ambientShapeCount: 6`) instead of
+zero. Also route-gated
 like the globe below it — `usePathname()` skips mounting on
 `/services/geotechnical-engineering`, where the shapes competed with Solaris's own
 particle/aurora geometry rather than complementing it. See ADR-0027, ADR-0041.
@@ -664,8 +678,11 @@ template's pinned `three@0.143.0` source onto this project's actual
 Scroll choreography reads `getScrollSignalSnapshot().progress` (see
 [[hooks]]) instead of a raw `window.scrollY` read. Draco decoder
 self-hosted at `public/draco/`, GLB/texture assets at
-`public/assets/planet/`. Device-tier gated the same as every other scene
-here — mobile skip, tier-based DPR clamp and star/atmo/marker counts.
+`public/assets/planet/`. Capability-gated the same as every other scene
+here (`isLowPowerDevice()`) — tier-based DPR clamp and star/atmo/marker
+counts. As of ADR-0078 a capable phone mounts this too, at a new
+`TIER_COUNTS.mobile` budget (350/80/15 stars/atmo/markers, roughly half of
+tablet's) rather than being excluded outright.
 
 **Route-scoped background exclusivity.** `PlanetBackground.tsx` and
 `AmbientBackground.tsx` both read `isGlassBackgroundRoute()`

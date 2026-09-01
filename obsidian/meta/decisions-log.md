@@ -17,6 +17,81 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0078 — WebGL scenes no longer skip on narrow viewport width; gate is device capability only
+
+**Status:** Accepted · 2026-09-01 · **Amends ADR-0056, ADR-0058, ADR-0060, ADR-0031.**
+
+**Context.** Explicit user report: on a real iPhone 15 Pro Max (Safari and
+Chrome iOS), every WebGL scene sitewide — the Earth globe (`PlanetBackground`),
+the homepage hero wireframe (`HeroScene`), the Geotechnical FEA scene
+(`GeotechnicalFeaScene`), every service-page hero, the ambient background, and
+every `SceneViewport` mini-scene (Stats globe, geological cross-section,
+contact terrain) — was not rendering. Root cause: two independent width-driven
+gates. (1) `device-tier.ts#getDeviceTier` treated any viewport `< 768px` as
+`"mobile"` tier outright, and every scene mount site treated `tier ===
+"mobile"` as "skip WebGL, show the CSS fallback" — true for essentially every
+phone regardless of capability. (2) `performance-tier.ts#detectPerformanceTier`
+independently forced any mobile-UA device with `width < 768` to the "low"
+capability tier, regardless of actual `hardwareConcurrency`/`deviceMemory` —
+catching high-end phones too, since Safari never exposes `deviceMemory` at all.
+A modern flagship phone (6+ CPU cores, full WebGL2) was being treated the same
+as end-of-life hardware, purely for being narrow and having a mobile UA
+string.
+
+**Decision.** Un-conflate "narrow viewport" from "should WebGL mount":
+
+- `detectPerformanceTier` now judges mobile devices on real `cores`/`memory`
+  signals, same as desktop, instead of flooring every mobile UA to "low" via
+  the width check. The mobile ceiling stays capped at "high" (never "ultra") —
+  phone GPUs/thermals are still weaker than desktop at the same core count.
+- `isLowPowerDevice()` (capability-only, no width dependency) is now the
+  *sole* "skip WebGL, show CSS/spring fallback" signal, called directly by
+  every scene mount site: `HeroScene`, `GeotechnicalFeaScene`,
+  `PlanetBackground`, `AmbientBackground`, `SceneViewport`. `getDeviceTier`'s
+  width-based `"mobile"` result is now documented and used as a *budget* tier
+  only (DPR clamp, particle/shape counts, hero frame-rate cap) — never again
+  as a mount/skip condition.
+- `SceneViewport`'s `mobileBreakpoint` prop (the width-based skip override, no
+  caller ever set it) is removed outright.
+- Kept and tuned rather than removed: the width-based *budget* scaling this
+  project already relies on for battery/thermal reasons. `TIER_BUDGETS.mobile`
+  moved from `dprClamp: 1` to `1.5` (the brief's explicit "keep DPR capped at
+  1.5 on mobile"); `heroFrameIntervalMs` stays a 30fps cap at mobile width.
+  Ambient background and the Earth globe, previously fully disabled at mobile
+  width (`ambientBackgroundEnabled: false`, `tier !== "mobile"`), now mount at
+  mobile width with their own reduced counts instead of zero —
+  `ambientShapeCount: 6` (was 0) and a new `TIER_COUNTS.mobile` entry in
+  `build-planet-scene.ts` (350/80/15 vs tablet's 700/160/30), so a capable
+  phone gets a lighter version of the scene rather than either the full
+  desktop load or nothing.
+- A genuinely low-spec device (< 6 cores or < 4GB RAM on a mobile UA; < 4
+  cores or < 4GB on desktop) still resolves to "low" and still gets the CSS
+  fallback — this was a deliberate scope decision (the alternative, forcing
+  WebGL on for every phone with no capability floor, was rejected) to avoid
+  crashes/thermal throttling on end-of-life Android hardware.
+
+**Why.** The width-based gate was over-broad by construction: it used
+"narrower than 768px" as a proxy for "can't handle WebGL," which stopped being
+true once modern phones shipped genuine GPUs. The fix keeps the *reason*
+mobile gets a reduced experience (real capability limits, battery/thermal
+budget) while dropping the *proxy* that had drifted from that reason (screen
+width, and a mobile UA string).
+
+**Amends.** ADR-0056 (original sitewide "mobile = no WebGL" convention),
+ADR-0058 (the 4-tier capability system that layered the same width-forcing
+rule on top), ADR-0060 (`HeroScene`'s and `GeotechnicalFeaScene`'s internal
+gating), ADR-0031 (service hero fallback's mobile-WebGL skip) — all reasoned
+soundly at the time from the brief's own "MOBILE SPECIFIC" forcing rules, but
+those rules are now explicitly reversed by direct user instruction backed by
+real-device testing.
+
+**When building.** Never reintroduce a raw viewport-width check as a WebGL
+mount/skip condition — that regresses this ADR. Width belongs only in budget
+lookups (`getTierBudget`/`getDeviceTier`, read for DPR/particle/frame-rate
+scaling). The skip decision is always `isLowPowerDevice()`.
+
+---
+
 ## ADR-0077 — Language switcher and the entire i18n stack removed; site is English-only
 
 **Status:** Accepted · 2026-09-01 · **Supersedes ADR-0024, ADR-0065.**

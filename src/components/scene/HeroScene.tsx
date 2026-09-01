@@ -11,7 +11,7 @@ import { getPointerSnapshot } from "@/hooks/cursor/use-pointer";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { useWindowWidth } from "@/hooks/use-window-size";
-import { getDeviceTier, getTierBudget } from "@/lib/scene/device-tier";
+import { getTierBudget, isLowPowerDevice } from "@/lib/scene/device-tier";
 import { reportHeroSceneFrame } from "@/lib/scene/performance-monitor";
 
 export interface HeroSceneProps {
@@ -20,20 +20,22 @@ export interface HeroSceneProps {
    * scene; every service detail page hero passes its own factory from
    * `service-heroes/index.ts`'s `SERVICE_HERO_SCENES` registry. */
   createScene?: (container: HTMLElement) => HeroSceneHandle;
-  /** Rendered instead of the WebGL scene on the mobile/low-power tier (see
-   * `device-tier.ts`). Defaults to the generic `--accent`/`--glow`-driven
-   * `HeroFallback` pulse; the nine fixed-full-page background wrappers each
-   * pass their own `<SceneFallbackGradient>` instead so the fallback still
-   * reads as that page's own scene, not the site's generic tint. See
-   * ADR-0056. */
+  /** Rendered instead of the WebGL scene on the low-power tier or under
+   * reduced motion (see `device-tier.ts#isLowPowerDevice`) — not on mobile
+   * per se; a capable phone mounts the real scene. Defaults to the generic
+   * `--accent`/`--glow`-driven `HeroFallback` pulse; the nine fixed-full-page
+   * background wrappers each pass their own `<SceneFallbackGradient>`
+   * instead so the fallback still reads as that page's own scene, not the
+   * site's generic tint. See ADR-0078 (superseded ADR-0056's mobile-width
+   * skip). */
   fallback?: ReactNode;
   /** Called once, right after the scene is constructed and mounted — lets a
    * parent client component capture the concrete handle to call scene-
    * specific controls beyond the base `HeroSceneHandle` contract (e.g. the
    * Geotechnical FEA scene's `setConstructionStage`/`setResultMode`, see
    * `GeotechnicalFeaScene.tsx`). Optional; every scene that only needs the
-   * base contract omits it. Not called at all on the mobile/reduced-motion
-   * tier, where the scene never mounts. */
+   * base contract omits it. Not called at all on the low-power/reduced-
+   * motion tier, where the scene never mounts. */
   onSceneReady?: (scene: HeroSceneHandle) => void;
 }
 
@@ -57,9 +59,11 @@ export const HeroScene = ({
   const sceneRef = useRef<HeroSceneHandle | null>(null);
   const width = useWindowWidth();
   // `width === 0` is the pre-hydration/SSR snapshot (see `useWindowSize`) —
-  // treated as "not mobile yet" so the real check runs once the client has
-  // actually measured the viewport, matching `SceneViewport`'s own guard.
-  const isMobile = width > 0 && getDeviceTier(width) === "mobile";
+  // treated as "not low-power yet" so the real check runs once the client
+  // has actually measured the viewport, matching `SceneViewport`'s own
+  // guard. Capability-only: a narrow-but-capable phone still mounts WebGL,
+  // it just reads a tighter `getTierBudget(width)` below (DPR, frame rate).
+  const skipWebgl = width > 0 && isLowPowerDevice();
 
   // Scroll-driven framing — the container fills the hero section exactly
   // (`inset-0` on its parent), so its own rect doubles as the section's
@@ -75,11 +79,11 @@ export const HeroScene = ({
   });
 
   useEffect(() => {
-    // WebGL never mounts below the mobile breakpoint — `HeroFallback` renders
+    // WebGL never mounts on the low-power tier — `HeroFallback` renders
     // instead (see the JSX below), matching `SceneViewport`'s existing
-    // mini-scene convention. This also means resizing from a wide viewport
-    // down to mobile doesn't tear down a running scene — it never started.
-    if (isMobile) return;
+    // mini-scene convention. This also means a live tier downgrade doesn't
+    // tear down a running scene — it never started.
+    if (skipWebgl) return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -95,8 +99,7 @@ export const HeroScene = ({
 
     // Read once at mount, not on every frame — a device doesn't change tier
     // mid-session. `0` on desktop means "render every tick" (see the loop
-    // below); only tablet is actually throttled, since mobile never reaches
-    // this effect at all.
+    // below); mobile/tablet widths are throttled to 30/45fps respectively.
     const { heroFrameIntervalMs } = getTierBudget(width);
 
     let rafId: number | null = null;
@@ -200,7 +203,7 @@ export const HeroScene = ({
 
   return (
     <div ref={containerRef} aria-hidden="true" className={className}>
-      {isMobile && fallback}
+      {skipWebgl && fallback}
     </div>
   );
 };
