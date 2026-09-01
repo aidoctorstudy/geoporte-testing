@@ -5,12 +5,10 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { services } from "@/data/mocks/services";
 import { brand } from "@/lib/company";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { Magnetic } from "@/components/common/Magnetic";
 import { GeoporteLogo } from "@/components/common/GeoporteLogo";
 import { ServicesDropdown } from "./ServicesDropdown";
 import { MobileMenu } from "./MobileMenu";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 
 const secondaryLinks = [
@@ -56,7 +54,7 @@ export const Nav = () => {
                     href={link.href}
                     className="text-foreground-muted transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
                   >
-                    <TranslatedText text={link.label} />
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -64,13 +62,12 @@ export const Nav = () => {
           </nav>
 
           <div className="hidden items-center gap-5 md:flex">
-            <LanguageSwitcher />
             <Magnetic>
               <Link
                 href="/contact"
                 className="flex min-h-[44px] shrink-0 items-center rounded-lg bg-accent px-[1.125rem] text-sm font-medium text-accent-foreground transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-accent/90"
               >
-                <TranslatedText text="Contact Us" />
+                Contact Us
               </Link>
             </Magnetic>
           </div>

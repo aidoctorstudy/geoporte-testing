@@ -2,7 +2,6 @@
 
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 
 export interface StatCounterProps {
   value: number;
@@ -29,7 +28,7 @@ export const StatCounter = ({ value, label, suffix = "+", prefix = "" }: StatCou
         {number.to((n) => `${prefix}${Math.round(n)}${suffix}`)}
       </animated.span>
       <span className="text-foreground-muted mt-3 text-sm tracking-[0.16em] uppercase">
-        <TranslatedText text={label} />
+        {label}
       </span>
     </div>
   );

@@ -8,7 +8,6 @@ import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { projects } from "@/data/mocks/projects";
 import {
   cascadeActiveIndex,
@@ -142,10 +141,10 @@ export const ProjectsCascade = () => {
     return (
       <section id="projects" aria-labelledby="projects-cascade-heading" className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
         <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
-          <TranslatedText text="GEOPORTE · Selected Work" />
+          GEOPORTE · Selected Work
         </p>
         <h1 id="projects-cascade-heading" className="text-foreground leading-display mt-4 text-3xl font-medium md:text-5xl">
-          <TranslatedText text="Our Projects" />
+          Our Projects
         </h1>
         <ul className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
@@ -169,13 +168,13 @@ export const ProjectsCascade = () => {
               />
               <div className="relative">
                 <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-                  <TranslatedText text={project.category} />
+                  {project.category}
                 </p>
                 <h3 className="text-foreground mt-1 text-sm font-medium">
-                  <TranslatedText text={project.title} />
+                  {project.title}
                 </h3>
                 <p className="text-foreground-muted mt-1 text-xs">
-                  <TranslatedText text={project.location} />
+                  {project.location}
                 </p>
               </div>
             </li>
@@ -202,17 +201,17 @@ export const ProjectsCascade = () => {
           style={{ opacity: intro }}
         >
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-            <TranslatedText text="GEOPORTE · Selected Work" />
+            GEOPORTE · Selected Work
           </p>
           <h1 id="projects-cascade-heading" className="text-foreground leading-display text-3xl font-medium md:text-5xl">
-            <TranslatedText text="Our Projects" />
+            Our Projects
           </h1>
           <button
             type="button"
             onClick={handleExploreClick}
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance pointer-events-auto mt-8 inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
           >
-            <TranslatedText text="Explore projects" />
+            Explore projects
           </button>
         </animated.div>
 
@@ -248,13 +247,13 @@ export const ProjectsCascade = () => {
               />
               <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
                 <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
-                  <TranslatedText text={project.category} />
+                  {project.category}
                 </p>
                 <h3 className="text-foreground mt-2 text-xl font-medium md:text-2xl [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
-                  <TranslatedText text={project.title} />
+                  {project.title}
                 </h3>
                 <p className="text-foreground-muted mt-1 text-sm [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
-                  <TranslatedText text={project.location} />
+                  {project.location}
                 </p>
               </div>
             </animated.div>

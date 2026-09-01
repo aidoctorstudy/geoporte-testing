@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-08-29
+updated: 2026-09-01
 ---
 
 # Decisions Log (ADRs)
@@ -14,6 +14,67 @@ decisions on top, continuing the numbering. Amending an inherited decision is
 fine; write a new ADR that says so rather than editing the old one.
 
 Template: [[templates/adr-note]].
+
+---
+
+## ADR-0077 — Language switcher and the entire i18n stack removed; site is English-only
+
+**Status:** Accepted · 2026-09-01 · **Supersedes ADR-0024, ADR-0065.**
+
+**Context.** Explicit user direction: "Remove the language switcher
+completely from the entire Geoporte website" — the nav toggle, all
+switching functionality, and any i18n/translation config, site-wide, with
+nothing else touched. ADR-0024 originally added the switcher (server-side
+LibreTranslate proxy, client-cached via `zustand`), and ADR-0065 widened its
+coverage from nav/headings/buttons to every page. Both are now reversed.
+
+**Decision.** Removed outright rather than disabled/flagged off, matching
+how this project has retired other features before (e.g. `ThemeController`,
+ADR-0066):
+
+- Deleted: `components/common/Nav/LanguageSwitcher.tsx`,
+  `components/common/LanguageDirection.tsx`,
+  `components/common/TranslatedText.tsx`, `hooks/i18n/` (`use-translated.ts`,
+  `use-language-store.ts`), `lib/i18n/` (`translation-queue.ts`,
+  `languages.ts`), `app/api/translate/route.ts`, `obsidian/frontend/i18n.md`.
+- `Nav.tsx`/`MobileMenu.tsx` no longer import or render
+  `<LanguageSwitcher>`; `layout.tsx` no longer mounts `<LanguageDirection>`
+  (so `<html lang>`/`dir` now stay at their static `"en"`/`ltr` defaults set
+  directly on the `<html>` tag).
+- Every `<TranslatedText text={expr} />` / `<TranslatedText text="literal" />`
+  call across `views/` and `components/common/` (~30 files: `Footer`,
+  `ServiceCard`, `ServicesDropdown`, every `views/home/*` and
+  `views/services/*` section, `ProjectCard`/`ProjectModal`/`ProjectsSection`/
+  `ProjectsCascade`/`ProjectsShowreel`, `TeamCascade`/`TeamMemberCard`,
+  `about.tsx`/`contact.tsx`/`publications.tsx`) replaced with the plain
+  source string in place — mechanical, done via a one-off codemod script
+  (not committed) plus manual review of each diff. `SectionHeading`,
+  `HeroHeading` (`HeroHeading`/`HeroSubtext`), `AboutHeading`, and
+  `TeamPanel`'s `TeamRoleTyped` dropped their `useTranslated()` indirection
+  and now pass their `text` prop straight to `TextEngine`/`Inview`.
+- `LIBRETRANSLATE_ENDPOINT` removed from `src/env.ts`'s server zod schema
+  and from `.env.example`.
+- Two comments in `contact.tsx`/`ContactSection.tsx` explaining why the
+  office street address was excluded from translation were removed — the
+  premise (a translation system that skips certain fields) no longer
+  applies.
+
+**Consequence.** `zustand` itself stays (still backs the scroll store,
+cookie-consent store, and the project-modal store — none of those are i18n).
+Two pre-existing `react/no-unescaped-entities` lint failures surfaced once
+`<TranslatedText>` text became literal JSX children ("Let's talk", "as
+they're presented") and were fixed with `&apos;` in the same pass, since
+leaving `yarn lint` red would misrepresent this change as unverified. No
+other files were touched — `.claude/scripts/verify.sh`'s one pre-existing
+FAIL (a false-positive `@keyframes` match on a comment string in
+`TeamCascade.tsx`/`ProjectsCascade.tsx`) and its WARNs all predate this
+change and were left alone per the user's "do not touch anything else."
+`yarn build` confirms `/api/translate` is gone from the route list; live
+verification on `/`, `/about`, `/about/team`, `/contact`, `/projects`,
+`/publications` found no globe icon, no language dropdown, and no
+`TranslatedText`/`i18n` references anywhere in `src/` outside CSS
+`translate()`/`translate3d()` transform calls (a false-positive substring
+match, unrelated to language translation).
 
 ---
 

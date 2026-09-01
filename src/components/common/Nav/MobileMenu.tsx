@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { Spring } from "@/components/animation/springs/spring";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { Service } from "@/data/mocks/services";
 import { contact } from "@/lib/company";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export interface MobileMenuProps {
   open: boolean;
@@ -34,11 +32,9 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
       aria-hidden={!open}
     >
       <nav className="flex flex-1 flex-col gap-8 px-6">
-        <LanguageSwitcher />
-
         <div>
           <p className="mb-3 text-xs tracking-[0.15em] text-foreground-muted uppercase">
-            <TranslatedText text="Services" />
+            Services
           </p>
           <ul className="grid grid-cols-1 gap-2">
             {services.map((service) => (
@@ -62,7 +58,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
                 onClick={onNavigate}
                 className="flex min-h-[44px] items-center text-xl text-foreground"
               >
-                <TranslatedText text={link.label} />
+                {link.label}
               </Link>
             </li>
           ))}

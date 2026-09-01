@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { Service } from "@/data/mocks/services";
 
 export interface ServicesDropdownProps {
@@ -43,7 +42,7 @@ export const ServicesDropdown = ({ services }: ServicesDropdownProps) => {
         aria-expanded={open}
         className="text-foreground-muted flex min-h-[44px] items-center transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
       >
-        <TranslatedText text="Services" />
+        Services
       </button>
       <div
         className={`absolute left-1/2 top-full z-50 mt-6 w-[28rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-2 rounded-xl border border-line bg-background-alt/95 p-6 opacity-0 shadow-2xl backdrop-blur-xl transition-[opacity,transform] duration-[var(--duration-normal)] ease-entrance group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 ${

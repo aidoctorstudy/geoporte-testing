@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { services } from "@/data/mocks/services";
 import { brand, contact, offices } from "@/lib/company";
 import { primaryNavLinks } from "@/components/common/Nav/nav-links";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 
 // Every route with its own fixed full-page WebGL background
@@ -35,17 +34,17 @@ export const Footer = () => {
         <div className="border-line flex flex-col gap-6 border-b pb-12 md:flex-row md:items-end md:justify-between md:gap-4">
           <div>
             <p className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
-              <TranslatedText text="Let's talk" />
+              Let&apos;s talk
             </p>
             <h2 className="text-foreground mt-3 max-w-xl text-3xl leading-[1.15] font-medium md:text-4xl">
-              <TranslatedText text="Ready to engineer with confidence in complex ground?" />
+              Ready to engineer with confidence in complex ground?
             </h2>
           </div>
           <Link
             href="/contact"
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex shrink-0 items-center justify-center rounded-full px-7 py-3 text-sm font-medium"
           >
-            <TranslatedText text="Contact Us" />
+            Contact Us
           </Link>
         </div>
 
@@ -90,7 +89,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
-              <TranslatedText text="Services" />
+              Services
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm">
               {services.map((service) => (
@@ -108,7 +107,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
-              <TranslatedText text="Company" />
+              Company
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm">
               {primaryNavLinks.map((link) => (
@@ -117,7 +116,7 @@ export const Footer = () => {
                     href={link.href}
                     className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                   >
-                    <TranslatedText text={link.label} />
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -126,7 +125,7 @@ export const Footer = () => {
                   href="/contact"
                   className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                 >
-                  <TranslatedText text="Contact" />
+                  Contact
                 </Link>
               </li>
             </ul>
@@ -134,7 +133,7 @@ export const Footer = () => {
 
           <div>
             <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
-              <TranslatedText text="Offices" />
+              Offices
             </h3>
             <ul className="mt-4 flex flex-col gap-3 text-sm">
               {offices.map((office) => (

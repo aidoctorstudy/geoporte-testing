@@ -4,7 +4,6 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { ContactForm } from "@/components/common/ContactForm";
 import { Inview } from "@/components/animation/springs/in-view";
 import { generateMetadata as buildMetadata } from "@/utils/seo/generate-page-metadata";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { contact, offices } from "@/lib/company";
 
 export function generateMetadata(): Metadata {
@@ -95,7 +94,7 @@ export function ContactView() {
               </a>
             </p>
             <p className="text-foreground-muted mt-2 text-sm">
-              <TranslatedText text={contact.responseTime} />
+              {contact.responseTime}
             </p>
             <ul className="mt-6 flex flex-col gap-2">
               {contact.phones.map((phone) => (
@@ -107,7 +106,7 @@ export function ContactView() {
                     {phone.number}
                   </a>{" "}
                   <span className="text-foreground-muted/60">
-                    (<TranslatedText text={phone.region} />)
+                    ({phone.region})
                   </span>
                 </li>
               ))}
@@ -127,10 +126,8 @@ export function ContactView() {
                 <address className="not-italic">
                   <p className="text-foreground font-medium">{office.city}</p>
                   <p className="text-foreground-muted mt-1 text-sm">
-                    <TranslatedText text={office.country} />
+                    {office.country}
                   </p>
-                  {/* Street address stays untranslated — a physical mailing
-                      address needs to remain exact, not machine-translated. */}
                   <p className="text-foreground-muted/80 mt-2 text-sm">
                     {office.address}
                   </p>

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { TiltCard } from "@/components/common/TiltCard";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { Project } from "@/data/mocks/projects";
 import { useProjectModalStore } from "./project-modal-store";
 
@@ -41,14 +40,14 @@ export const ProjectCard = ({ project, priority = false }: ProjectCardProps) => 
       <div className="flex flex-1 flex-col justify-between p-6">
         <div>
           <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-            <TranslatedText text={project.sector} />
+            {project.sector}
           </p>
           <h3 className="text-foreground mt-2 text-lg font-medium">
-            <TranslatedText text={project.title} />
+            {project.title}
           </h3>
         </div>
         <p className="text-foreground-muted mt-6 text-sm">
-          {project.location}, <TranslatedText text={project.country} />
+          {project.location}, {project.country}
         </p>
       </div>
     </TiltCard>

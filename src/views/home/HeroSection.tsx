@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { Magnetic } from "@/components/common/Magnetic";
 import { brand } from "@/lib/company";
 import { HeroScene } from "@/components/scene/HeroScene";
@@ -31,7 +30,7 @@ export const HeroSection = () => {
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-8">
         <p className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
-          <TranslatedText text="Civil · Geotechnical · Structural · Telecom" />
+          Civil · Geotechnical · Structural · Telecom
         </p>
         <HeroHeading
           id="hero-heading"
@@ -50,7 +49,7 @@ export const HeroSection = () => {
               href="#projects"
               className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
             >
-              <TranslatedText text="See Our Projects" />
+              See Our Projects
             </Link>
           </Magnetic>
         </div>

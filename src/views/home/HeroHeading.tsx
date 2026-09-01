@@ -5,7 +5,6 @@
 import { useEffect, useRef } from "react";
 import TextEngine from "spring-text-engine";
 import { easings } from "@react-spring/web";
-import { useTranslated } from "@/hooks/i18n/use-translated";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 
 const SHIMMER_PERIOD_S = 5;
@@ -33,7 +32,6 @@ export interface HeroHeadingProps {
  * rather than a per-frame React re-render.
  */
 export const HeroHeading = ({ id, text, className }: HeroHeadingProps) => {
-  const translated = useTranslated(text);
   const shimmerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,7 +56,7 @@ export const HeroHeading = ({ id, text, className }: HeroHeadingProps) => {
         wordStagger={90}
         wordConfig={{ duration: 700, easing: easings.easeOutCubic }}
       >
-        {translated}
+        {text}
       </TextEngine>
       <div
         ref={shimmerRef}
@@ -90,8 +88,6 @@ export interface HeroSubtextProps {
  * engine.
  */
 export const HeroSubtext = ({ text, className }: HeroSubtextProps) => {
-  const translated = useTranslated(text);
-
   return (
     <TextEngine
       tag="p"
@@ -103,7 +99,7 @@ export const HeroSubtext = ({ text, className }: HeroSubtextProps) => {
       letterStagger={14}
       letterConfig={{ duration: 1, easing: easings.linear }}
     >
-      {translated}
+      {text}
     </TextEngine>
   );
 };

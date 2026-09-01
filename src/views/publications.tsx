@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { generateMetadata as buildMetadata } from "@/utils/seo/generate-page-metadata";
 import { contact } from "@/lib/company";
 import { services } from "@/data/mocks/services";
@@ -44,7 +43,7 @@ export function PublicationsView() {
           to={{ opacity: 1, y: 0 }}
           className="text-foreground-muted mt-8 max-w-2xl text-base leading-relaxed md:text-lg"
         >
-          <TranslatedText text="Our engineers regularly publish technical papers and present at industry conferences on ground behaviour, foundation design and risk-based engineering — drawn from decades of work on complex infrastructure projects across Australia, New Zealand and beyond." />
+          Our engineers regularly publish technical papers and present at industry conferences on ground behaviour, foundation design and risk-based engineering — drawn from decades of work on complex infrastructure projects across Australia, New Zealand and beyond.
         </Inview>
       </section>
 
@@ -80,13 +79,13 @@ export function PublicationsView() {
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5 p-5">
                   <h3 className="text-foreground text-sm font-medium leading-snug">
-                    <TranslatedText text={publication.title} />
+                    {publication.title}
                   </h3>
                   <p className="text-foreground-muted text-xs">
-                    <TranslatedText text={publication.authors} />
+                    {publication.authors}
                   </p>
                   <p className="text-foreground-muted/70 mt-auto pt-2 text-xs">
-                    <TranslatedText text={publication.venue} />
+                    {publication.venue}
                   </p>
                 </div>
               </article>
@@ -120,10 +119,10 @@ export function PublicationsView() {
                 className="border-line bg-surface hover:border-accent/60 group block h-full rounded-2xl border p-6 transition-colors duration-[var(--duration-fast)] ease-entrance"
               >
                 <h3 className="text-foreground group-hover:text-accent text-base font-medium transition-colors duration-[var(--duration-fast)] ease-entrance">
-                  <TranslatedText text={service.title} />
+                  {service.title}
                 </h3>
                 <p className="text-foreground-muted mt-3 text-sm leading-relaxed">
-                  <TranslatedText text={service.shortDescription} />
+                  {service.shortDescription}
                 </p>
               </Link>
             </Inview>
@@ -141,10 +140,10 @@ export function PublicationsView() {
         className="glass-panel relative z-10 mx-auto my-8 max-w-6xl px-6 py-16 text-center md:my-12 md:px-8 md:py-24"
       >
         <p className="text-foreground text-lg font-medium">
-          <TranslatedText text="More publications are added as they're presented." />
+          More publications are added as they&apos;re presented.
         </p>
         <p className="text-foreground-muted mx-auto mt-3 max-w-md text-sm leading-relaxed">
-          <TranslatedText text="For copies of our recent work, or papers not yet listed here, reach out to" />{" "}
+          For copies of our recent work, or papers not yet listed here, reach out to{" "}
           <a
             href={`mailto:${contact.email}`}
             className="text-accent hover:text-glow transition-colors duration-[var(--duration-fast)] ease-entrance"

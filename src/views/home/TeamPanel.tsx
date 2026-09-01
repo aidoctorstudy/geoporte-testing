@@ -6,8 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { animated, easings, useInView, useSpring } from "@react-spring/web";
 import TextEngine from "spring-text-engine";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
-import { useTranslated } from "@/hooks/i18n/use-translated";
 import { cultureValues, teamComposition } from "@/lib/company";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 
@@ -23,15 +21,10 @@ const CURSOR_LINGER_MS = 500;
  * typing settles. The blink toggle is throttled to ~10fps (via the shared
  * ticker) since it only needs to look like a blink, not track every frame. */
 const TeamRoleTyped = ({ text, delayIn }: { text: string; delayIn: number }) => {
-  // Resolved before handing to `TextEngine` — same reason `SectionHeading`
-  // does this instead of nesting `<TranslatedText>` as a child: `TextEngine`
-  // reads `children` synchronously to split it into letters, so it needs the
-  // already-translated string, not a component that resolves one render later.
-  const translated = useTranslated(text);
   const [cursorOn, setCursorOn] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(true);
   const startRef = useRef<number | null>(null);
-  const typingDurationMs = translated.length * ROLE_LETTER_STAGGER_MS;
+  const typingDurationMs = text.length * ROLE_LETTER_STAGGER_MS;
 
   useEffect(() => {
     return subscribeToTicker((time) => {
@@ -53,7 +46,7 @@ const TeamRoleTyped = ({ text, delayIn }: { text: string; delayIn: number }) => 
         letterStagger={ROLE_LETTER_STAGGER_MS}
         letterConfig={{ duration: 1, easing: easings.linear }}
       >
-        {translated}
+        {text}
       </TextEngine>
       {cursorVisible && (
         <span
@@ -94,7 +87,7 @@ export const TeamPanel = () => {
     >
       <div>
         <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-          <TranslatedText text="Our team" />
+          Our team
         </h3>
         <ul className="mt-4 flex flex-col gap-2">
           {teamComposition.map((role, i) => (
@@ -104,7 +97,7 @@ export const TeamPanel = () => {
       </div>
       <div>
         <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-          <TranslatedText text="What drives us" />
+          What drives us
         </h3>
         <ul className="mt-4 flex flex-wrap gap-2">
           {cultureValues.map((value, i) => (
@@ -118,7 +111,7 @@ export const TeamPanel = () => {
               config={{ tension: 400, friction: 12 }}
               className="border-line text-foreground rounded-full border px-3 py-1 text-xs"
             >
-              <TranslatedText text={value} />
+              {value}
             </Inview>
           ))}
         </ul>

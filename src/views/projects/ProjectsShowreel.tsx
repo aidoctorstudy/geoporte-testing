@@ -7,7 +7,6 @@ import Image from "next/image";
 import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { projects } from "@/data/mocks/projects";
 import { useProjectModalStore } from "@/views/home/project-modal-store";
 import {
@@ -146,10 +145,10 @@ export const ProjectsShowreel = () => {
       />
       <div className="relative">
         <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
-          <TranslatedText text={tile.project.sector} />
+          {tile.project.sector}
         </p>
         <h3 className="text-foreground mt-1 text-sm font-medium [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
-          <TranslatedText text={tile.project.title} />
+          {tile.project.title}
         </h3>
       </div>
     </div>
@@ -189,10 +188,10 @@ export const ProjectsShowreel = () => {
             />
             <div className="relative">
               <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-                <TranslatedText text={tile.project.sector} />
+                {tile.project.sector}
               </p>
               <h3 className="text-foreground mt-1 text-sm font-medium">
-                <TranslatedText text={tile.project.title} />
+                {tile.project.title}
               </h3>
             </div>
           </div>
@@ -213,10 +212,10 @@ export const ProjectsShowreel = () => {
           style={{ opacity: s.intro }}
         >
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-            <TranslatedText text="27 projects · 7 countries" />
+            27 projects · 7 countries
           </p>
           <h2 className="text-foreground leading-display text-3xl font-medium md:text-5xl">
-            <TranslatedText text="Every landmark, in one field" />
+            Every landmark, in one field
           </h2>
         </animated.div>
 
@@ -237,7 +236,7 @@ export const ProjectsShowreel = () => {
             href="#projects"
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] pointer-events-auto ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
           >
-            <TranslatedText text="Explore All Projects" />
+            Explore All Projects
           </a>
         </animated.div>
       </div>

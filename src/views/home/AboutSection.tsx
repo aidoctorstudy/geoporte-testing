@@ -1,5 +1,4 @@
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { AboutHeading } from "./AboutHeading";
 import { GeologicalCrossSection } from "./GeologicalCrossSection";
 import { TeamPanel } from "./TeamPanel";
@@ -20,7 +19,7 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
       <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.2fr_1fr]">
         <div>
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-            <TranslatedText text="About Geoporte" />
+            About Geoporte
           </p>
           <AboutHeading
             id="about-heading"

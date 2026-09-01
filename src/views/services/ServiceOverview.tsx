@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { ServiceStats } from "./ServiceStats";
 import type { Service } from "@/data/mocks/services";
 
@@ -22,12 +21,7 @@ export interface ServiceOverviewProps {
   service: Service;
 }
 
-/** `overview` and `capabilityGroups` were plain strings under ADR-0024's
- * original "nav/headings/buttons only" i18n scope; that scope was widened to
- * full page coverage (see the i18n note in decisions-log.md), so this body
- * copy now goes through `<TranslatedText>` too, same as everything else.
- *
- * `capabilityGroups` used to be its own `ServiceCapabilities` section; folded
+/** `capabilityGroups` used to be its own `ServiceCapabilities` section; folded
  * in here so the page reads as the 6 sections the spec calls for without
  * dropping that real, previously-sourced content — see decisions-log.md. */
 export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
@@ -89,7 +83,7 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
       >
         <SectionHeading id="service-overview-heading" eyebrow="Overview" heading="What we deliver" />
         <p className="text-foreground-muted mt-6 max-w-3xl text-lg leading-relaxed">
-          <TranslatedText text={service.overview} />
+          {service.overview}
         </p>
 
         <ServiceStats stats={service.stats} />
@@ -98,12 +92,12 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
           {service.capabilityGroups.map((group) => (
             <div key={group.heading}>
               <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-                <TranslatedText text={group.heading} />
+                {group.heading}
               </h3>
               <ul className="text-foreground-muted/90 mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
                 {group.items.map((item) => (
                   <li key={item}>
-                    <TranslatedText text={item} />
+                    {item}
                   </li>
                 ))}
               </ul>
@@ -118,16 +112,16 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
         {service.subServices && (
           <div className="mt-16">
             <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-              <TranslatedText text="In more detail" />
+              In more detail
             </h3>
             <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
               {service.subServices.map((subService) => (
                 <div key={subService.title}>
                   <dt className="text-foreground text-sm font-medium">
-                    <TranslatedText text={subService.title} />
+                    {subService.title}
                   </dt>
                   <dd className="text-foreground-muted mt-1 text-sm leading-relaxed">
-                    <TranslatedText text={subService.description} />
+                    {subService.description}
                   </dd>
                 </div>
               ))}

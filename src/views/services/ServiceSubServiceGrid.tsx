@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { animated, to, useSpring } from "@react-spring/web";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { ServiceSubService } from "@/data/mocks/services";
 
 const MAX_TILT_DEG = 6;
@@ -57,10 +56,10 @@ const SubServiceCard = ({ title, description }: ServiceSubService) => {
       className="border-line bg-surface hover:border-accent/60 h-full rounded-2xl border p-6 transition-colors duration-[var(--duration-normal)] ease-entrance"
     >
       <h3 className="text-foreground text-base font-medium">
-        <TranslatedText text={title} />
+        {title}
       </h3>
       <p className="text-foreground-muted mt-3 text-sm leading-relaxed">
-        <TranslatedText text={description} />
+        {description}
       </p>
     </animated.article>
   );

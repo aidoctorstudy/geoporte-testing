@@ -4,7 +4,6 @@
 
 import TextEngine from "spring-text-engine";
 import { easings } from "@react-spring/web";
-import { useTranslated } from "@/hooks/i18n/use-translated";
 
 export interface SectionHeadingProps {
   eyebrow: string;
@@ -19,8 +18,7 @@ const DEFAULT_HEADING_CLASSNAME =
 
 /**
  * The eyebrow + `TextEngine` heading pattern repeated across every homepage
- * section — one place to keep the reveal config and language-switcher
- * translation consistent. See obsidian/frontend/i18n.md.
+ * section — one place to keep the reveal config consistent.
  */
 export const SectionHeading = ({
   eyebrow,
@@ -29,13 +27,10 @@ export const SectionHeading = ({
   tag = "h2",
   headingClassName = DEFAULT_HEADING_CLASSNAME,
 }: SectionHeadingProps) => {
-  const translatedEyebrow = useTranslated(eyebrow);
-  const translatedHeading = useTranslated(heading);
-
   return (
     <>
       <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-        {translatedEyebrow}
+        {eyebrow}
       </p>
       <TextEngine
         tag={tag}
@@ -48,7 +43,7 @@ export const SectionHeading = ({
         lineConfig={{ duration: 800, easing: easings.easeOutCubic }}
         overflow
       >
-        {translatedHeading}
+        {heading}
       </TextEngine>
     </>
   );

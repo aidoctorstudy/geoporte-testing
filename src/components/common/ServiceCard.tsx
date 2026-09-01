@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { Hover } from "@/components/animation/springs/hover";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { SceneViewport } from "@/components/scene/SceneViewport";
 import { HeroScene } from "@/components/scene/HeroScene";
 import { MINI_SCENES } from "@/components/scene/mini-scenes";
@@ -109,13 +108,13 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
         className="group relative z-10 flex h-full flex-col"
       >
         <h3 className="text-foreground max-w-[calc(100%-4.5rem)] text-xl font-medium">
-          <TranslatedText text={service.title} />
+          {service.title}
         </h3>
         <p className="text-foreground-muted mt-3 flex-1 text-sm leading-relaxed">
-          <TranslatedText text={service.shortDescription} />
+          {service.shortDescription}
         </p>
         <span className="text-accent group-hover:text-glow mt-6 inline-flex items-center gap-2 text-xs font-medium tracking-[0.12em] uppercase transition-colors duration-[var(--duration-fast)] ease-entrance">
-          <TranslatedText text="Explore" />
+          Explore
           <span aria-hidden="true">→</span>
         </span>
       </Link>

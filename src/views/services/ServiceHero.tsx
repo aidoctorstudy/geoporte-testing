@@ -1,6 +1,5 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { ServiceHeroScene } from "@/components/scene/ServiceHeroScene";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { isGlassSceneTheme, type Service } from "@/data/mocks/services";
 
 export interface ServiceHeroProps {
@@ -59,7 +58,7 @@ export const ServiceHero = ({ service }: ServiceHeroProps) => {
                 heading={service.title}
               />
               <p className="text-foreground-muted mt-6 max-w-xl text-lg">
-                <TranslatedText text={service.shortDescription} />
+                {service.shortDescription}
               </p>
             </div>
           </div>

@@ -9,7 +9,6 @@ import { getSiteStructuredData } from "@/utils/seo/structured-data";
 import { LazyCookie } from "@/components/common/Cookie";
 import { Footer } from "@/components/common/Footer";
 import { AdaptiveGrid } from "@/components/common/grid";
-import { LanguageDirection } from "@/components/common/LanguageDirection";
 import { Nav } from "@/components/common/Nav";
 import { ReducedMotion } from "@/components/common/reduced-motion";
 import { ScrollSignal } from "@/components/common/ScrollSignal";
@@ -68,7 +67,6 @@ export default function RootLayout({
           <ScrollLayout>
             <AdaptiveGrid />
             <ReducedMotion />
-            <LanguageDirection />
             <ScrollSignal />
             {/* Planet mounts first — its canvas is pinned to z-index: -1 in
                 build-planet-scene.ts regardless of mount order, but this JSX

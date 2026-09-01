@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { animated, useTransition } from "@react-spring/web";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { useProjectModalStore } from "./project-modal-store";
 
 const TITLE_ID = "project-modal-title";
@@ -101,34 +100,34 @@ export const ProjectModal = () => {
           <div className="flex flex-col gap-5 p-6 sm:p-8">
             <div>
               <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-                <TranslatedText text={project.category} />
+                {project.category}
               </p>
               <h2 id={TITLE_ID} className="text-foreground mt-2 text-2xl font-medium leading-tight">
-                <TranslatedText text={project.title} />
+                {project.title}
               </h2>
             </div>
 
             <dl className="border-line grid grid-cols-1 gap-4 border-y py-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
-                  <TranslatedText text="Location" />
+                  Location
                 </dt>
                 <dd className="text-foreground mt-1">
-                  {project.location}, <TranslatedText text={project.country} />
+                  {project.location}, {project.country}
                 </dd>
               </div>
               <div>
                 <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
-                  <TranslatedText text="Discipline" />
+                  Discipline
                 </dt>
                 <dd className="text-foreground mt-1">
-                  <TranslatedText text={project.sector} />
+                  {project.sector}
                 </dd>
               </div>
             </dl>
 
             <p className="text-foreground-muted text-sm leading-relaxed">
-              <TranslatedText text={project.description} />
+              {project.description}
             </p>
           </div>
         </animated.div>

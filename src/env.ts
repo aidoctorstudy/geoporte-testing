@@ -30,9 +30,6 @@ const publicSchema = z.object({
 const serverSchema = z.object({
   /** Optional upstream the contact endpoint forwards leads to (CRM / webhook). */
   CONTACT_ENDPOINT: optionalUrl(),
-  /** LibreTranslate instance for the language switcher; defaults to the
-   *  public disroot.org instance if unset — see app/api/translate/route.ts. */
-  LIBRETRANSLATE_ENDPOINT: optionalUrl(),
 });
 
 /** Public env — safe to read anywhere (server or client). */
@@ -49,7 +46,6 @@ let cachedServerEnv: z.infer<typeof serverSchema> | undefined;
 export function getServerEnv() {
   cachedServerEnv ??= serverSchema.parse({
     CONTACT_ENDPOINT: process.env.CONTACT_ENDPOINT,
-    LIBRETRANSLATE_ENDPOINT: process.env.LIBRETRANSLATE_ENDPOINT,
   });
   return cachedServerEnv;
 }

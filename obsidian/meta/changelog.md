@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-08-29
+updated: 2026-09-01
 ---
 
 # Changelog
@@ -36,6 +36,30 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-09-01 (Language switcher and the whole i18n stack removed — site is English-only)
+
+Explicit user direction: remove the nav language switcher and every i18n
+mechanism, site-wide. Per [[decisions-log]] ADR-0077.
+
+- Deleted outright: `LanguageSwitcher.tsx`, `LanguageDirection.tsx`,
+  `TranslatedText.tsx`, `hooks/i18n/` (`use-translated.ts`,
+  `use-language-store.ts`), `lib/i18n/` (`translation-queue.ts`,
+  `languages.ts`), `app/api/translate/route.ts`.
+- `Nav.tsx`/`MobileMenu.tsx` no longer render `<LanguageSwitcher>`;
+  `layout.tsx` no longer mounts `<LanguageDirection>`.
+- Every `<TranslatedText text={…} />`/`<TranslatedText text="…" />` call
+  (~30 files across `views/` and `components/common/`) replaced with the
+  plain source string; `SectionHeading`, `HeroHeading`, `AboutHeading`,
+  `TeamPanel`'s typed role line dropped their `useTranslated()` calls the
+  same way.
+- `LIBRETRANSLATE_ENDPOINT` removed from `src/env.ts`'s server schema and
+  `.env.example`.
+- `zustand` itself is untouched — still used by the scroll store, cookie
+  consent, and the project-modal store, none of which were part of i18n.
+- `yarn lint` / `yarn build` clean; verified live on `/`, `/about`,
+  `/about/team`, `/contact`, `/projects`, `/publications` — no globe icon,
+  no language dropdown, `document.documentElement.lang` fixed at `"en"`.
 
 ## 2026-08-30 (`TeamCascade` card layout: two columns — photo left, full details right)
 

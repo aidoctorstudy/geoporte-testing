@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { useScrollSignal } from "@/hooks/scroll/use-scroll-signal";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
@@ -68,7 +67,7 @@ export const ScrollCue = () => {
         <circle ref={dotRef} cx="10" cy={DOT_REST_Y} r="2" fill="currentColor" className="text-accent" />
       </svg>
       <span className="text-foreground-muted/50 text-xs tracking-[0.3em] uppercase">
-        <TranslatedText text="Scroll" />
+        Scroll
       </span>
     </animated.div>
   );

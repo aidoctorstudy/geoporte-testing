@@ -2,7 +2,6 @@
 
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { ExperienceStat } from "@/data/mocks/experience";
 
 const VARIANT_CLASSNAME: Record<ExperienceStat["variant"], string> = {
@@ -33,7 +32,7 @@ export const ExperienceStatBox = ({ stat }: ExperienceStatBoxProps) => {
         {number.to((n) => `${Math.round(n)}${stat.suffix}`)}
       </animated.span>
       <span className="text-foreground/85 text-sm leading-snug">
-        <TranslatedText text={stat.label} />
+        {stat.label}
       </span>
     </div>
   );

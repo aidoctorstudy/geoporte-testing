@@ -68,7 +68,6 @@ consistent with it.
 | How do I add a page? | [[new-page]] |
 | How does animation work? | [[animation-system]], [[text-engine]] |
 | How do I style something? | [[design-system]] |
-| How does the language switcher work? | [[i18n]] |
 | What components/hooks/utils exist? | [[components/animation-springs]], [[components/common]], [[hooks]], [[utils]] |
 | The 3D scene lags / needs optimising? | [[optimize-3d-scene]] |
 | How do I check my work? | [[qa-verification]] |

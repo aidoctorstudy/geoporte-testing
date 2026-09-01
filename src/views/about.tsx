@@ -6,7 +6,6 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { Magnetic } from "@/components/common/Magnetic";
 import { Inview } from "@/components/animation/springs/in-view";
 import { generateMetadata as buildMetadata } from "@/utils/seo/generate-page-metadata";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { offices, experienceRegions, brand } from "@/lib/company";
 
 export function generateMetadata(): Metadata {
@@ -32,7 +31,7 @@ export function AboutView() {
         className="glass-panel relative z-10 mx-auto mt-24 max-w-6xl px-6 py-16 md:mt-32 md:px-8 md:py-24"
       >
         <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-          <TranslatedText text="About Geoporte" />
+          About Geoporte
         </p>
         <AboutHeading
           id="about-heading"
@@ -49,7 +48,7 @@ export function AboutView() {
             delayIn={100}
             className="text-foreground-muted text-base leading-relaxed md:text-lg"
           >
-            <TranslatedText text={brand.mission} />
+            {brand.mission}
           </Inview>
           <Inview
             tag="p"
@@ -59,7 +58,7 @@ export function AboutView() {
             delayIn={160}
             className="text-foreground-muted text-base leading-relaxed md:text-lg"
           >
-            <TranslatedText text="We work as a One Team with our clients, pairing cutting-edge digital tools and modelling with rigorous senior review — across building, transport, water, ports, marine and energy infrastructure." />
+            We work as a One Team with our clients, pairing cutting-edge digital tools and modelling with rigorous senior review — across building, transport, water, ports, marine and energy infrastructure.
           </Inview>
         </div>
       </section>
@@ -81,7 +80,7 @@ export function AboutView() {
             href="/about/team"
             className="bg-accent text-accent-foreground hover:bg-accent/90 inline-flex min-h-[44px] items-center gap-2 rounded-full px-6 text-sm font-medium transition-colors duration-[var(--duration-fast)] ease-entrance"
           >
-            <TranslatedText text="Meet Our Team" />
+            Meet Our Team
             <span aria-hidden="true">→</span>
           </Link>
         </Magnetic>
@@ -119,7 +118,7 @@ export function AboutView() {
         </Inview>
 
         <p className="text-foreground-muted mt-14 text-xs tracking-[0.2em] uppercase">
-          <TranslatedText text="Project experience" />
+          Project experience
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {experienceRegions.map((region, i) => (
@@ -133,7 +132,7 @@ export function AboutView() {
               config={{ tension: 400, friction: 12 }}
               className="border-line text-foreground rounded-full border px-3 py-1 text-xs"
             >
-              <TranslatedText text={region} />
+              {region}
             </Inview>
           ))}
         </ul>
@@ -149,16 +148,16 @@ export function AboutView() {
         className="glass-panel relative z-10 mx-auto my-8 max-w-6xl px-6 py-16 text-center md:my-12 md:px-8 md:py-24"
       >
         <p className="text-foreground text-lg font-medium">
-          <TranslatedText text={brand.philosophy} />
+          {brand.philosophy}
         </p>
         <p className="text-foreground-muted mx-auto mt-3 max-w-md text-sm leading-relaxed">
-          <TranslatedText text="Talk to us about your next project." />
+          Talk to us about your next project.
         </p>
         <Link
           href="/contact"
           className="bg-accent text-accent-foreground hover:bg-accent/90 mt-6 inline-flex min-h-[44px] items-center rounded-lg px-6 text-sm font-medium transition-colors duration-[var(--duration-fast)] ease-entrance"
         >
-          <TranslatedText text="Contact Geoporte" />
+          Contact Geoporte
         </Link>
       </Inview>
     </div>

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { TeamMember } from "@/data/mocks/team";
 
 export interface TeamMemberCardProps {
@@ -37,14 +36,14 @@ export const TeamMemberCard = ({ member, priority = false }: TeamMemberCardProps
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div>
         <h3 className="text-foreground text-xl font-medium [text-shadow:0_1px_20px_rgba(0,0,0,.7)]">
-          <TranslatedText text={member.name} />
+          {member.name}
         </h3>
         <p className="text-accent mt-1 text-sm font-medium tracking-[0.04em]">
-          <TranslatedText text={member.title} />
+          {member.title}
         </p>
         {member.experience && (
           <p className="text-foreground/70 mt-1 text-xs tracking-[0.1em] uppercase">
-            {member.experience} <TranslatedText text="experience" />
+            {member.experience} experience
           </p>
         )}
       </div>
@@ -55,13 +54,13 @@ export const TeamMemberCard = ({ member, priority = false }: TeamMemberCardProps
             key={credential}
             className="text-foreground/90 rounded-full border border-[var(--glass-border)] bg-[var(--glass-fill)] px-3 py-1 text-xs backdrop-blur-md"
           >
-            <TranslatedText text={credential} />
+            {credential}
           </li>
         ))}
       </ul>
 
       <p className="text-foreground/85 mt-auto text-sm leading-relaxed [text-shadow:0_1px_16px_rgba(0,0,0,.6)]">
-        <TranslatedText text={member.bio} />
+        {member.bio}
       </p>
     </div>
   </article>

@@ -101,7 +101,7 @@ Mount it once. Props: `baseWidth` (defaults to the largest breakpoint) and
 ## Homepage motion/3D overhaul globals (Phase 0)
 
 Six new client leaves, all mounted once in the root layout alongside the existing
-headless globals (`AdaptiveGrid`, `ReducedMotion`, `LanguageDirection`) — see
+headless globals (`AdaptiveGrid`, `ReducedMotion`) — see
 [[decisions-log]] ADR-0027 for why a persistent ambient background scene needed its
 own renderer, and [[hooks]] for the `usePointer` / `useScrollSignal` stores these
 all read.
@@ -240,9 +240,8 @@ Fixed, pill-shaped primary navigation, mounted once in the root layout. Lives in
 
 | File | Role |
 |------|------|
-| `Nav.tsx` | Desktop bar — logo, `ServicesDropdown`, secondary links, `LanguageSwitcher`, CTA, mobile toggle |
+| `Nav.tsx` | Desktop bar — logo, `ServicesDropdown`, secondary links, CTA, mobile toggle |
 | `ServicesDropdown.tsx` | Hover-open services menu (desktop) — CSS-only per ADR-0014, not a spring |
-| `LanguageSwitcher.tsx` | Click-open language dropdown — see [[i18n]] |
 | `MobileMenu.tsx` | Full-screen mobile nav, `<Spring>`-driven open/close |
 | `nav-links.ts` | Primary nav link data — also consumed by `Footer` |
 
@@ -305,30 +304,24 @@ Every other route keeps its plain opaque `bg-background-alt` panel. See
 ADR-0042, ADR-0044, ADR-0045, ADR-0047, ADR-0048, ADR-0050, ADR-0051,
 ADR-0052, ADR-0053, ADR-0054, ADR-0055, ADR-0057.
 
-## LanguageDirection — `LanguageDirection.tsx`
-
-`<LanguageDirection>` — a client leaf that syncs `document.documentElement.lang`
-/ `dir` to the language store, flipping RTL for Arabic/Urdu. Renders `null`;
-mounted once in the root layout next to `<ReducedMotion>`. See [[i18n]].
-
 > [!note] `#removed`
 > A `ThemeController`/`ThemeToggle` pair briefly existed here (light/dark
 > theme toggle, ADR-0064) and was fully removed the same day under explicit
 > user direction — dark-only again, no toggle in the nav. See
 > [[decisions-log]] ADR-0066. Noted so it isn't rebuilt from a stale memory
 > of this catalog.
-
-## TranslatedText — `TranslatedText.tsx`
-
-`<TranslatedText text="..." />` — resolves a UI string through `useTranslated`.
-Exists as a component (not a bare hook call) so it can sit inside `.map()`
-lists without breaking the rules of hooks. See [[i18n]].
+>
+> The nav language switcher (`LanguageSwitcher.tsx`), `LanguageDirection.tsx`
+> and `TranslatedText.tsx` (plus the rest of the i18n stack — `hooks/i18n/`,
+> `lib/i18n/`, `app/api/translate/route.ts`) were likewise fully removed —
+> see [[decisions-log]] ADR-0077. The site is English-only; don't rebuild
+> these from a stale memory of this catalog.
 
 ## SectionHeading — `SectionHeading.tsx`
 
 `<SectionHeading eyebrow heading id tag? headingClassName? />` — the eyebrow +
-`TextEngine` heading pattern repeated across every homepage section, with
-built-in language-switcher translation. See [[i18n]] and [[text-engine]].
+`TextEngine` heading pattern repeated across every homepage section. See
+[[text-engine]].
 
 ## GeotechnicalPlexusSection — `src/views/home/GeotechnicalPlexusSection.tsx`
 

@@ -1,6 +1,5 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { contact, offices } from "@/lib/company";
 import { ContactTerrain } from "./ContactTerrain";
 
@@ -43,7 +42,7 @@ export const ContactSection = ({ headingTag = "h2" }: ContactSectionProps = {}) 
               </a>
             </p>
             <p className="text-foreground-muted mt-2 text-sm">
-              <TranslatedText text={contact.responseTime} />
+              {contact.responseTime}
             </p>
             <ul className="mt-6 flex flex-col gap-2">
               {contact.phones.map((phone) => (
@@ -55,7 +54,7 @@ export const ContactSection = ({ headingTag = "h2" }: ContactSectionProps = {}) 
                     {phone.number}
                   </a>{" "}
                   <span className="text-foreground-muted/60">
-                    (<TranslatedText text={phone.region} />)
+                    ({phone.region})
                   </span>
                 </li>
               ))}
@@ -68,9 +67,8 @@ export const ContactSection = ({ headingTag = "h2" }: ContactSectionProps = {}) 
                 <address className="not-italic">
                   <p className="text-foreground font-medium">{office.city}</p>
                   <p className="text-foreground-muted mt-1 text-sm">
-                    <TranslatedText text={office.country} />
+                    {office.country}
                   </p>
-                  {/* Street address stays untranslated — see contact.tsx. */}
                   <p className="text-foreground-muted/80 mt-2 text-sm">
                     {office.address}
                   </p>

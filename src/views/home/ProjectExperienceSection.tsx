@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Inview } from "@/components/animation/springs/in-view";
 import { Magnetic } from "@/components/common/Magnetic";
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { experienceCopy, experienceStats, experienceTeamPhoto } from "@/data/mocks/experience";
 import { ExperienceStatBox } from "./ExperienceStatBox";
 
@@ -65,7 +64,7 @@ export const ProjectExperienceSection = () => {
                 href="/about"
                 className="bg-accent text-accent-foreground hover:bg-accent/90 inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase transition-colors duration-[var(--duration-fast)] ease-entrance"
               >
-                <TranslatedText text="Learn more" />
+                Learn more
                 <span aria-hidden="true">→</span>
               </Link>
             </Magnetic>

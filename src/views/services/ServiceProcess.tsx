@@ -1,6 +1,5 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 
 export interface ServiceProcessProps {
   steps: string[];
@@ -52,7 +51,7 @@ export const ServiceProcess = ({ steps, glass }: ServiceProcessProps) => {
                 {index + 1}
               </span>
               <p className="text-foreground text-sm font-medium">
-                <TranslatedText text={step} />
+                {step}
               </p>
             </Inview>
           ))}

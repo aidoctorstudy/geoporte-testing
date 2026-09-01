@@ -8,7 +8,6 @@ import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import type { TeamMember } from "@/data/mocks/team";
 import {
   cascadeActiveIndex,
@@ -163,17 +162,17 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
     return (
       <section aria-labelledby="team-cascade-heading" className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
         <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
-          <TranslatedText text="GEOPORTE · Our People" />
+          GEOPORTE · Our People
         </p>
         <h1 id="team-cascade-heading" className="text-foreground leading-display mt-4 text-3xl font-medium md:text-5xl">
-          <TranslatedText text="Our" />
+          Our
           <br />
           <em style={{ color: ACCENT }}>
-            <TranslatedText text="Team" />
+            Team
           </em>
         </h1>
         <p className="text-foreground-muted mt-4 text-lg">
-          <TranslatedText text="The specialists behind every project" />
+          The specialists behind every project
         </p>
         <ul className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((member) => (
@@ -197,14 +196,14 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
               />
               <div className="relative">
                 <h3 className="text-foreground text-sm font-medium">
-                  <TranslatedText text={member.name} />
+                  {member.name}
                 </h3>
                 <p className="text-foreground-muted mt-1 text-xs">
-                  <TranslatedText text={member.title} />
+                  {member.title}
                 </p>
                 {member.experience ? (
                   <p className="mt-1 text-xs" style={{ color: ACCENT }}>
-                    <TranslatedText text={member.experience} />
+                    {member.experience}
                   </p>
                 ) : null}
               </div>
@@ -231,17 +230,17 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
           style={{ opacity: intro }}
         >
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-            <TranslatedText text="GEOPORTE · Our People" />
+            GEOPORTE · Our People
           </p>
           <h1 id="team-cascade-heading" className="text-foreground leading-display text-3xl font-medium md:text-5xl">
-            <TranslatedText text="Our" />
+            Our
             <br />
             <em style={{ color: ACCENT }}>
-              <TranslatedText text="Team" />
+              Team
             </em>
           </h1>
           <p className="text-foreground-muted mt-4 text-lg">
-            <TranslatedText text="The specialists behind every project" />
+            The specialists behind every project
           </p>
           <button
             type="button"
@@ -249,7 +248,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
             style={{ background: ACCENT }}
             className="text-accent-foreground hover:opacity-90 transition-opacity duration-[var(--duration-fast)] ease-entrance pointer-events-auto mt-8 inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
           >
-            <TranslatedText text="Meet the team" />
+            Meet the team
           </button>
         </animated.div>
 
@@ -279,18 +278,18 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
               {/* RIGHT — full details */}
               <div className="min-w-0 flex-1 text-center md:text-left">
                 <h2 className="text-foreground text-2xl font-medium md:text-4xl">
-                  <TranslatedText text={member.name} />
+                  {member.name}
                 </h2>
                 <p className="mt-2 text-base font-medium md:text-lg" style={{ color: ACCENT }}>
-                  <TranslatedText text={member.title} />
+                  {member.title}
                 </p>
                 {member.experience ? (
                   <p className="text-foreground-muted mt-1 text-xs tracking-[0.08em] uppercase">
-                    <TranslatedText text={member.experience} />
+                    {member.experience}
                   </p>
                 ) : null}
                 <p className="text-foreground-muted mx-auto mt-4 max-w-xl text-sm leading-relaxed md:mx-0 md:text-base">
-                  <TranslatedText text={member.bio} />
+                  {member.bio}
                 </p>
                 {member.credentials.length > 0 ? (
                   <div className="mt-4 flex flex-wrap justify-center gap-2 md:justify-start">
@@ -299,7 +298,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
                         key={credential}
                         className="border-line/60 text-foreground-muted rounded-full border px-3 py-1 text-xs"
                       >
-                        <TranslatedText text={credential} />
+                        {credential}
                       </span>
                     ))}
                   </div>

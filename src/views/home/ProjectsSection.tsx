@@ -1,6 +1,5 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { projectCategories, projects } from "@/data/mocks/projects";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
@@ -40,7 +39,7 @@ export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}
               delayIn={index * 100}
             >
               <h3 className="text-foreground-muted text-sm tracking-[0.16em] uppercase">
-                <TranslatedText text={category} />
+                {category}
               </h3>
               <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {categoryProjects.map((project, cardIndex) => (

@@ -706,22 +706,6 @@ routes where a background scene is route-conditional; `CustomCursor`/
 `Footer`/`Nav` read the same list to swap in their own glass-page
 treatment. See ADR-0037, ADR-0040, ADR-0042, ADR-0044.
 
-## Internationalization
-
-Homepage UI strings (nav links, section headings, button labels) translate at
-runtime for the nav language switcher — English, Arabic, Urdu, French, Chinese,
-with `ar`/`ur` flipping the document to RTL. No i18n framework/package added;
-built from what's already in the stack:
-
-| Piece | Uses | Role |
-|-------|------|------|
-| `app/api/translate/route.ts` | `zod`, `fetch` | Server-side proxy to a LibreTranslate instance (public `translate.disroot.org` by default, `LIBRETRANSLATE_ENDPOINT` overrides) — the browser never calls it directly, per [[api-architecture]]. |
-| `hooks/i18n/use-language-store.ts` | `zustand` + `persist` | Chosen language + translation cache, persisted to `localStorage` (`geoporte-language`). |
-| `lib/i18n/translation-queue.ts` | `lib/api-client.ts` | Batches every string requested in one tick into a single `/api/translate` call per language. |
-
-See [[i18n]] for the full design (batching, caching, RTL, fallback behaviour) and
-ADR-0024 in [[decisions-log]].
-
 ## Scroll & state
 
 | Package | Version | Role |
@@ -795,9 +779,11 @@ only when a project needs them (ADR-0020):
 > `@payloadcms/next` 3.88 peer-requires `next >=16.2.6 <17`. The starter is on
 > `16.3.1`, so it now satisfies that range. Re-check when either side moves.
 
-i18n adopted 2026-08-23 — see the "Internationalization" section above. Still
-undecided: payments, data-fetching libraries, testing. Document here when
-adopted and add an ADR to [[decisions-log]].
+i18n was adopted 2026-08-23 and fully removed 2026-09-01 under explicit user
+direction — the site is English-only again, no nav language switcher, no
+`app/api/translate` proxy, no `zod`/`zustand` i18n plumbing. See ADR-0077 in
+[[decisions-log]]. Still undecided: payments, data-fetching libraries,
+testing. Document here when adopted and add an ADR to [[decisions-log]].
 
 ## Related
 
