@@ -1,6 +1,6 @@
 ---
 tags: [frontend, design-system, stable]
-updated: 2026-07-17
+updated: 2026-08-27
 ---
 
 # Design System — Tailwind v4
@@ -68,6 +68,26 @@ every `bg-background` on the page. Binding a literal — or a `var(--raw-*)` —
 directly in `@theme` freezes the value at build time and silently breaks theming.
 The indirection is load-bearing, not ceremony.
 
+> [!warning] That inlining only happens for real Tailwind utility classes
+> `bg-accent`/`text-glow`/etc genuinely resolve `var(--accent)` live, so a
+> page-scoped override of `--accent` on a wrapper div correctly cascades into
+> every descendant using those classes. **Hand-written CSS that references the
+> Tier-3 alias name directly does not get this treatment** — `--color-glass-fill:
+> var(--glass-fill)` is an ordinary CSS custom property once it leaves
+> `@theme inline`, and an ordinary custom property's `var()` reference resolves
+> at the element **where that property is declared** (`:root`), not at the
+> element consuming it. A page-scoped override of `--glass-fill` further down
+> the tree therefore never reaches a rule written as `background:
+> var(--color-glass-fill)` — the classic `--b: var(--a)` / `.override { --a:
+> blue }` CSS gotcha. `.glass-panel` hit exactly this (ADR-0059): its
+> page-scoped "-clear"/"-intense" overrides silently did nothing for years
+> until caught by `getComputedStyle`, not a screenshot. **Rule: any
+> hand-authored `@layer utilities`/`@layer components` rule that needs to
+> respect a page-scoped Tier-2 override must reference the Tier-2 token by its
+> own name directly** (`var(--glass-fill)`), never the Tier-3 alias
+> (`var(--color-glass-fill)`) — the Tier-3 binding exists only for Tailwind's
+> own utility-class generation, not for other CSS to consume.
+
 ### Namespaces that generate utilities
 
 A token only becomes a utility if its prefix is a Tailwind namespace. Verified
@@ -94,6 +114,16 @@ against `tailwindcss` v4.3.3 (the installed version):
 
 If a value's prefix is not in that table, it is not a utility — either pick the
 right namespace or use it via `var()` in an arbitrary value.
+
+> [!warning] Lightning CSS can silently drop a duplicated `backdrop-filter` pair
+> Tailwind v4's build pass (Lightning CSS) may drop **both** `backdrop-filter`
+> and `-webkit-backdrop-filter` from the compiled output when a hand-written
+> rule declares them with the same value on adjacent lines — the textbook
+> copy-paste pattern. DevTools' *Styles* panel still shows your authored
+> source either way, so it looks correct there; only the *Computed* tab (or
+> `getComputedStyle(el).backdropFilter`) reveals it came back `"none"`. Write
+> a single un-prefixed `backdrop-filter` and trust the build's own
+> autoprefixer — do not add `-webkit-backdrop-filter` by hand. See ADR-0040.
 
 > [!important] The token rule
 > **Never** hardcode hex values, pixel spacing, or named colours in `className` or
@@ -195,7 +225,16 @@ Loaded in `src/app/layout.tsx` and exposed on `<body>` as `--font-onest`.
 - Extract a repeated pattern to a **React component** — not a `@layer
   components` class. See *Where a style goes* above (ADR-0012).
 - Mobile-first responsive: `sm:` / `md:` / `lg:` / `xl:` prefixes.
-- Dark mode: `dark:` prefix or token overrides in a `prefers-color-scheme` block.
+- Sizing something against a **real pixel requirement** (a touch target, a
+  hard external spec)? Use an arbitrary absolute value (`min-h-[44px]`), not
+  a rem utility (`min-h-11`) — the adaptive scaling grid means rem-based
+  sizes are not fixed pixel sizes at most viewport widths. See
+  [[components/common]] → "Grid — adaptive scaling" and [[decisions-log]]
+  ADR-0063 for the numbers.
+- Dark-only, deliberately — no `dark:` variant, no `prefers-color-scheme`,
+  no `data-theme` toggle. A light theme was tried and fully reverted the
+  same day (ADR-0064/ADR-0066); don't reintroduce one without checking that
+  history first.
 - No inline `style` except for dynamic values (e.g. spring-animated values).
 - Motion is spring-based; CSS `transition-*` only for the narrow hover/focus case
   above — never `@keyframes`.

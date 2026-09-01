@@ -4,7 +4,13 @@ import { AboutHeading } from "./AboutHeading";
 import { GeologicalCrossSection } from "./GeologicalCrossSection";
 import { TeamPanel } from "./TeamPanel";
 
-export const AboutSection = () => {
+export interface AboutSectionProps {
+  /** Defaults to "h2" (the homepage's own `<h1>` lives in `HeroHeading`).
+   * The standalone `/about` page passes "h1". */
+  headingTag?: "h1" | "h2";
+}
+
+export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
   return (
     <section
       id="about"
@@ -18,6 +24,7 @@ export const AboutSection = () => {
           </p>
           <AboutHeading
             id="about-heading"
+            tag={headingTag}
             className="leading-display text-foreground max-w-xl text-3xl font-medium md:text-5xl"
           />
 

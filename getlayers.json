@@ -24,6 +24,14 @@
     "gl-font-mono": "'General Sans', ui-sans-serif, system-ui, sans-serif"
   },
   "activeTemplateId": null,
-  "placed": [],
+  "placed": [
+    {
+      "id": "cards-cascade",
+      "type": "section",
+      "role": "cards",
+      "route": "/about/team",
+      "note": "Fold geometry ported verbatim to src/views/about-team/cascade-config.ts; skin, scroll-progress wiring and bio-panel sync re-authored. See decisions-log.md ADR-0062."
+    }
+  ],
   "notes": "Geoporte — engineering consultancy. Real brand accent is blue, honoring existing geoporte.com.au identity. Custom hero: bespoke bridge/tunnel/geological-cutaway digital-twin scene, authored in Scene Lab (not a catalog scene). 8 service pages planned, each with a bespoke tailored 3D scene: Civil Engineering, Design & Drafting, Geotechnical Engineering, Structural Engineering, Stormwater & Flood Modelling, Project Control Services, Advisory Services, Telecom Services."
 }

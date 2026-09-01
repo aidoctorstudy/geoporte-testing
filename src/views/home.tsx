@@ -1,6 +1,8 @@
 import { AboutSection } from "./home/AboutSection";
 import { ContactSection } from "./home/ContactSection";
+import { GeotechnicalPlexusSection } from "./home/GeotechnicalPlexusSection";
 import { HeroSection } from "./home/HeroSection";
+import { ProjectExperienceSection } from "./home/ProjectExperienceSection";
 import { ProjectsSection } from "./home/ProjectsSection";
 import { ServicesSection } from "./home/ServicesSection";
 import { StatsSection } from "./home/StatsSection";
@@ -14,7 +16,9 @@ export const HomeView = () => {
     <>
       <HeroSection />
       <AboutSection />
+      <GeotechnicalPlexusSection />
       <ServicesSection />
+      <ProjectExperienceSection />
       <StatsSection />
       <ProjectsSection />
       <ContactSection />

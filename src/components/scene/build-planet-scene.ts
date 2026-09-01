@@ -316,14 +316,19 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
     { p: 0.64, v: 3.2 },
     { p: 1, v: 0 },
   ];
+  // Hero stop (p: 0) only — was { v: -4.5 }, "huge globe, low, half below the
+  // fold" per the ported template's own design (see the comment above). The
+  // brief now explicitly requires the globe fully visible behind the hero,
+  // which that pose contradicts, so it's tuned smaller/higher here. Every
+  // other stop (0.32/0.64/1, the mid-scroll swing and settle) is untouched.
   const STOPS_Y: KeyframeStop[] = [
-    { p: 0, v: -4.5 },
+    { p: 0, v: -1.3 },
     { p: 0.32, v: 0.55 },
     { p: 0.64, v: 0.45 },
     { p: 1, v: 0.15 },
   ];
   const STOPS_S: KeyframeStop[] = [
-    { p: 0, v: 2.15 },
+    { p: 0, v: 1.35 },
     { p: 0.32, v: 1.0 },
     { p: 0.64, v: 0.92 },
     { p: 1, v: 1.12 },

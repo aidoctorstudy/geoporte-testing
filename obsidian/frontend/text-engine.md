@@ -1,6 +1,6 @@
 ---
 tags: [frontend, animation, stable]
-updated: 2026-07-17
+updated: 2026-08-28
 ---
 
 # Text Engine — `spring-text-engine`
@@ -20,6 +20,18 @@ import TextEngine from 'spring-text-engine';
 import { tengine } from 'spring-text-engine';            // factory pattern
 import type { TextEngineInstance } from 'spring-text-engine';
 ```
+
+> [!warning] Always use `TextEngine` behind a `"use client"` file
+> The package ships no `"use client"` banner of its own — it's a plain npm
+> package, not written for Next's RSC system. Importing it directly into a
+> Server Component compiles fine but breaks the **production build**
+> (`next build` fails at "Collecting page data" with `TypeError:
+> [x].createContext is not a function`) — the dev server won't catch this.
+> Every use in this codebase goes through a small client leaf instead
+> (`SectionHeading.tsx`, `home/HeroHeading.tsx`,
+> `home/GeotechnicalPlexusHeading.tsx`) rather than marking the whole
+> section `"use client"`, keeping hard rule #6 (Server Components by
+> default) intact. See ADR-0060.
 
 ## How it works
 

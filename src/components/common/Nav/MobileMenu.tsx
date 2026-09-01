@@ -15,9 +15,10 @@ export interface MobileMenuProps {
 
 const primaryLinks = [
   { href: "/about", label: "About Us" },
+  { href: "/about/team", label: "Our Team" },
   { href: "/projects", label: "Projects" },
   { href: "/publications", label: "Publications" },
-  { href: "/#contact", label: "Contact" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
@@ -45,7 +46,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
                 <Link
                   href={`/services/${service.slug}`}
                   onClick={onNavigate}
-                  className="block py-2 text-lg text-foreground"
+                  className="flex min-h-[44px] items-center text-lg text-foreground"
                 >
                   {service.title}
                 </Link>
@@ -59,7 +60,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
               <Link
                 href={link.href}
                 onClick={onNavigate}
-                className="block py-2 text-xl text-foreground"
+                className="flex min-h-[44px] items-center text-xl text-foreground"
               >
                 <TranslatedText text={link.label} />
               </Link>

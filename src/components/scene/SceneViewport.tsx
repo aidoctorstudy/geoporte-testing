@@ -16,6 +16,7 @@ import {
   ViewportBuilder,
 } from "@/lib/scene/shared-viewport-renderer";
 import { useWindowWidth } from "@/hooks/use-window-size";
+import { isLowPowerDevice } from "@/lib/scene/device-tier";
 
 export interface SceneViewportHandle {
   /** Feed a caller-defined control value into the scene's `update` (0..1 hover
@@ -48,7 +49,11 @@ export const SceneViewport = forwardRef<SceneViewportHandle, SceneViewportProps>
     const containerRef = useRef<HTMLDivElement>(null);
     const controlRef = useRef<((value: number) => void) | null>(null);
     const width = useWindowWidth();
-    const isMobile = width > 0 && width < mobileBreakpoint;
+    // `isLowPowerDevice()` is folded in behind the same `width > 0` guard as
+    // the breakpoint check — see `device-tier.ts`'s own comment on why: it
+    // must not run on the very first client render (before hydration
+    // completes), or the tier disagrees with the server-rendered HTML.
+    const isMobile = width > 0 && (width < mobileBreakpoint || isLowPowerDevice());
     const skip = isMobile || isReducedMotion();
 
     useImperativeHandle(ref, () => ({

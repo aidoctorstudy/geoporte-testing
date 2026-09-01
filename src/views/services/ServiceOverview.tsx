@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { SectionHeading } from "@/components/common/SectionHeading";
+import { TranslatedText } from "@/components/common/TranslatedText";
 import { ServiceStats } from "./ServiceStats";
 import type { Service } from "@/data/mocks/services";
 
@@ -21,18 +22,27 @@ export interface ServiceOverviewProps {
   service: Service;
 }
 
-/** `overview` and `capabilityGroups` are per-service authored/sourced body
- * copy, not app chrome — stay plain strings, not `<TranslatedText>` (ADR-0024,
- * i18n scope is nav/section headings/button labels only).
+/** `overview` and `capabilityGroups` were plain strings under ADR-0024's
+ * original "nav/headings/buttons only" i18n scope; that scope was widened to
+ * full page coverage (see the i18n note in decisions-log.md), so this body
+ * copy now goes through `<TranslatedText>` too, same as everything else.
  *
  * `capabilityGroups` used to be its own `ServiceCapabilities` section; folded
  * in here so the page reads as the 6 sections the spec calls for without
  * dropping that real, previously-sourced content — see decisions-log.md. */
 export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
   const image = SERVICE_IMAGES[service.slug];
+  // Only the Geotechnical page carries a fixed Solaris background worth
+  // showing through the section — every other page keeps plain opaque
+  // `bg-background`. See ADR in decisions-log.md.
+  const glass = service.sceneTheme === "solaris";
 
   return (
-    <section aria-labelledby="service-overview-heading" className="relative">
+    <section
+      id="service-overview"
+      aria-labelledby="service-overview-heading"
+      className={glass ? "relative z-10" : "relative z-10 bg-background"}
+    >
       {image && (
         // Confined to a top band, not the whole (tall — paragraph + stats +
         // capability lists) section: an overlay strong enough to keep text
@@ -58,16 +68,28 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
           {/* Fades to solid background at both the band's top edge (blends
               into the hero above, no hard seam) and bottom edge (blends into
               the plain-background content below) — the photo only reads
-              clearly through a band in the middle. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background from-0% via-transparent via-35% to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background from-0% via-transparent via-55% to-transparent" />
+              clearly through a band in the middle. Glass mode fades to
+              transparent instead: there's no solid section fill to blend
+              into, and the Solaris canvas must stay visible through it. */}
+          <div
+            className={`absolute inset-0 bg-gradient-to-b from-0% via-transparent via-35% to-transparent ${glass ? "from-transparent" : "from-background"}`}
+          />
+          <div
+            className={`absolute inset-0 bg-gradient-to-t from-0% via-transparent via-55% to-transparent ${glass ? "from-transparent" : "from-background"}`}
+          />
         </div>
       )}
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24">
+      <div
+        className={
+          glass
+            ? "glass-panel relative z-10 mx-auto my-8 max-w-6xl px-6 py-16 md:my-12 md:px-8 md:py-24"
+            : "relative z-10 mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24"
+        }
+      >
         <SectionHeading id="service-overview-heading" eyebrow="Overview" heading="What we deliver" />
         <p className="text-foreground-muted mt-6 max-w-3xl text-lg leading-relaxed">
-          {service.overview}
+          <TranslatedText text={service.overview} />
         </p>
 
         <ServiceStats stats={service.stats} />
@@ -76,11 +98,13 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
           {service.capabilityGroups.map((group) => (
             <div key={group.heading}>
               <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-                {group.heading}
+                <TranslatedText text={group.heading} />
               </h3>
               <ul className="text-foreground-muted/90 mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
                 {group.items.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>
+                    <TranslatedText text={item} />
+                  </li>
                 ))}
               </ul>
             </div>
@@ -94,14 +118,16 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
         {service.subServices && (
           <div className="mt-16">
             <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
-              In more detail
+              <TranslatedText text="In more detail" />
             </h3>
             <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
               {service.subServices.map((subService) => (
                 <div key={subService.title}>
-                  <dt className="text-foreground text-sm font-medium">{subService.title}</dt>
+                  <dt className="text-foreground text-sm font-medium">
+                    <TranslatedText text={subService.title} />
+                  </dt>
                   <dd className="text-foreground-muted mt-1 text-sm leading-relaxed">
-                    {subService.description}
+                    <TranslatedText text={subService.description} />
                   </dd>
                 </div>
               ))}

@@ -2,6 +2,7 @@
 
 // 📖 Docs: obsidian/architecture/tech-stack.md → "3D — Geoporte hero + service scenes"
 
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { createHeroScene } from "./build-hero-scene";
 import { HeroFallback } from "./HeroFallback";
@@ -19,6 +20,21 @@ export interface HeroSceneProps {
    * scene; every service detail page hero passes its own factory from
    * `service-heroes/index.ts`'s `SERVICE_HERO_SCENES` registry. */
   createScene?: (container: HTMLElement) => HeroSceneHandle;
+  /** Rendered instead of the WebGL scene on the mobile/low-power tier (see
+   * `device-tier.ts`). Defaults to the generic `--accent`/`--glow`-driven
+   * `HeroFallback` pulse; the nine fixed-full-page background wrappers each
+   * pass their own `<SceneFallbackGradient>` instead so the fallback still
+   * reads as that page's own scene, not the site's generic tint. See
+   * ADR-0056. */
+  fallback?: ReactNode;
+  /** Called once, right after the scene is constructed and mounted — lets a
+   * parent client component capture the concrete handle to call scene-
+   * specific controls beyond the base `HeroSceneHandle` contract (e.g. the
+   * Geotechnical FEA scene's `setConstructionStage`/`setResultMode`, see
+   * `GeotechnicalFeaScene.tsx`). Optional; every scene that only needs the
+   * base contract omits it. Not called at all on the mobile/reduced-motion
+   * tier, where the scene never mounts. */
+  onSceneReady?: (scene: HeroSceneHandle) => void;
 }
 
 /**
@@ -31,7 +47,12 @@ export interface HeroSceneProps {
  * Pauses when off-screen, when the tab is hidden, or when the OS "reduce
  * motion" setting is on (renders one static frame instead).
  */
-export const HeroScene = ({ className, createScene = createHeroScene }: HeroSceneProps) => {
+export const HeroScene = ({
+  className,
+  createScene = createHeroScene,
+  fallback = <HeroFallback className="h-full w-full" />,
+  onSceneReady,
+}: HeroSceneProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HeroSceneHandle | null>(null);
   const width = useWindowWidth();
@@ -66,6 +87,7 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
     const scene = createScene(container);
     sceneRef.current = scene;
     container.appendChild(scene.canvas);
+    onSceneReady?.(scene);
 
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -169,12 +191,16 @@ export const HeroScene = ({ className, createScene = createHeroScene }: HeroScen
     // `createScene` is only ever a stable module-level factory (the default,
     // or one keyed out of `SERVICE_HERO_SCENES`) — re-running this effect on
     // every render would tear down and rebuild the WebGL context for no reason.
+    // `onSceneReady` only needs to fire once at mount (its whole purpose is
+    // handing the caller the one-time-constructed handle), so it's read from
+    // the closure at mount time same as `createScene`, not re-invoked on
+    // every parent render even if the caller passes a fresh reference.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div ref={containerRef} aria-hidden="true" className={className}>
-      {isMobile && <HeroFallback className="h-full w-full" />}
+      {isMobile && fallback}
     </div>
   );
 };

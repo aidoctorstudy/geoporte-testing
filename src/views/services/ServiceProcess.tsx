@@ -4,19 +4,29 @@ import { TranslatedText } from "@/components/common/TranslatedText";
 
 export interface ServiceProcessProps {
   steps: string[];
+  /** Glass-panel treatment instead of a plain opaque background — the
+   * Geotechnical page only, so its fixed Solaris background stays visible
+   * through this section. See ADR in decisions-log.md. */
+  glass?: boolean;
 }
 
 /** The "how we work" process timeline (item 4 of the service page spec) — a
  * numbered step sequence with a connecting line, each step staggering in on
  * scroll. Step count varies per service (5 or 6), so the grid is driven by
  * `steps.length` rather than a fixed column count. */
-export const ServiceProcess = ({ steps }: ServiceProcessProps) => {
+export const ServiceProcess = ({ steps, glass }: ServiceProcessProps) => {
   return (
     <section
       aria-labelledby="service-process-heading"
-      className="bg-background-alt/40 border-line border-y py-16 md:py-24"
+      className={glass ? "relative z-10" : "bg-background-alt/40 border-line relative z-10 border-y py-16 md:py-24"}
     >
-      <div className="mx-auto max-w-6xl px-6 md:px-8">
+      <div
+        className={
+          glass
+            ? "glass-panel mx-auto my-8 max-w-6xl px-6 py-16 md:my-12 md:px-8 md:py-24"
+            : "mx-auto max-w-6xl px-6 md:px-8"
+        }
+      >
         <SectionHeading id="service-process-heading" eyebrow="How we work" heading="Our process" />
 
         <ol

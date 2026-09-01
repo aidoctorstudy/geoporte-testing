@@ -8,31 +8,36 @@ import {
   hasStaticLowPerformanceSignal,
   subscribeToLowFpsWarning,
 } from "@/lib/scene/performance-monitor";
+import { usePerformanceTier } from "@/hooks/performance/use-performance-tier";
 
-const AUTO_DISMISS_MS = 8000;
+const AUTO_DISMISS_MS = 6000;
 const TRANSITION_CONFIG = { tension: 280, friction: 32 };
 
 /**
- * A dismissible bottom-left notice shown once, the first time this device
- * looks underpowered for the site's 3D work — either a static hint
- * (`navigator.hardwareConcurrency`/`deviceMemory`, checked immediately on
- * mount) or a measured frame-rate drop below 30fps (reported by
+ * A dismissible bottom-left notice shown whenever this device is running
+ * the site's 3D work below full quality (ADR-0058's 4-tier system) —
+ * either a static hint (medium/low tier, resolved immediately on mount) or
+ * a measured frame-rate drop below 20fps sustained for 3s (reported by
  * `HeroScene.tsx`'s own render loop via `performance-monitor.ts`, after a
  * warm-up grace period so a scene's own load-in animation doesn't read as
- * a slow device). Mirrors `CookieBanner`'s spring/mount-unmount idiom, just
- * bottom-left instead of bottom-right and self-dismissing rather than
- * store-driven.
+ * a slow device). A live FPS-triggered drop also downgrades the tier one
+ * step (`usePerformanceTier().downgrade()`) and re-shows this toast, even
+ * if it was already dismissed once — `performance-monitor.ts`'s own
+ * cooldown keeps that to at most one downgrade per 5s. Mirrors
+ * `CookieBanner`'s spring/mount-unmount idiom, just bottom-left instead of
+ * bottom-right and self-dismissing rather than store-driven.
  */
 export const PerformanceWarningToast = () => {
   const [visible, setVisible] = useState(false);
+  const { downgrade } = usePerformanceTier();
 
   useEffect(() => {
-    if (hasStaticLowPerformanceSignal()) {
+    if (hasStaticLowPerformanceSignal()) setVisible(true);
+    return subscribeToLowFpsWarning(() => {
+      downgrade();
       setVisible(true);
-      return;
-    }
-    return subscribeToLowFpsWarning(() => setVisible(true));
-  }, []);
+    });
+  }, [downgrade]);
 
   useEffect(() => {
     if (!visible) return;
@@ -56,7 +61,7 @@ export const PerformanceWarningToast = () => {
           className="fixed bottom-4 left-4 z-50 flex max-w-xs items-start gap-3 rounded-xl border border-foreground/10 bg-background/95 px-4 py-3 shadow-2xl backdrop-blur-xl"
         >
           <p className="text-foreground-muted text-xs leading-relaxed">
-            Some 3D elements have been simplified for your device&apos;s performance.
+            Some visual effects have been simplified for your device.
           </p>
           <button
             type="button"

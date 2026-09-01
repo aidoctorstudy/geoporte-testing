@@ -7,6 +7,7 @@ import { animated, easings, useInView, useSpring } from "@react-spring/web";
 import TextEngine from "spring-text-engine";
 import { Inview } from "@/components/animation/springs/in-view";
 import { TranslatedText } from "@/components/common/TranslatedText";
+import { useTranslated } from "@/hooks/i18n/use-translated";
 import { cultureValues, teamComposition } from "@/lib/company";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 
@@ -22,10 +23,15 @@ const CURSOR_LINGER_MS = 500;
  * typing settles. The blink toggle is throttled to ~10fps (via the shared
  * ticker) since it only needs to look like a blink, not track every frame. */
 const TeamRoleTyped = ({ text, delayIn }: { text: string; delayIn: number }) => {
+  // Resolved before handing to `TextEngine` — same reason `SectionHeading`
+  // does this instead of nesting `<TranslatedText>` as a child: `TextEngine`
+  // reads `children` synchronously to split it into letters, so it needs the
+  // already-translated string, not a component that resolves one render later.
+  const translated = useTranslated(text);
   const [cursorOn, setCursorOn] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(true);
   const startRef = useRef<number | null>(null);
-  const typingDurationMs = text.length * ROLE_LETTER_STAGGER_MS;
+  const typingDurationMs = translated.length * ROLE_LETTER_STAGGER_MS;
 
   useEffect(() => {
     return subscribeToTicker((time) => {
@@ -47,7 +53,7 @@ const TeamRoleTyped = ({ text, delayIn }: { text: string; delayIn: number }) => 
         letterStagger={ROLE_LETTER_STAGGER_MS}
         letterConfig={{ duration: 1, easing: easings.linear }}
       >
-        {text}
+        {translated}
       </TextEngine>
       {cursorVisible && (
         <span
@@ -112,7 +118,7 @@ export const TeamPanel = () => {
               config={{ tension: 400, friction: 12 }}
               className="border-line text-foreground rounded-full border px-3 py-1 text-xs"
             >
-              {value}
+              <TranslatedText text={value} />
             </Inview>
           ))}
         </ul>

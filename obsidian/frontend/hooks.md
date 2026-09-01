@@ -34,6 +34,12 @@ components — don't call them directly unless extending the engine.
 |------|------|------|
 | `usePointer` | `use-pointer.ts` | Shared pointer position/velocity store — one `window.pointermove` listener for the whole app (`useSyncExternalStore`, same idiom as `useWindowSize`). Also exports `getPointerSnapshot()`, a non-reactive read for per-frame consumers (ticker callbacks, WebGL render loops) that must not re-subscribe on every pointer move. `isFinePointer` gates cursor-driven effects off on touch (`matchMedia("(hover: hover) and (pointer: fine)")`). `hasMoved` is false until the first real `pointermove` — consumers must stay hidden/inert until it flips true, or they render at the stale `0,0` default (see ADR-0027). |
 
+## `hooks/performance/`
+
+| Hook | File | Role |
+|------|------|------|
+| `usePerformanceTier` | `use-performance-tier.tsx` | React context for the 4-tier capability system (`src/lib/scene/performance-tier.ts`, ADR-0058) — `{ tier, downgrade }`, `tier` one of `"ultra"`\|`"high"`\|`"medium"`\|`"low"`. `PerformanceTierProvider` mounted once in `app/layout.tsx`, wrapping `<ScrollLayout>`. For *reactive* consumers that need to notice a live tier change (currently just `PerformanceWarningToast`) — scene builders still read the synchronous `getDeviceTier()`/`getTierBudget()` API in `device-tier.ts` at construction time instead, since a scene is built once per mount. |
+
 ## `hooks/scroll/`
 
 | Hook | File | Role |

@@ -36,6 +36,7 @@ here on route `/` (see [[ai-agent-guide]] / [[new-page]]).
 | Route | File | View |
 |-------|------|------|
 | `/` | `src/app/page.tsx` | `views/home.tsx` → `HomeView` |
+| `/about/team` | `src/app/about/team/page.tsx` | `views/about-team.tsx` → `AboutTeamView` |
 
 ## Special files
 

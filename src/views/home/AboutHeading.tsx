@@ -36,6 +36,10 @@ const AboutHeadingLine = ({
 export interface AboutHeadingProps {
   id: string;
   className?: string;
+  /** Defaults to "h2" — the homepage's own `<h1>` lives in `HeroHeading`.
+   * The standalone `/about` page passes "h1" since this becomes that page's
+   * only heading. */
+  tag?: "h1" | "h2";
 }
 
 /**
@@ -45,10 +49,10 @@ export interface AboutHeadingProps {
  * other section uses and shouldn't change project-wide for one section's
  * particular effect).
  */
-export const AboutHeading = ({ id, className }: AboutHeadingProps) => (
-  <h2 id={id} className={className}>
+export const AboutHeading = ({ id, className, tag: Tag = "h2" }: AboutHeadingProps) => (
+  <Tag id={id} className={className}>
     {LINES.map((line, i) => (
       <AboutHeadingLine key={line.text} {...line} delayIn={i * LINE_STAGGER_MS} />
     ))}
-  </h2>
+  </Tag>
 );

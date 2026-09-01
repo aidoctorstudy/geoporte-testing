@@ -166,7 +166,7 @@ export const CookiePreferencesModal = () => {
               return (
                 <div
                   key={c.key}
-                  className="flex items-start justify-between gap-4 rounded-[10px] border border-foreground/10 px-4 py-3.5"
+                  className="flex items-center justify-between gap-4 rounded-[10px] border border-foreground/10 px-4 py-3.5"
                 >
                   <div className="flex min-w-0 flex-col gap-1">
                     <h3 className="text-sm font-medium leading-snug">{c.title}</h3>
@@ -224,14 +224,18 @@ const Toggle = ({ on, disabled, onChange, label }: ToggleProps) => {
       aria-disabled={disabled || undefined}
       disabled={disabled}
       onClick={onChange}
-      className={`relative h-6 w-11 shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground ${
-        on ? "bg-foreground" : "bg-foreground/15"
-      } ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}
+      className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground ${
+        disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"
+      }`}
     >
-      <animated.span
-        style={{ transform: knob.x.to((v) => `translateX(${v}px)`) }}
-        className="absolute left-[3px] top-[3px] block h-[18px] w-[18px] rounded-full bg-background shadow"
-      />
+      <span
+        className={`relative h-6 w-11 rounded-full ${on ? "bg-foreground" : "bg-foreground/15"}`}
+      >
+        <animated.span
+          style={{ transform: knob.x.to((v) => `translateX(${v}px)`) }}
+          className="absolute left-[3px] top-[3px] block h-[18px] w-[18px] rounded-full bg-background shadow"
+        />
+      </span>
     </button>
   );
 };

@@ -5,21 +5,41 @@
  */
 import type { Service } from "@/data/mocks/services";
 import type { HeroSceneHandle } from "../hero-scene-types";
-import { createCorridorGradingScene } from "./build-corridor-grading-scene";
-import { createBimClashDetectionScene } from "./build-bim-clash-detection-scene";
-import { createGeologicalDigitalTwinScene } from "./build-geological-digital-twin-scene";
-import { createStructuralFemAnalysisScene } from "./build-structural-fem-analysis-scene";
-import { createFloodInundationTerrainScene } from "./build-flood-inundation-terrain-scene";
+import { createAetherFluxHeroScene } from "../build-aether-flux-scene";
+import { createSolarisHeroScene } from "../build-solaris-scene";
+import { createEinsteinRosenLatticeHeroScene } from "../build-einstein-rosen-lattice-scene";
+import { createGoldenParthenonHeroScene } from "../build-golden-parthenon-scene";
+import { createNegentropyHeroScene } from "../build-negentropy-scene";
 import { createScheduleNetworkGraphScene } from "./build-schedule-network-graph-scene";
 import { createAdvisoryLifecycleNetworkScene } from "./build-advisory-lifecycle-network-scene";
 import { createTelecomSignalNetworkScene } from "./build-telecom-signal-network-scene";
 
+// `aether-flux`/`solaris`/`einstein-rosen-lattice`/`golden-parthenon`/
+// `negentropy`/`schedule-network-graph`/`advisory-lifecycle-network`
+// entries are never actually invoked through this registry —
+// `ServiceHero.tsx` mounts their scenes as fixed, route-scoped page
+// backgrounds instead (`AetherFluxBackground`/`SolarisBackground`/
+// `EinsteinRosenLatticeBackground`/`GoldenParthenonBackground`/
+// `NegentropyBackground`/`ProjectControlBackground` — a video, not a WebGL
+// scene/`AureoleBackground` — so `createScheduleNetworkGraphScene` and
+// `createAdvisoryLifecycleNetworkScene` below are dead code, kept only for
+// the same reason the others are) and skips calling `ServiceHeroScene` for
+// those themes entirely. Kept here only so this remains a total `Record`
+// over `Service["sceneTheme"]`.
+//
+// The Geotechnical Engineering page's *hero section* also never reaches
+// this registry — `service-detail.tsx` special-cases that slug to render
+// the bespoke `GeotechnicalAnalysisHero.tsx` instead of `ServiceHero.tsx`,
+// which mounts its own bounded FE scene
+// (`build-geotechnical-fea-scene.ts`) directly, on top of the Solaris
+// background this registry's `solaris` entry still (also) serves. See
+// ADR-0061.
 export const SERVICE_HERO_SCENES: Record<Service["sceneTheme"], (container: HTMLElement) => HeroSceneHandle> = {
-  "corridor-grading": createCorridorGradingScene,
-  "bim-clash-detection": createBimClashDetectionScene,
-  "geological-digital-twin": createGeologicalDigitalTwinScene,
-  "structural-fem-analysis": createStructuralFemAnalysisScene,
-  "flood-inundation-terrain": createFloodInundationTerrainScene,
+  "golden-parthenon": createGoldenParthenonHeroScene,
+  "aether-flux": createAetherFluxHeroScene,
+  solaris: createSolarisHeroScene,
+  "einstein-rosen-lattice": createEinsteinRosenLatticeHeroScene,
+  negentropy: createNegentropyHeroScene,
   "schedule-network-graph": createScheduleNetworkGraphScene,
   "advisory-lifecycle-network": createAdvisoryLifecycleNetworkScene,
   "telecom-signal-network": createTelecomSignalNetworkScene,

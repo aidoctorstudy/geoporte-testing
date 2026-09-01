@@ -19,12 +19,74 @@
   --raw-color-white: #ffffff;
   --raw-color-navy-950: #01040e; /* gl-bg */
   --raw-color-navy-900: #04122e; /* gl-bg-alt */
+  --raw-color-navy-925: #040d1a; /* explicit dark-navy fix for the homepage
+    Digital Twin section's page-scoped `--surface-engineering` override —
+    see GeotechnicalPlexusSection.tsx and decisions-log.md */
   --raw-color-surface: rgba(255, 255, 255, 0.04); /* gl-surface */
   --raw-color-surface-raised: rgba(4, 18, 46, 0.6); /* gl-surface-raised */
   --raw-color-sky-300: #8ecbff; /* gl-ink-muted */
   --raw-color-azure-600: #1f6ae0; /* gl-accent — Geoporte's real brand blue */
   --raw-color-azure-300: #70bcff; /* gl-glow */
   --raw-color-line: rgba(31, 106, 224, 0.28); /* gl-line */
+  --raw-color-red-400: #f87171; /* form validation / error state — ContactForm */
+
+  /* Liquid-glass panel treatment — Geotechnical Engineering page only (the
+     one page with a fixed, always-visible WebGL background worth showing
+     through every section as you scroll). Fill is dark navy (not white) at
+     0.65 opacity — a near-transparent white wash read as barely-there glass
+     against the bright Solaris orange; a darker, more opaque backing keeps
+     the glass look while giving body text a readable, near-solid backdrop
+     again. See obsidian/meta/decisions-log.md. */
+  --raw-color-glass-fill: rgba(4, 6, 15, 0.65);
+  --raw-color-glass-border: rgba(255, 255, 255, 0.1);
+  /* Tailwind's own blur scale only steps 16px/24px (blur-lg/blur-xl); the
+     glass-panel spec needs exactly 20px. */
+  --raw-blur-glass: 20px;
+  /* No Tailwind saturate-* namespace exists to bind this into (unlike
+     blur) — same reasoning `.glass-panel`'s own comment already gives for
+     writing saturate() as a plain value there; tokenized as Tier 1/2 like
+     the rest of the glass quartet so a page can still override it via the
+     same "-intense" mechanism below, just consumed directly in the
+     .glass-panel rule rather than through the Tailwind theme-binding
+     layer. */
+  --raw-saturate-glass: 180%;
+  /* Baseline glass-page text-shadow, tokenized alongside the trio above so
+     a page that goes more transparent than the default (see the "-clear"/
+     "-strong" pair below) can override all four together the same way. */
+  --raw-shadow-glass-text: 0 1px 20px rgba(0, 0, 0, 0.8);
+
+  /* Contact page only — "50% more liquid glass": blur, saturation and
+     border prominence each scaled ×1.5 over the sitewide default above
+     (20px→30px, 180%→270%, border alpha 0.1→0.15) so the frosted panels
+     read as a stronger, more vivid glass over the Bird video background.
+     Fill is deliberately unchanged — it's the text-legibility backing,
+     not part of what reads as "glassy" — and the text-shadow is
+     untouched too since fill opacity (the thing it compensates for)
+     didn't move. Overridden onto the page's own wrapper (views/
+     contact.tsx), same "swap the Tier 2 role's value" mechanism as the
+     Stormwater "-clear" trio below. See obsidian/meta/decisions-log.md. */
+  --raw-color-glass-border-intense: rgba(255, 255, 255, 0.15);
+  --raw-blur-glass-intense: 30px;
+  --raw-saturate-glass-intense: 270%;
+
+  /* Stormwater & Flood Modelling page only — much more see-through glass so
+     the Negentropy particle field reads clearly through every section,
+     instead of the sitewide near-solid glass look above. Overridden onto
+     that page's own wrapper (service-detail.tsx), same "swap the Tier 2
+     role's value" mechanism as --raw-color-service-*-accent/-glow. The
+     text-shadow is strengthened to match — thinner glass means less of its
+     own dark backing behind body text, so contrast has to come from a
+     harder shadow instead. See obsidian/meta/decisions-log.md. */
+  --raw-color-glass-fill-clear: rgba(4, 6, 15, 0.35);
+  --raw-color-glass-border-clear: rgba(255, 255, 255, 0.08);
+  --raw-blur-glass-clear: 12px;
+  --raw-shadow-glass-text-strong: 0 2px 20px rgba(0, 0, 0, 0.9);
+  /* Brighter than the sitewide --raw-color-sky-300 (#8ecbff) muted-text
+     colour — against Solaris's warm orange/red, the sitewide muted blue
+     reads low-contrast and muddy. Geotechnical-page-only override of
+     --foreground-muted, same "swap the raw value a Tier 2 role points at"
+     mechanism as --raw-color-service-*-accent/-glow in service-accent.ts. */
+  --raw-color-glass-muted-bright: #d6f0ff;
 
   /* Geological cross-section layers (About section) — four steps of the same
      navy/azure family, lightest to darkest, so the strata read as one more
@@ -58,6 +120,38 @@
   --raw-color-service-telecom-services-accent: #0ea0e0;
   --raw-color-service-telecom-services-glow: #4ff0ff;
 
+  /* Mobile/low-power fallback gradients (`SceneFallbackGradient.tsx`, the
+     "low" tier in `performance-tier.ts` — see ADR-0058, which replaced the
+     two-stop `from`/`to` pair ADR-0056 first shipped with these full
+     3-stop gradients, per an explicit, more specific brief). Each is one
+     dedicated full-page WebGL scene's own literal gradient — deliberately
+     NOT the sitewide --accent/--glow (that also tints buttons/links) and
+     deliberately NOT the same hue family as --raw-color-service-*-accent
+     above (that's the site's generic azure brand tint). Stormwater &
+     Flood Modelling wasn't in the brief's own list (an omission also
+     present in ADR-0056's list — see that ADR and ADR-0058) — its accent
+     (#0aff7f) is Negentropy's own card palette, carried over unchanged,
+     just reshaped into the new 3-stop form for consistency. */
+  --raw-gradient-fallback-solaris: radial-gradient(ellipse at 70% 50%, #ff4500 0%, #1a0000 60%, #000000 100%);
+  --raw-gradient-fallback-aether-flux: radial-gradient(ellipse at 30% 50%, #c0c0c0 0%, #1a1a2e 60%, #000000 100%);
+  --raw-gradient-fallback-wormhole: radial-gradient(ellipse at 50% 50%, #ffffff 0%, #0a0a1a 50%, #000000 100%);
+  --raw-gradient-fallback-golden-parthenon: radial-gradient(ellipse at 30% 60%, #ff8c00 0%, #12100b 60%, #000000 100%);
+  --raw-gradient-fallback-negentropy: radial-gradient(ellipse at 50% 50%, #0aff7f 0%, #041a12 60%, #000000 100%);
+  --raw-gradient-fallback-aureole: radial-gradient(ellipse at 60% 40%, #ff8c00 0%, #1a0a00 60%, #000000 100%);
+  --raw-gradient-fallback-spiral-galaxy: radial-gradient(ellipse at 50% 60%, #6b2bff 0%, #0e0626 60%, #000000 100%);
+  /* Re-tinted alongside the scene's own CONFIG (ADR-0070) — was the
+     materialized source's magenta `#c026d3`/`#1a0833`, now matches the
+     scene's blue re-skin so the mobile/low-tier fallback doesn't revert to
+     the purple/pink look the WebGL scene itself no longer has. */
+  --raw-gradient-fallback-pinwheel-galaxy: radial-gradient(ellipse at 40% 50%, #1f6ae0 0%, #040d1a 60%, #000000 100%);
+  --raw-gradient-fallback-aurum-peak: radial-gradient(ellipse at 50% 40%, #c8862f 0%, #12100b 60%, #000000 100%);
+  /* `/about/team`'s dedicated starfield (see `build-team-starfield-scene.ts`,
+     ADR-0072) — no dominant accent colour to gradient toward (it's a plain
+     particle field, not a coloured scene), so this is just a subtle navy
+     vignette rather than the "toward a bright accent" shape every other
+     entry here uses. */
+  --raw-gradient-fallback-team-starfield: radial-gradient(ellipse at 50% 45%, #0a1830 0%, #040d1a 55%, #01040e 100%);
+
   /* Loaded via Fontshare <link> in layout.tsx — not a next/font/google face,
      so there is no generated CSS variable to bind to; the stack lives here. */
   --raw-font-general-sans: "General Sans", ui-sans-serif, system-ui,
@@ -66,6 +160,30 @@
   --raw-duration-fast: 150ms;
   --raw-duration-normal: 250ms;
   --raw-duration-slow: 700ms;
+
+  /* Geotechnical Plexus homepage feature section only — the brief for this
+     scene explicitly calls for a premium "white/light background... digital
+     twin" look, the opposite of the sitewide Neural Monitor dark palette
+     above. Scoped to its own semantic roles (below) rather than overriding
+     --background/--foreground, which would flip the whole site's theme.
+     A warm off-white engineering-diagram palette, not a cold pure-white —
+     reads closer to drafting paper than a UI surface. See
+     obsidian/meta/decisions-log.md. */
+  --raw-color-engineering-surface: #f4f2ec;
+  --raw-color-engineering-surface-alt: #e9e4d7;
+  --raw-color-engineering-ink: #1c1e22;
+  --raw-color-engineering-ink-muted: #585c64;
+  --raw-color-engineering-line: #cac3b3;
+  --raw-color-engineering-accent: #2b6e8f;
+  --raw-color-engineering-glow: #6fb8d6;
+
+  /* Homepage "Project Experience" section (item: stat boxes over the team
+     photo) — two flat, saturated fills deliberately outside the sitewide
+     azure family, same "distinct instrument" reasoning as
+     --raw-color-service-*-accent, so the two numbers read as separate
+     callouts rather than blending into the Neural Monitor blue. */
+  --raw-color-stat-purple: #7c3aed;
+  --raw-color-stat-amber: #f59e0b;
 }
 
 /* ---------------------------------------------------------------------------
@@ -75,8 +193,12 @@
    these are separate from the @theme bindings below (see the note there).
    Grammar: --<role>[-<variant>][-<state>]
 
-   This Style is DARK-ONLY by design (an instrumented monitoring surface, not a
-   toggle) — there is deliberately no `prefers-color-scheme` override.
+   This Style is DARK-ONLY by design (an instrumented monitoring surface, not
+   a toggle) — there is deliberately no `prefers-color-scheme` override. A
+   light theme was added under ADR-0064 and removed again the same day under
+   explicit user direction ("remove light mode entirely, dark mode only") —
+   see ADR-0066. Don't re-add a `[data-theme="light"]` block without reading
+   that ADR first.
    --------------------------------------------------------------------------- */
 :root {
   --background: var(--raw-color-navy-950);
@@ -89,6 +211,12 @@
   --accent-foreground: var(--raw-color-white);
   --glow: var(--raw-color-azure-300);
   --line: var(--raw-color-line);
+  --danger: var(--raw-color-red-400);
+  --glass-fill: var(--raw-color-glass-fill);
+  --glass-border: var(--raw-color-glass-border);
+  --glass-blur: var(--raw-blur-glass);
+  --glass-saturate: var(--raw-saturate-glass);
+  --glass-text-shadow: var(--raw-shadow-glass-text);
 
   --strata-clay: var(--raw-color-strata-clay);
   --strata-rock: var(--raw-color-strata-rock);
@@ -98,6 +226,17 @@
   --duration-fast: var(--raw-duration-fast);
   --duration-normal: var(--raw-duration-normal);
   --duration-slow: var(--raw-duration-slow);
+
+  --surface-engineering: var(--raw-color-engineering-surface);
+  --surface-engineering-alt: var(--raw-color-engineering-surface-alt);
+  --ink-engineering: var(--raw-color-engineering-ink);
+  --ink-engineering-muted: var(--raw-color-engineering-ink-muted);
+  --line-engineering: var(--raw-color-engineering-line);
+  --accent-engineering: var(--raw-color-engineering-accent);
+  --glow-engineering: var(--raw-color-engineering-glow);
+
+  --stat-purple: var(--raw-color-stat-purple);
+  --stat-amber: var(--raw-color-stat-amber);
 }
 
 /* ---------------------------------------------------------------------------
@@ -124,10 +263,20 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-glow: var(--glow);
   --color-line: var(--line);
+  --color-danger: var(--danger);
   --color-strata-clay: var(--strata-clay);
   --color-strata-rock: var(--strata-rock);
   --color-strata-soil: var(--strata-soil);
   --color-strata-bedrock: var(--strata-bedrock);
+  --color-surface-engineering: var(--surface-engineering);
+  --color-surface-engineering-alt: var(--surface-engineering-alt);
+  --color-ink-engineering: var(--ink-engineering);
+  --color-ink-engineering-muted: var(--ink-engineering-muted);
+  --color-line-engineering: var(--line-engineering);
+  --color-accent-engineering: var(--accent-engineering);
+  --color-glow-engineering: var(--glow-engineering);
+  --color-stat-purple: var(--stat-purple);
+  --color-stat-amber: var(--stat-amber);
   --font-sans: var(--raw-font-general-sans);
 
   /* Leading floor for clipped TextEngine reveals — see
@@ -143,6 +292,19 @@ body {
 }
 
 @layer base {
+  /* Defensive floor for hard rule "no horizontal scrollbar at any width" —
+     only the X axis, so `position: sticky` (the Cards Cascade deck, the
+     mobile nav's own scroll) keeps working; that only breaks when an
+     ancestor OTHER than the viewport clips overflow, not the viewport/root
+     scroller itself. Belt-and-suspenders: every layout below is already
+     built not to overflow, but a single missed `min-w-*`/arbitrary px
+     value anywhere in the tree would otherwise widen the whole page. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   /* Adaptive scaling grid — scales the root font-size with the viewport so a
      rem-based layout stays proportional. Each breakpoint divides FONT_BASE
      (16px) by the design base width its range was laid out at:
@@ -179,6 +341,31 @@ body {
 }
 
 @layer utilities {
+  /* Liquid-glass panel — the Geotechnical Engineering page's content
+     sections, floating over the fixed Solaris canvas (iOS control-centre
+     look), and every other glass-background page's own page-scoped
+     "-clear"/"-intense" override (Stormwater ADR-0049, Contact's own
+     ADR). All four custom properties are read as their Tier-2 name
+     directly (--glass-fill/-border/-blur/-saturate), never through a
+     Tailwind-namespaced Tier-3 alias (--color-glass-fill etc, which this
+     file used to also define, removed) — a hand-written CSS rule
+     referencing a `@theme inline`-bound alias only ever sees the value
+     that alias resolved to AT THE ELEMENT WHERE THE ALIAS ITSELF IS
+     DECLARED (:root), not at the element consuming it, so a page-scoped
+     override further down the tree silently never took effect. (Tailwind
+     utility classes like `bg-accent` don't have this problem — Tailwind
+     inlines the *aliased* variable directly into those generated
+     utilities, which is what "inline" in `@theme inline` is actually
+     for; that inlining only happens for real generated utility classes,
+     never for hand-authored CSS in this file, which is why this rule
+     needs the direct Tier-2 reference instead.) Confirmed via
+     `getComputedStyle` before and after — see obsidian/meta/decisions-log.md. */
+  .glass-panel {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
 }
 
 @layer components {
@@ -189,5 +376,24 @@ body {
   .cursor-hidden,
   .cursor-hidden * {
     cursor: none !important;
+  }
+
+  /* Glass-background-page readability boost — set on the page's own wrapper
+     (about.tsx, contact.tsx, publications.tsx, about-team.tsx, service-
+     detail.tsx's glass branch) instead of baked into .glass-panel:
+     text-shadow is an inherited property, so one declaration here reaches
+     every descendant — the hero's glass band included, which isn't a
+     .glass-panel. Against a busy WebGL/video background, even fully-opaque
+     text needs this to stay legible in the gaps between panels and at
+     panel edges. Was a per-page inline `style` override of --foreground/
+     --foreground-muted; consolidated into this one attribute-selector rule
+     when a (since-removed, see ADR-0066) light theme briefly needed the
+     override to be theme-aware — kept as the simpler single-rule form even
+     after that reversal, rather than reintroducing five duplicated inline
+     style objects. See decisions-log.md ADR-0064/ADR-0066. */
+  [data-glass-readability] {
+    --foreground: var(--raw-color-white);
+    --foreground-muted: var(--raw-color-glass-muted-bright);
+    text-shadow: var(--glass-text-shadow);
   }
 }

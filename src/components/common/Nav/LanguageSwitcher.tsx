@@ -29,7 +29,7 @@ export const LanguageSwitcher = () => {
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="text-foreground-muted hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance flex items-center gap-1.5 text-sm"
+        className="text-foreground-muted hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance flex min-h-[44px] items-center gap-1.5 text-sm"
       >
         <span aria-hidden="true">🌐</span>
         {current.nativeLabel}
@@ -52,7 +52,7 @@ export const LanguageSwitcher = () => {
                 setLang(language.code);
                 setOpen(false);
               }}
-              className={`hover:bg-surface hover:text-foreground w-full rounded-lg px-3 py-2 text-start text-sm transition-colors duration-[var(--duration-fast)] ease-entrance ${
+              className={`hover:bg-surface hover:text-foreground flex min-h-[44px] w-full items-center rounded-lg px-3 text-start text-sm transition-colors duration-[var(--duration-fast)] ease-entrance ${
                 language.code === lang ? "text-foreground" : "text-foreground-muted"
               }`}
             >

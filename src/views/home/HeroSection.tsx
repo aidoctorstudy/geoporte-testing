@@ -15,29 +15,33 @@ export const HeroSection = () => {
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="bg-background relative flex min-h-screen items-center overflow-hidden"
+      className="bg-background relative z-0 flex min-h-screen items-center overflow-hidden"
     >
-      <div data-cursor="canvas" className="absolute inset-0 h-full w-full">
+      {/* Opaque dark-navy fill, by explicit design choice: the hero keeps its
+          own bespoke digital-twin wireframe scene (below) as its ONLY 3D
+          content, so this section's background must occlude the persistent
+          Earth globe (mounted at the app root, `position:fixed`/`z-index:-1`,
+          see PlanetBackground.tsx) rather than let it show through. Every
+          section below this one stays transparent/translucent so the globe
+          is visible there as the user scrolls — see ADR-0068 in
+          decisions-log.md. */}
+      <div data-cursor="canvas" className="absolute inset-0 z-0 h-full w-full">
         <HeroScene className="h-full w-full" />
       </div>
-      <div
-        aria-hidden="true"
-        className="from-background via-background/75 to-background/15 absolute inset-0 bg-gradient-to-t"
-      />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-8">
-        <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+        <p className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
           <TranslatedText text="Civil · Geotechnical · Structural · Telecom" />
         </p>
         <HeroHeading
           id="hero-heading"
           text="Design. Engineering. Advisory."
-          className="leading-display text-foreground max-w-4xl text-5xl font-medium md:text-7xl"
+          className="leading-display text-foreground [text-shadow:0_2px_24px_rgba(0,0,0,.85)] max-w-4xl text-5xl font-medium md:text-7xl"
         />
 
         <HeroSubtext
           text={brand.mission}
-          className="text-foreground-muted mt-6 max-w-xl text-lg"
+          className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mt-6 max-w-xl text-lg"
         />
 
         <div className="mt-10">

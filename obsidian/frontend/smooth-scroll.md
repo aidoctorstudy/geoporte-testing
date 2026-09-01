@@ -30,7 +30,14 @@ Wraps the whole app (mounted in `app/layout.tsx`). It splits into:
 3. Starts a `requestAnimationFrame` loop calling `lenis.raf(time)`.
 4. Watches `isEnableScroll` — starts/stops Lenis and locks/unlocks native scroll
    (`html { overflow: hidden }`) accordingly.
-5. Watches `pathname` for `#hash` → smooth-scrolls to the target after 300 ms.
+5. Watches `pathname` for `#hash` → smooth-scrolls to the target after 300 ms;
+   for a plain route change (no hash), instead calls `lenis.scrollTo(0,
+   { immediate: true })` — not a raw `window.scrollTo`, which would desync
+   Lenis's own virtual scroll position and jank the next user scroll — so
+   every client-side navigation lands at the top of the new page. Falls back
+   to `window.scrollTo(0, 0)` if Lenis hasn't mounted yet. Added in ADR-0058
+   (this had been missing — a client-side route change kept whatever scroll
+   position the previous page was left at).
 
 `scrollSpeed` is an exported mutable `{ current: 1 }` — adjust to change global speed.
 

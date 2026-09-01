@@ -1,10 +1,17 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
+import { TranslatedText } from "@/components/common/TranslatedText";
 import { projectCategories, projects } from "@/data/mocks/projects";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
 
-export const ProjectsSection = () => {
+export interface ProjectsSectionProps {
+  /** Defaults to "h2" (the homepage's own `<h1>` lives in `HeroHeading`).
+   * The standalone `/projects` page passes "h1". */
+  headingTag?: "h1" | "h2";
+}
+
+export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}) => {
   return (
     <section
       id="projects"
@@ -13,6 +20,7 @@ export const ProjectsSection = () => {
     >
       <SectionHeading
         id="projects-heading"
+        tag={headingTag}
         eyebrow="Selected work"
         heading="Landmark projects, across continents"
       />
@@ -32,12 +40,12 @@ export const ProjectsSection = () => {
               delayIn={index * 100}
             >
               <h3 className="text-foreground-muted text-sm tracking-[0.16em] uppercase">
-                {category}
+                <TranslatedText text={category} />
               </h3>
               <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {categoryProjects.map((project) => (
+                {categoryProjects.map((project, cardIndex) => (
                   <li key={project.title}>
-                    <ProjectCard project={project} />
+                    <ProjectCard project={project} priority={index === 0 && cardIndex < 3} />
                   </li>
                 ))}
               </ul>

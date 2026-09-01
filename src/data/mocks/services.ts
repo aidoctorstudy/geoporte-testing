@@ -25,14 +25,45 @@ export interface ServiceStat {
 }
 
 export type ServiceSceneTheme =
-  | "corridor-grading"
-  | "bim-clash-detection"
-  | "geological-digital-twin"
-  | "structural-fem-analysis"
-  | "flood-inundation-terrain"
+  | "golden-parthenon"
+  | "aether-flux"
+  | "solaris"
+  | "einstein-rosen-lattice"
+  | "negentropy"
   | "schedule-network-graph"
   | "advisory-lifecycle-network"
   | "telecom-signal-network";
+
+// Themes whose scene mounts as a fixed, page-wide background instead of a
+// section-scoped hero (see `AetherFluxBackground.tsx`/`SolarisBackground.tsx`/
+// `EinsteinRosenLatticeBackground.tsx`/`GoldenParthenonBackground.tsx`/
+// `NegentropyBackground.tsx`/`ProjectControlBackground.tsx`/
+// `AureoleBackground.tsx`/`SpiralGalaxyBackground.tsx`) — dense/bright
+// enough (or, for `schedule-network-graph`, backed by a video rather than a
+// WebGL scene at all) that plain text-on-gradient loses contrast, so
+// `ServiceHero.tsx` swaps in a frosted glass band and every content section
+// on that page (`service-detail.tsx`) swaps its opaque background for the
+// `.glass-panel` treatment. One shared Set so the two files can't drift.
+//
+// Geotechnical Engineering keeps `solaris` here (full-page fixed
+// background, unchanged) — but its *hero section* no longer goes through
+// `ServiceHero.tsx`'s glass branch. `service-detail.tsx` special-cases this
+// slug to render the bespoke `GeotechnicalAnalysisHero.tsx` instead, which
+// mounts a second, bounded 3D scene (`build-geotechnical-fea-scene.ts`, a
+// PLAXIS-inspired FE model) inside the hero on top of the Solaris
+// background — both visible together, per explicit user direction. See
+// ADR-0061.
+export const GLASS_SCENE_THEMES: ReadonlySet<ServiceSceneTheme> = new Set([
+  "solaris",
+  "aether-flux",
+  "einstein-rosen-lattice",
+  "golden-parthenon",
+  "negentropy",
+  "schedule-network-graph",
+  "advisory-lifecycle-network",
+  "telecom-signal-network",
+]);
+export const isGlassSceneTheme = (theme: ServiceSceneTheme): boolean => GLASS_SCENE_THEMES.has(theme);
 
 export interface Service {
   slug: string;
@@ -62,9 +93,9 @@ export const services: Service[] = [
       "Designs focused on functionality, constructability, safety and economy.",
     overview:
       "Geoporte's Civil Design team collaborates with clients, architects, contractors and government entities to deliver designs that emphasise functionality, constructability and well-planning — without compromising safety or economic efficiency. The team brings extensive experience across transport, water and building infrastructure projects.",
-    sceneTheme: "corridor-grading",
+    sceneTheme: "golden-parthenon",
     sceneSummary:
-      "A city construction site building itself — roads growing outward from a centre point, a cable-stay bridge whose cables attach one by one, two tower cranes swinging beams into place, low-poly cars running the finished road segments.",
+      "A classical temple at golden hour — sun-warmed stone colonnade against a dusk sky, drifting dust motes catching the light, the sun itself following the cursor across the horizon as it sweeps.",
     capabilityGroups: [
       {
         heading: "Design & Planning",
@@ -157,9 +188,9 @@ export const services: Service[] = [
       "Comprehensive civil engineering design solutions using cutting-edge technology.",
     overview:
       "High-quality design and drafting services that adhere to industry standards and best practice. The team pairs experienced civil engineers with CAD specialists, working in industry-leading software — AutoCAD, Civil 3D and Revit — to deliver precise, coordinated documentation as an extension of the client's own project team.",
-    sceneTheme: "bim-clash-detection",
+    sceneTheme: "aether-flux",
     sceneSummary:
-      "A blueprint sheet unrolling into view — its drafting lines drawing themselves on, dimension call-outs and revision-cloud annotations fading in after, individual lines brightening as the cursor passes near them.",
+      "A slowly turning cube of brushed-platinum drafting rods, each one orienting itself along a swirling flow field — the cursor parts them into a soft pocket and curls them into a vortex, a click sends an expanding ring that lengthens and ignites the rods it passes.",
     capabilityGroups: [
       {
         heading: "Services Offered",
@@ -234,9 +265,9 @@ export const services: Service[] = [
       "Full-service solutions for planning and design challenges beneath the ground.",
     overview:
       "Geoporte's geotechnical practice is the deepest bench in the firm — full-service solutions across site investigation, ground behaviour, foundation design and slope stabilisation, applied to some of the region's most technically demanding infrastructure. This is the discipline the Geoporte digital twin was built to show: what lies beneath the project.",
-    sceneTheme: "geological-digital-twin",
+    sceneTheme: "solaris",
     sceneSummary:
-      "A cutaway descending through named soil and rock layers — a borehole tube with a core-sampler drill continuously working its way down, floating core samples pulled from a few depths, glowing water veins threading through the lower layers.",
+      "A breathing navy-to-azure particle sun as the page's full-page background, with a bounded finite-element geotechnical model layered on top of it inside the hero: six geological strata cut away around a deep excavation with retaining walls, a piled foundation and a tunnel bore, a graded FE mesh denser around every structural element, toggleable deformation and analysis-result contours, a 6-stage construction sequence, and a clamped orbit camera.",
     capabilityGroups: [
       {
         heading: "Ground engineering",
@@ -404,9 +435,9 @@ export const services: Service[] = [
       "Cost-effective solutions to the latest standards and codes.",
     overview:
       "Customised, cost-effective structural engineering solutions for the civil infrastructure sector, combining local and international expertise to meet current standards without compromising delivery efficiency. Geoporte works a One Team approach — collaborating directly with clients to develop tailored structural solutions across site development, transportation, utilities and infrastructure.",
-    sceneTheme: "structural-fem-analysis",
+    sceneTheme: "einstein-rosen-lattice",
     sceneSummary:
-      "A steel frame assembling itself — individual members flying in and connecting one by one with a brief weld-spark flare at each joint, glass facade panels sliding into place once the frame stands, the finished structure turning slowly in space.",
+      "A platinum lattice wormhole funnelling down to a glowing throat — warm gold at the mouth, cold sapphire at the flaring rim, its meridian wireframe breathing and drifting as the structure slowly spins.",
     capabilityGroups: [
       {
         heading: "Core capabilities",
@@ -470,9 +501,9 @@ export const services: Service[] = [
     shortDescription: "Innovative risk management through technical expertise.",
     overview:
       "Helping clients effectively manage stormwater and flood risk through innovative solutions, technical expertise and current modelling technology — hydrological, hydraulic and GIS-based approaches, backed by clear regulatory navigation and sophisticated data visualisation.",
-    sceneTheme: "flood-inundation-terrain",
+    sceneTheme: "negentropy",
     sceneSummary:
-      "A catchment terrain under falling rain, a translucent water level rising as you scroll, flood-extent contour rings expanding outward, a branching drainage network pulsing with flow direction from trunk to outlet.",
+      "A drifting field of luminous particles — a spiral web resolving into strands of light, an orbiting molecule cage, a swirling green storm, a counter-spinning hourglass galaxy — flown through with the scroll as a single cursor-reactive composition.",
     capabilityGroups: [
       {
         heading: "Core competencies",
@@ -549,7 +580,7 @@ export const services: Service[] = [
       "Integrated project controls across scheduling, cost management, risk assessment and quality control — optimising project performance, mitigating risk, and ensuring timely, cost-effective delivery through accurate forecasting and transparent stakeholder reporting.",
     sceneTheme: "schedule-network-graph",
     sceneSummary:
-      "A floating Gantt-bar field — status-coloured bars extending on their own staggered timers along a glowing timeline axis, dependency lines linking consecutive activities, milestone diamonds pulsing along the way, more bars revealing as you scroll.",
+      "A looping silhouette video backdrop (GetLayers' \"Siloutte\"), muted and full-bleed behind every section, rather than the WebGL Gantt-bar field the theme name still refers to.",
     capabilityGroups: [
       {
         heading: "Planning & scheduling",
@@ -636,7 +667,7 @@ export const services: Service[] = [
       "Geoporte's value lies in highly experienced staff who understand geotechnical challenges, operating through an open, collaborative partnership approach — creating innovative, practical solutions that save clients time and money across every project phase.",
     sceneTheme: "advisory-lifecycle-network",
     sceneSummary:
-      "A rotating wireframe globe pinned at Geoporte's real project countries, curved arcs radiating from Australia to each with a travelling light, a soft atmosphere glow at the rim, the whole globe zooming in as you scroll.",
+      "A golden particle corona — tens of thousands of motes erupting from a dark hollow core along sixteen irregular spokes, drifting outward and dissipating, the cursor dragging a directional solar flare across the field and every click spawning another shockwave ring.",
     capabilityGroups: [
       {
         heading: "Core advisory capabilities",
@@ -706,7 +737,7 @@ export const services: Service[] = [
       "Surveys, design, build and testing of mobile communications systems across in-building (DAS / Small Cells / Repeaters / Nextivity) and outdoor (Macro / PSN / Small Cells) networks — RF engineering delivered by certified professionals from site survey through commissioning.",
     sceneTheme: "telecom-signal-network",
     sceneSummary:
-      "A transmission tower assembling itself bottom-up, five coverage rings expanding outward on a clear pulse, data streaming up the mast, a connected in-building node lattice that fills in further as you scroll.",
+      "A slowly turning two-arm spiral galaxy — molten-gold core fading into deep-violet dust — diving toward its centre as you scroll, the disc tipping edge-on, drifting atmosphere motes and a cursor-driven void parting the dust.",
     capabilityGroups: [
       {
         heading: "Core competencies",

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { animated, useTransition } from "@react-spring/web";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
+import { TranslatedText } from "@/components/common/TranslatedText";
 import { useProjectModalStore } from "./project-modal-store";
 
 const TITLE_ID = "project-modal-title";
@@ -61,22 +63,29 @@ export const ProjectModal = () => {
           style={{
             transform: style.scale.to((s) => `translate(-50%, -50%) scale(${s})`),
           }}
-          className="border-line bg-background absolute top-1/2 left-1/2 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[560px] flex-col gap-5 overflow-y-auto rounded-2xl border p-6 text-foreground shadow-2xl sm:p-8"
+          className="border-line bg-background absolute top-1/2 left-1/2 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[560px] flex-col overflow-y-auto rounded-2xl border text-foreground shadow-2xl"
         >
-          <header className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-                {project.category}
-              </p>
-              <h2 id={TITLE_ID} className="text-foreground mt-2 text-2xl font-medium leading-tight">
-                {project.title}
-              </h2>
-            </div>
+          <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden">
+            <Image
+              src={project.image.src}
+              alt={project.image.alt}
+              fill
+              sizes="(max-width: 640px) 100vw, 560px"
+              className="object-cover"
+              priority
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, rgba(1,4,14,.75) 0%, rgba(1,4,14,0) 55%)",
+              }}
+            />
             <button
               type="button"
               onClick={close}
               aria-label="Close project details"
-              className="border-line text-foreground hover:bg-surface flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              className="border-line bg-background/80 text-foreground hover:bg-surface absolute top-4 right-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
                 <path
@@ -87,28 +96,41 @@ export const ProjectModal = () => {
                 />
               </svg>
             </button>
-          </header>
+          </div>
 
-          <dl className="border-line grid grid-cols-2 gap-4 border-y py-4 text-sm">
+          <div className="flex flex-col gap-5 p-6 sm:p-8">
             <div>
-              <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
-                Location
-              </dt>
-              <dd className="text-foreground mt-1">
-                {project.location}, {project.country}
-              </dd>
+              <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+                <TranslatedText text={project.category} />
+              </p>
+              <h2 id={TITLE_ID} className="text-foreground mt-2 text-2xl font-medium leading-tight">
+                <TranslatedText text={project.title} />
+              </h2>
             </div>
-            <div>
-              <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
-                Discipline
-              </dt>
-              <dd className="text-foreground mt-1">{project.sector}</dd>
-            </div>
-          </dl>
 
-          <p className="text-foreground-muted text-sm leading-relaxed">
-            {project.description}
-          </p>
+            <dl className="border-line grid grid-cols-1 gap-4 border-y py-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
+                  <TranslatedText text="Location" />
+                </dt>
+                <dd className="text-foreground mt-1">
+                  {project.location}, <TranslatedText text={project.country} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
+                  <TranslatedText text="Discipline" />
+                </dt>
+                <dd className="text-foreground mt-1">
+                  <TranslatedText text={project.sector} />
+                </dd>
+              </div>
+            </dl>
+
+            <p className="text-foreground-muted text-sm leading-relaxed">
+              <TranslatedText text={project.description} />
+            </p>
+          </div>
         </animated.div>
       </animated.div>
     ) : null,

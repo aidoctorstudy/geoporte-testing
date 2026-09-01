@@ -83,9 +83,16 @@ function ScrollController() {
         if (hash) {
           setHash(hash);
         }
+      } else {
+        // Plain route change (not an in-page anchor) — always land at the
+        // top. `lenis.scrollTo` (not a raw `window.scrollTo`) keeps Lenis's
+        // own virtual scroll position in sync; without this it desyncs from
+        // the real scroll offset and the next user scroll jumps/stutters.
+        if (lenis) lenis.scrollTo(0, { immediate: true });
+        else if (typeof window !== "undefined") window.scrollTo(0, 0);
       }
     }
-  }, [pathname, setHash]);
+  }, [pathname, setHash, lenis]);
 
   return null; // This component doesn't render anything visible
 }

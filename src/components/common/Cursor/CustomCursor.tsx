@@ -3,10 +3,19 @@
 // 📖 Docs: obsidian/frontend/components/common.md
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { animated, to, useSpring } from "@react-spring/web";
 import { usePointer, getPointerSnapshot } from "@/hooks/cursor/use-pointer";
 import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import { subscribeToTicker } from "@/lib/animation/ticker";
+import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
+
+// Every route with its own fixed full-page WebGL background
+// (`glass-background-routes.ts`) has its own cursor interaction baked into
+// the scene (Solaris's solar-flare raycast, Aether Flux's rod pocket/
+// vortex) — the generic accent-coloured dot/ring/glow on top of that read
+// as a second, conflicting cursor effect, so it steps aside on those routes,
+// the same way `PlanetBackground` steps aside for them.
 
 type CursorVariant = "default" | "interactive" | "canvas";
 
@@ -83,12 +92,17 @@ const TrailParticle = ({
  * Gated off entirely on touch (`usePointer().isFinePointer`) and under
  * `prefers-reduced-motion` — the native cursor and default focus rings stay
  * intact there. Position updates ride the shared ticker rather than a
- * per-component `pointermove` listener.
+ * per-component `pointermove` listener. Also gated off on every
+ * glass-background route (`isGlassBackgroundRoute`) — those pages' fixed
+ * scenes already give the cursor their own reaction, and this component's
+ * own accent ring on top of that read as a second, conflicting effect.
+ * See ADR-0037.
  */
 export const CustomCursor = () => {
   const { isFinePointer, hasMoved } = usePointer();
+  const pathname = usePathname();
   const reducedMotion = isReducedMotion();
-  const active = isFinePointer && !reducedMotion;
+  const active = isFinePointer && !reducedMotion && !isGlassBackgroundRoute(pathname);
   // Visible only once the pointer has actually moved — before that, `x`/`y`
   // are still the `0,0` default and rendering would show the cursor stuck in
   // the top-left corner instead of staying hidden until first movement.

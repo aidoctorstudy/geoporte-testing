@@ -63,7 +63,7 @@ export const CookieBanner = () => {
           <button
             type="button"
             onClick={openModal}
-            className="px-2 py-2 text-sm font-medium leading-none text-foreground underline underline-offset-2 hover:text-foreground/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            className="inline-flex min-h-[44px] items-center px-2 text-sm font-medium leading-none text-foreground underline underline-offset-2 hover:text-foreground/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
             Manage preferences
           </button>

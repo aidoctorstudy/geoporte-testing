@@ -1,16 +1,37 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { services } from "@/data/mocks/services";
 import { brand, contact, offices } from "@/lib/company";
 import { primaryNavLinks } from "@/components/common/Nav/nav-links";
 import { TranslatedText } from "@/components/common/TranslatedText";
+import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
+
+// Every route with its own fixed full-page WebGL background
+// (`glass-background-routes.ts`) gets the footer's glass-panel treatment
+// too, so that background stays visible all the way to the page bottom.
 
 export const Footer = () => {
   const year = new Date().getFullYear();
+  const glass = isGlassBackgroundRoute(usePathname());
 
   return (
-    <footer className="border-line bg-background-alt border-t">
-      <div className="mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-20">
+    <footer
+      className={
+        glass
+          ? "relative z-10"
+          : "border-line bg-background-alt relative z-10 border-t"
+      }
+    >
+      <div
+        className={
+          glass
+            ? "glass-panel mx-auto my-8 max-w-6xl px-6 py-16 md:my-12 md:px-8 md:py-20"
+            : "mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-20"
+        }
+      >
         <div className="border-line flex flex-col gap-6 border-b pb-12 md:flex-row md:items-end md:justify-between md:gap-4">
           <div>
             <p className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
@@ -21,14 +42,14 @@ export const Footer = () => {
             </h2>
           </div>
           <Link
-            href="/#contact"
+            href="/contact"
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex shrink-0 items-center justify-center rounded-full px-7 py-3 text-sm font-medium"
           >
             <TranslatedText text="Contact Us" />
           </Link>
         </div>
 
-        <div className="border-line grid grid-cols-2 gap-x-8 gap-y-10 border-b py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="border-line grid grid-cols-1 gap-x-8 gap-y-10 border-b py-12 sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <p className="text-foreground text-sm font-semibold tracking-[0.18em]">
               {brand.wordmark}
@@ -102,7 +123,7 @@ export const Footer = () => {
               ))}
               <li>
                 <Link
-                  href="/#contact"
+                  href="/contact"
                   className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                 >
                   <TranslatedText text="Contact" />

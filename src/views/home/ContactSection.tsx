@@ -1,9 +1,16 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
+import { TranslatedText } from "@/components/common/TranslatedText";
 import { contact, offices } from "@/lib/company";
 import { ContactTerrain } from "./ContactTerrain";
 
-export const ContactSection = () => {
+export interface ContactSectionProps {
+  /** Defaults to "h2" (the homepage's own `<h1>` lives in `HeroHeading`).
+   * The standalone `/contact` page passes "h1". */
+  headingTag?: "h1" | "h2";
+}
+
+export const ContactSection = ({ headingTag = "h2" }: ContactSectionProps = {}) => {
   return (
     <section
       id="contact"
@@ -14,6 +21,7 @@ export const ContactSection = () => {
       <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-8">
         <SectionHeading
           id="contact-heading"
+          tag={headingTag}
           eyebrow="Get in touch"
           heading="Ready to engineer with confidence in complex ground?"
         />
@@ -35,7 +43,7 @@ export const ContactSection = () => {
               </a>
             </p>
             <p className="text-foreground-muted mt-2 text-sm">
-              {contact.responseTime}
+              <TranslatedText text={contact.responseTime} />
             </p>
             <ul className="mt-6 flex flex-col gap-2">
               {contact.phones.map((phone) => (
@@ -47,21 +55,22 @@ export const ContactSection = () => {
                     {phone.number}
                   </a>{" "}
                   <span className="text-foreground-muted/60">
-                    ({phone.region})
+                    (<TranslatedText text={phone.region} />)
                   </span>
                 </li>
               ))}
             </ul>
           </address>
 
-          <ul className="grid grid-cols-2 gap-x-8 gap-y-8">
+          <ul className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-2">
             {offices.map((office) => (
               <li key={office.city}>
                 <address className="not-italic">
                   <p className="text-foreground font-medium">{office.city}</p>
                   <p className="text-foreground-muted mt-1 text-sm">
-                    {office.country}
+                    <TranslatedText text={office.country} />
                   </p>
+                  {/* Street address stays untranslated — see contact.tsx. */}
                   <p className="text-foreground-muted/80 mt-2 text-sm">
                     {office.address}
                   </p>

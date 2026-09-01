@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { animated, to, useSpring } from "@react-spring/web";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
+import { TranslatedText } from "@/components/common/TranslatedText";
 import type { ServiceSubService } from "@/data/mocks/services";
 
 const MAX_TILT_DEG = 6;
@@ -55,24 +56,36 @@ const SubServiceCard = ({ title, description }: ServiceSubService) => {
       }}
       className="border-line bg-surface hover:border-accent/60 h-full rounded-2xl border p-6 transition-colors duration-[var(--duration-normal)] ease-entrance"
     >
-      <h3 className="text-foreground text-base font-medium">{title}</h3>
-      <p className="text-foreground-muted mt-3 text-sm leading-relaxed">{description}</p>
+      <h3 className="text-foreground text-base font-medium">
+        <TranslatedText text={title} />
+      </h3>
+      <p className="text-foreground-muted mt-3 text-sm leading-relaxed">
+        <TranslatedText text={description} />
+      </p>
     </animated.article>
   );
 };
 
 export interface ServiceSubServiceGridProps {
   subServices: ServiceSubService[];
+  /** Glass-panel treatment instead of a plain opaque background — the
+   * Geotechnical page only, so its fixed Solaris background stays visible
+   * through this section. See ADR in decisions-log.md. */
+  glass?: boolean;
 }
 
 /** The 6-card sub-services grid (item 3 of the service page spec) — distinct
  * from the deeper `capabilityGroups`/`subServices` content folded into
  * `ServiceOverview` instead; see ADR in decisions-log.md. */
-export const ServiceSubServiceGrid = ({ subServices }: ServiceSubServiceGridProps) => {
+export const ServiceSubServiceGrid = ({ subServices, glass }: ServiceSubServiceGridProps) => {
   return (
     <section
       aria-labelledby="service-subservice-grid-heading"
-      className="mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24"
+      className={
+        glass
+          ? "glass-panel relative z-10 mx-auto my-8 max-w-6xl px-6 py-16 md:my-12 md:px-8 md:py-24"
+          : "bg-background relative z-10 mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24"
+      }
     >
       <SectionHeading
         id="service-subservice-grid-heading"

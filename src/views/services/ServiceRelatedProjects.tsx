@@ -9,13 +9,17 @@ const MAX_RELATED_PROJECTS = 6;
 
 export interface ServiceRelatedProjectsProps {
   serviceSlug: string;
+  /** Glass-panel treatment instead of a plain opaque background — the
+   * Geotechnical page only, so its fixed Solaris background stays visible
+   * through this section. See ADR in decisions-log.md. */
+  glass?: boolean;
 }
 
 /** Filters the real project list (`@/data/mocks/projects`) via the curated
  * `SERVICE_PROJECT_CATEGORIES` map (no per-project service field exists — see
  * ADR in decisions-log.md), capped at 6 cards, reusing `ProjectCard`
  * unchanged — it already opens the shared `ProjectModal` on click. */
-export const ServiceRelatedProjects = ({ serviceSlug }: ServiceRelatedProjectsProps) => {
+export const ServiceRelatedProjects = ({ serviceSlug, glass }: ServiceRelatedProjectsProps) => {
   const relevantCategories = SERVICE_PROJECT_CATEGORIES[serviceSlug] ?? [];
   const relatedProjects = projects
     .filter((project) => relevantCategories.includes(project.category))
@@ -26,7 +30,11 @@ export const ServiceRelatedProjects = ({ serviceSlug }: ServiceRelatedProjectsPr
   return (
     <section
       aria-labelledby="service-related-projects-heading"
-      className="mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24"
+      className={
+        glass
+          ? "glass-panel relative z-10 mx-auto my-8 max-w-6xl px-6 py-16 md:my-12 md:px-8 md:py-24"
+          : "bg-background relative z-10 mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-24"
+      }
     >
       <SectionHeading
         id="service-related-projects-heading"
