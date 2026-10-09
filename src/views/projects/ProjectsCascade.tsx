@@ -9,6 +9,7 @@ import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import { projects } from "@/data/mocks/projects";
+import { useProjectModalStore } from "@/views/home/project-modal-store";
 import {
   cascadeActiveIndex,
   HERO_VH,
@@ -41,6 +42,7 @@ export const ProjectsCascade = () => {
   const reducedMotion =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const lenis = useScroll((s) => s.lenis);
+  const openProject = useProjectModalStore((s) => s.open);
 
   const total = projects.length;
 
@@ -148,34 +150,45 @@ export const ProjectsCascade = () => {
         </h1>
         <ul className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <li
-              key={project.title}
-              className="border-line/50 bg-surface relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl border p-4"
-            >
-              <Image
-                src={project.image.src}
-                alt={project.image.alt}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
-              />
+            <li key={project.title}>
               <div
-                aria-hidden="true"
-                className="absolute inset-0"
-                style={{
-                  background: "linear-gradient(to top, rgba(1,4,14,.85) 0%, rgba(1,4,14,.15) 45%, rgba(1,4,14,0) 70%)",
+                role="button"
+                tabIndex={0}
+                aria-label={`View details for ${project.title}`}
+                onClick={() => openProject(project)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openProject(project);
+                  }
                 }}
-              />
-              <div className="relative">
-                <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
-                  {project.category}
-                </p>
-                <h3 className="text-foreground mt-1 text-sm font-medium">
-                  {project.title}
-                </h3>
-                <p className="text-foreground-muted mt-1 text-xs">
-                  {project.location}
-                </p>
+                className="border-line/50 bg-surface hover:border-accent/60 relative flex aspect-[4/3] w-full cursor-pointer flex-col justify-end overflow-hidden rounded-2xl border p-4 transition-colors duration-[var(--duration-fast)] ease-entrance focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <Image
+                  src={project.image.src}
+                  alt={project.image.alt}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  style={{
+                    background: "linear-gradient(to top, rgba(1,4,14,.85) 0%, rgba(1,4,14,.15) 45%, rgba(1,4,14,0) 70%)",
+                  }}
+                />
+                <div className="relative">
+                  <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+                    {project.category}
+                  </p>
+                  <h3 className="text-foreground mt-1 text-sm font-medium">
+                    {project.title}
+                  </h3>
+                  <p className="text-foreground-muted mt-1 text-xs">
+                    {project.location}
+                  </p>
+                </div>
               </div>
             </li>
           ))}
@@ -223,7 +236,17 @@ export const ProjectsCascade = () => {
           {projects.map((project, index) => (
             <animated.div
               key={project.title}
-              className="border-line/50 bg-surface absolute top-1/2 left-1/2 w-[min(640px,86vw)] overflow-hidden rounded-2xl border aspect-[16/10]"
+              role="button"
+              tabIndex={0}
+              aria-label={`View details for ${project.title}`}
+              onClick={() => openProject(project)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openProject(project);
+                }
+              }}
+              className="border-line/50 bg-surface hover:border-accent/60 absolute top-1/2 left-1/2 w-[min(640px,86vw)] cursor-pointer overflow-hidden rounded-2xl border aspect-[16/10] transition-colors duration-[var(--duration-fast)] ease-entrance focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               style={{
                 transform: cardAnimations[index].transform,
                 opacity: cardAnimations[index].opacity,

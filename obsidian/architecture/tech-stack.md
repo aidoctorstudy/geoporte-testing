@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-09-01
+updated: 2026-09-02
 ---
 
 # Tech Stack
@@ -583,6 +583,17 @@ available synchronously on the client before hydration completes, so
 checking them unconditionally would make the tier disagree between the
 server-rendered HTML and the client's first paint.
 
+As of ADR-0079, `getDeviceTier` also returns `"desktop"` for any viewport
+width when the device's *capability* tier is `"ultra"` (a detected flagship
+phone — see below) — the width-forcing rule's mirror image at the other end:
+`"low"` capability already forced `"mobile"` regardless of width;  `"ultra"`
+now forces `"desktop"` regardless of width. This is the one line that makes
+"no simplification for flagship phones" true everywhere at once: every
+`getDeviceTier`/`getTierBudget` consumer (DPR clamp, ambient shape count,
+hero frame cap, the Earth globe's star/atmo/marker counts, every scene
+builder's own `getDeviceTier(...) === "desktop"` density branch) picks up
+the literal desktop budget for a flagship phone with no other file touched.
+
 **4-tier performance/capability system** (`src/lib/scene/
 performance-tier.ts` + `src/hooks/performance/use-performance-tier.tsx`,
 ADR-0058) — Ultra/High/Medium/Low, resolved once per session from
@@ -603,6 +614,30 @@ since a scene is built once per mount. `PERFORMANCE_TIER_BUDGETS` also
 exports `particleScale`/`bloomScale` multipliers per tier, not yet wired
 into any of the 9 dedicated scene builders — see ADR-0058's "not done"
 section for why.
+
+As of ADR-0079, a mobile-UA device can also resolve straight to `"ultra"` —
+previously the mobile branch capped out at `"high"` no matter how capable
+the hardware read, since a phone GPU/thermal envelope is generally weaker
+than desktop's at the same core count. A **flagship** device is the explicit
+exception: `isFlagshipMobileDevice(cores, memory)` checks two independent
+paths before the ordinary cores/memory ladder runs —
+  - **Android**: the literal `cores >= 8 && memory >= 8` — both real,
+    reliable Chrome signals, no proxy needed.
+  - **iOS**: `deviceMemory` isn't implemented in Safari at all and
+    `hardwareConcurrency` has read a flat `6` on every iPhone since the A13
+    (iPhone 11, 2019), so neither can distinguish a 15 Pro Max from a 12
+    mini. The only proxy available is the device's logical screen size ×
+    `devicePixelRatio` — `IOS_FLAGSHIP_SCREEN_SIGNATURES`, a hand-maintained
+    table of `[shortSide, longSide, dpr]` triples (normalized so portrait/
+    landscape both match) covering 14 Pro/14 Pro Max/15/15 Plus/15 Pro/15
+    Pro Max/16/16 Plus/16 Pro/16 Pro Max. Plain "14"/"14 Plus" (older,
+    different screen signature, shared with 12/13) are deliberately not in
+    the table. An unrecognized future iPhone falls through to the normal
+    ladder — safe by construction, never silently mis-promoted; **update
+    this table when a new iPhone generation ships**. See ADR-0079 for why a
+    UA-string model check was requested but isn't implementable, and why
+    this proxy was chosen over the alternatives (treat every 6-core iOS
+    device as flagship; or leave iOS unhandled).
 
 `VideoBackground.tsx` (`src/components/common/`) also reads the mobile
 check for a client-computed `preload="none"` (ADR-0056) — separate from

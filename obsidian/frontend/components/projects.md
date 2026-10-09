@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-08-30
+updated: 2026-10-09
 ---
 
 # Catalog — `/projects`
@@ -157,6 +157,15 @@ React), `ProjectsCascade.tsx` is the `"use client"` scroll-driven stage.
   copy, not reusing `ProjectsSection`'s grid or `ProjectsShowreel`'s
   reduced-motion grid) — same rationale both of those already use: the
   scroll-jacked fold has no natural slower version.
+- **Cards were not clickable (fixed 2026-10-09).** Unlike `ProjectsShowreel`'s
+  tiles, the deck cards (both the animated 3D deck and the reduced-motion
+  static grid) shipped with no `onClick`/`onKeyDown`/`role="button"` at all —
+  clicking anywhere on `/projects`' main card deck did nothing. Fixed by
+  wiring every card to the same shared `useProjectModalStore` singleton
+  `ProjectsShowreel.tsx` already uses (`<ProjectModal />` is already mounted
+  once in `projects.tsx`, see above — no second modal needed), mirroring the
+  showreel's exact click/keyboard pattern. If a future card variant here
+  ships inert again, check for this same missing wiring first.
 
 ## Related
 

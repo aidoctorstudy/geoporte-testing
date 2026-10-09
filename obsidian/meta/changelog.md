@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-09-01
+updated: 2026-09-02
 ---
 
 # Changelog
@@ -36,6 +36,73 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-10-09 (Fixed: clicking a project card on `/projects` did nothing)
+
+Bug report: project cards on the standalone `/projects` page didn't open the
+detail modal on click, even though the identical-looking modal works from the
+homepage.
+
+- Root cause: `/projects` renders two sections — `ProjectsShowreel` (the
+  scroll-driven flight intro) and `ProjectsCascade` (the scroll-driven 3D
+  card deck beneath it, per ADR-0075). `ProjectsShowreel`'s tiles already
+  called `useProjectModalStore((s) => s.open)` on click. `ProjectsCascade`'s
+  cards never did — in both its animated 3D deck and its
+  `prefers-reduced-motion` static-grid fallback, the card markup had no
+  `onClick`/`onKeyDown`/`role="button"` at all, so most of the page's cards
+  were inert.
+- Fix: wired `ProjectsCascade.tsx`'s cards (both variants) to the same shared
+  `useProjectModalStore` singleton `ProjectsShowreel.tsx` already uses — no
+  new modal, no new store, just the missing click/keyboard handlers, mirroring
+  the existing pattern exactly (`role="button"`, `tabIndex`, `aria-label`,
+  Enter/Space handling, focus-visible ring).
+- `yarn lint` clean; `next build --webpack` clean (Turbopack itself can't run
+  in this sandbox — native SWC bindings are blocked by an Application Control
+  policy — so the build was run with the documented webpack fallback).
+  Verified live via `next dev --webpack`: clicking a Cascade card opens the
+  modal with image/category/name/location/discipline/description, and the
+  X button closes it.
+
+## 2026-09-02 (Flagship phones now get the full desktop WebGL budget — DPR 2, full particle counts, bloom, uncapped frame rate)
+
+Follow-up to 2026-09-01's fix below: capable phones were no longer *gated
+off* WebGL, but every mobile-width device — flagship or not — was still
+capped at the reduced mobile budget (DPR 1.5, cut particle counts, 30fps).
+Explicit request: iPhone 14 Pro and above (by name) and Android with 8+
+cores/8GB+ RAM should get the literal desktop budget, no simplification. Per
+[[decisions-log]] ADR-0079 (extends ADR-0078).
+
+- The literal ask ("detect iPhone model from `navigator.userAgent`") isn't
+  implementable — Safari never puts the model in the UA string, never
+  implements `deviceMemory`, and reports a flat 6-core `hardwareConcurrency`
+  on every iPhone since 2019. Flagged to the user; they chose a screen-
+  resolution × `devicePixelRatio` lookup table as the proxy, accepting it
+  needs manual upkeep as new iPhones ship.
+- `performance-tier.ts`: new `isFlagshipMobileDevice()` — iOS path matches
+  UA `"iPhone"` + a `[shortSide, longSide, dpr]` signature against a table
+  covering 14 Pro/14 Pro Max/15/15 Plus/15 Pro/15 Pro Max/16/16 Plus/16
+  Pro/16 Pro Max (14 and 14 Plus non-Pro deliberately excluded — different,
+  older screen signature); Android path is the literal `cores >= 8 &&
+  memory >= 8` (both real, reliable signals on Chrome). A flagship resolves
+  straight to the existing `"ultra"` tier in `detectPerformanceTier`,
+  bypassing the mobile ceiling ADR-0078 capped at `"high"`.
+- `device-tier.ts#getDeviceTier`: one new line — `"ultra"` capability now
+  forces `"desktop"` tier regardless of viewport width, mirroring the
+  existing "`"low"` capability forces `"mobile"` regardless of width" rule.
+  This single override is the whole mechanism: every consumer already keyed
+  off `getDeviceTier`/`getTierBudget` (DPR clamp, ambient shape count, hero
+  frame cap, the Earth globe's star/atmo/marker counts, every scene
+  builder's own `=== "desktop"` density check) picks up the full desktop
+  budget for a flagship phone automatically, no other files touched.
+- Verified against synthetic device profiles (not live-device, per the
+  09-01 entry's same caveat): iPhone 14 Pro/15/15 Pro Max/16 Pro Max →
+  `ultra`/desktop budget; iPhone 13 and plain 14 → unchanged `medium`/mobile
+  budget; Android at exactly 8 cores/8GB → `ultra`; Android at 8 cores/6GB →
+  stays `high`, not promoted; budget Android → still `low`/gated; desktop
+  profile → unaffected.
+- `yarn lint` / `yarn build` clean.
+- Desktop behaviour untouched — the new override only fires for
+  `isMobile`-branch detection; desktop's own tier logic wasn't touched.
 
 ## 2026-09-01 (3D scenes were not rendering on mobile — width-based WebGL skip replaced with a capability-only gate)
 

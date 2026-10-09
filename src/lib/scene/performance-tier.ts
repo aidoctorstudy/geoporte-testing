@@ -55,6 +55,54 @@ interface NavigatorWithMemory extends Navigator {
 const isMobileUserAgent = (): boolean =>
   typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+const isIOSDevice = (): boolean =>
+  typeof navigator !== "undefined" && /iPhone/i.test(navigator.userAgent);
+
+/**
+ * Safari never puts the device model in `navigator.userAgent` (every iPhone
+ * reports the same generic `"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac
+ * OS X)…"` string, model-free), never implements `navigator.deviceMemory`
+ * (Chromium-only), and has reported a flat `hardwareConcurrency: 6` on every
+ * iPhone since the A13 (iPhone 11, 2019) — so none of the usual capability
+ * signals can tell a 15 Pro Max from a 12 mini. The only proxy left is the
+ * device's logical screen size × `devicePixelRatio`, which Apple ties to a
+ * specific screen panel/chip generation.
+ *
+ * `[shortSide, longSide, dpr]` in CSS px, normalized (sorted) so portrait vs
+ * landscape both match — `screen.width`/`height`'s order isn't reliably
+ * orientation-stable across mobile Safari versions.
+ *
+ * MAINTENANCE: update this table when a new iPhone generation ships. An
+ * unrecognized (future) iPhone falls through to the normal cores/memory
+ * tiering below — safe by construction, never silently mis-promoted to
+ * "ultra"; worst case a new flagship reads as "medium" until this table is
+ * updated, not "low"/broken.
+ */
+const IOS_FLAGSHIP_SCREEN_SIGNATURES: ReadonlyArray<readonly [number, number, number]> = [
+  [393, 852, 3], // iPhone 14 Pro, 15, 15 Pro, 16
+  [430, 932, 3], // iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus
+  [402, 874, 3], // iPhone 16 Pro
+  [440, 956, 3], // iPhone 16 Pro Max
+];
+
+const isFlagshipIOSDevice = (): boolean => {
+  if (!isIOSDevice()) return false;
+  if (typeof screen === "undefined" || typeof window === "undefined") return false;
+  const [shortSide, longSide] = [screen.width, screen.height].sort((a, b) => a - b);
+  const dpr = window.devicePixelRatio;
+  return IOS_FLAGSHIP_SCREEN_SIGNATURES.some(
+    ([s, l, d]) => s === shortSide && l === longSide && d === dpr,
+  );
+};
+
+/** Android (and other Chromium-mobile) flagships report real
+ * `hardwareConcurrency`/`deviceMemory` — no proxy needed, unlike iOS above. */
+const isFlagshipAndroidDevice = (cores: number | null, memory: number | null): boolean =>
+  cores !== null && cores >= 8 && memory !== null && memory >= 8;
+
+const isFlagshipMobileDevice = (cores: number | null, memory: number | null): boolean =>
+  isFlagshipIOSDevice() || isFlagshipAndroidDevice(cores, memory);
+
 const readSignals = () => {
   const nav = typeof navigator !== "undefined" ? (navigator as NavigatorWithMemory) : null;
   const cores = nav && typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
@@ -73,9 +121,12 @@ const readSignals = () => {
  * width/UA check (ADR-0078 removed that forcing rule: it was catching every
  * phone, including high-end ones like iPhone 14+/15 Pro, since Safari never
  * exposes `deviceMemory` and `width < 768` is true for essentially all
- * phones in portrait). A phone's GPU/thermal envelope is still weaker than a
- * desktop's at the same core count, so the ceiling for a mobile UA is capped
- * at "high" rather than reaching "ultra".
+ * phones in portrait). A phone's GPU/thermal envelope is generally weaker
+ * than a desktop's at the same core count, so the ordinary mobile ceiling is
+ * capped at "high" — except a *flagship* device (see
+ * `isFlagshipMobileDevice`: recent Pro-tier iPhones by screen signature,
+ * Android by real 8-core/8GB signals), which reaches "ultra" — the same
+ * uncapped budget desktop gets, no simplification (ADR-0079).
  */
 export const detectPerformanceTier = (): PerformanceTier => {
   const { cores, memory, isMobile } = readSignals();
@@ -83,6 +134,7 @@ export const detectPerformanceTier = (): PerformanceTier => {
   const m = memory ?? 4;
 
   if (isMobile) {
+    if (isFlagshipMobileDevice(cores, memory)) return "ultra";
     if (c < 6 || m < 4) return "low";
     if (c >= 8 && m >= 6) return "high";
     return "medium";

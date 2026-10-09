@@ -17,7 +17,77 @@ Template: [[templates/adr-note]].
 
 ---
 
-## ADR-0078 — WebGL scenes no longer skip on narrow viewport width; gate is device capability only
+## ADR-0079 — Flagship phones (recent Pro-tier iPhones, 8-core/8GB Android) get the full desktop budget, not just "not gated off"
+
+**Status:** Accepted · 2026-09-02 · **Extends ADR-0078.**
+
+**Context.** ADR-0078 (previous turn) fixed capable phones being wrongly
+gated off WebGL entirely. It did not change how much budget a capable-but-
+not-gated phone gets — every mobile-width device, regardless of how powerful,
+still received the *mobile* width-tier budget (`dprClamp: 1.5`, reduced
+particle/shape counts, 30fps hero cap). Explicit follow-up request: give
+genuinely flagship devices — iPhone 14 Pro and above, and Android with 8+
+cores/8GB+ RAM — the literal desktop budget (full particle count, DPR up to
+2, bloom, full post-processing), not a merely-un-gated reduced one.
+
+**The detection problem.** The request asked for UA-string iPhone model
+detection. That isn't implementable: Safari's `navigator.userAgent` never
+includes the device model (every iPhone reports the same generic
+`"Mozilla/5.0 (iPhone; CPU iPhone OS …)"` string), Safari has never
+implemented `navigator.deviceMemory` (Chromium-only), and
+`navigator.hardwareConcurrency` has reported a flat `6` on every iPhone since
+the A13 (iPhone 11, 2019) — none of the normal capability signals can tell a
+15 Pro Max from a 12 mini. Flagged to the user directly; **user chose** a
+screen-resolution × `devicePixelRatio` lookup table as the least-bad proxy,
+accepting that it needs manual updates as Apple ships new screen sizes and
+that an unrecognized future iPhone should degrade safely rather than guess.
+
+**Decision.**
+
+- `performance-tier.ts` gains `isFlagshipMobileDevice(cores, memory)`:
+  - iOS path (`isFlagshipIOSDevice`): UA contains `"iPhone"` AND the
+    normalized (orientation-independent) `[shortSide, longSide,
+    devicePixelRatio]` matches `IOS_FLAGSHIP_SCREEN_SIGNATURES` — four
+    known signatures covering 14 Pro, 14 Pro Max, 15, 15 Plus, 15 Pro, 15
+    Pro Max, 16, 16 Plus, 16 Pro, 16 Pro Max. Explicitly excludes plain
+    "14"/"14 Plus" (different, older screen signature, shared with 12/13) —
+    matches the brief's own list. An iPhone with an unrecognized future
+    signature falls through to the normal cores/memory tiering (safe
+    default: "medium", same as today — never silently mis-promoted).
+  - Android path (`isFlagshipAndroidDevice`): real, reliable signals —
+    `cores >= 8 && memory >= 8`, both directly available via Chrome.
+  - `detectPerformanceTier`'s mobile branch checks flagship status first;
+    a flagship resolves straight to `"ultra"`, bypassing the ordinary
+    mobile ceiling (which stays capped at `"high"` for everyone else, per
+    ADR-0078).
+- `device-tier.ts#getDeviceTier` gains the mirror-image override of its
+  existing "low capability forces `mobile` tier regardless of width" rule:
+  **"ultra" capability forces `desktop` tier regardless of width.** This one
+  line is the entire mechanism — every existing consumer keyed off
+  `getDeviceTier`/`getTierBudget` (DPR clamp, ambient shape count, hero
+  frame-rate cap, the Earth globe's star/atmo/marker counts via
+  `build-planet-scene.ts`'s `tier` param, every scene builder's own
+  `getDeviceTier(...) === "desktop"` density check — negentropy, geotechnical
+  plexus, telecom signal network, advisory lifecycle network) picks up the
+  full desktop budget automatically, with zero additional wiring, the same
+  "one module decides" principle ADR-0056/ADR-0078 already established for
+  the low end.
+
+**Why the screen-signature table over the alternatives.** Two other options
+were on the table: (a) treat every 6-core iOS device as flagship — never
+goes stale, but wrongly promotes iPhone 11/12/13 which the brief explicitly
+wants kept at the mid-range floor; (b) ship only the (reliable) Android half
+and leave iPhone as-is — correct but doesn't satisfy the actual request. The
+screen-signature table is the only option that matches the requested
+boundary (14 Pro+ in, 12/13/14-non-Pro out) at the cost of needing upkeep —
+an explicit, informed tradeoff, not an oversight.
+
+**When building.** Add a new `IOS_FLAGSHIP_SCREEN_SIGNATURES` entry whenever
+a new iPhone generation ships with a new logical screen size — check current
+Pro-tier models' `screen.width`/`height`/`devicePixelRatio` in Safari and add
+the triple. Never try to read the device model from `navigator.userAgent` —
+it isn't there. Never add `navigator.deviceMemory` handling for iOS paths —
+Safari doesn't implement it; `memory` is always `null` there by construction.
 
 **Status:** Accepted · 2026-09-01 · **Amends ADR-0056, ADR-0058, ADR-0060, ADR-0031.**
 
