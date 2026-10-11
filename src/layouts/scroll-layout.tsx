@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import { scrollTo } from "@/utils/scroll-to";
 import { useShallow } from "zustand/react/shallow";
+import { isLowPowerDevice } from "@/lib/scene/device-tier";
 
 export const scrollSpeed = { current: 1 };
 
@@ -34,6 +35,14 @@ function ScrollController() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.scrollTo(0, 0);
+    // Tier 1 (low capability) skips Lenis entirely — native scroll instead.
+    // Lenis's own per-frame rAF easing math is a continuous main-thread cost
+    // for the life of the page; on a device already stripped of WebGL and
+    // springs, it's the one remaining animation loop still running. `scrollTo`
+    // (`utils/scroll-to.ts`) and every `lenis`-null branch below already fall
+    // back to plain `window.scrollTo`, so this isn't a new code path.
+    if (isLowPowerDevice()) return;
+
     const lenis = new Lenis({
       smoothWheel: true,
       // syncTouch: true,

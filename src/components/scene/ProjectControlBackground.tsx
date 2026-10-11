@@ -35,8 +35,6 @@ export const ProjectControlBackground = () => {
       webmSrc="/assets/siloutte/siloutte-bg.webm"
       mobileMp4Src="/assets/siloutte/siloutte-bg-720.mp4"
       mobileWebmSrc="/assets/siloutte/siloutte-bg-720.webm"
-      mobileMp4Src480="/assets/siloutte/siloutte-bg-480.mp4"
-      mobileWebmSrc480="/assets/siloutte/siloutte-bg-480.webm"
       poster="/assets/siloutte/siloutte-bg.jpg"
       className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover"
     />

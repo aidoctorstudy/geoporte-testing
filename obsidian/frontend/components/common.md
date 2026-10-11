@@ -1,6 +1,6 @@
 ---
 tags: [frontend, stable]
-updated: 2026-08-29
+updated: 2026-10-11
 ---
 
 # Catalog — Common Components
@@ -227,11 +227,19 @@ rather than store-driven. See ADR-0033, ADR-0058, ADR-0067 in
 
 ## ReducedMotion — `reduced-motion.tsx`
 
-`<ReducedMotion>` — a client leaf that calls react-spring's `useReducedMotion()`.
-It watches the `prefers-reduced-motion` media query and toggles react-spring's
-global `skipAnimation`, so every spring — and `spring-text-engine` — jumps to its
-end state instead of animating. Renders `null`; mounted once in the root layout.
-See [[animation-system]] and [[seo-metadata]].
+`<ReducedMotion>` — a client leaf, mounted once in the root layout, renders
+`null`. Watches the `prefers-reduced-motion` media query **and** the Tier 1
+("low" capability) performance tier (`usePerformanceTier()`); either one
+forces react-spring's global `skipAnimation`, so every spring — and
+`spring-text-engine` — jumps to its end state instead of animating.
+Re-implements the OS listener directly (rather than react-spring's own
+`useReducedMotion()` hook) so the tier can be OR'd in without racing a second
+listener — see ADR-0081. Also toggles `data-perf-tier="low"` on `<html>`,
+which `globals.css` reads to flatten every `backdrop-blur`/`.glass-panel`
+surface to a solid fill on that tier. Non-spring motion (WebGL scene mounts,
+the cursor trail, the page-load intro, Lenis) reads the same tier through
+`isReducedMotion()`/`isLowPowerDevice()` instead, since it isn't driven by
+react-spring's `Globals`. See [[animation-system]] and [[seo-metadata]].
 
 ## Nav — `Nav/`
 

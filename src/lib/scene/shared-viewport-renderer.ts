@@ -12,7 +12,7 @@
  * small scenes threaded through the rest of the page.
  */
 import * as THREE from "three";
-import { getTierBudget } from "./device-tier";
+import { getTierBudget, isLowPowerDevice } from "./device-tier";
 
 export interface ViewportBuild {
   scene: THREE.Scene;
@@ -263,9 +263,20 @@ export const registerViewport = ({
   };
 };
 
+/**
+ * True under the OS `prefers-reduced-motion` setting *or* on the "low"
+ * capability tier (`device-tier.ts#isLowPowerDevice`) — Tier 1 disables every
+ * non-WebGL animation surface too (ambient background gating, the cursor
+ * trail, the scroll cue, the page-load intro, route-transition sweep), not
+ * just the 3D scenes `isLowPowerDevice()` already skips on its own. Every
+ * existing caller of this function picks up the Tier 1 behaviour with zero
+ * additional wiring — the same "one module decides" principle `device-tier.ts`
+ * already documents for `isLowPowerDevice()` itself.
+ */
 export const isReducedMotion = (): boolean =>
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  (typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
+  isLowPowerDevice();
 
 /** Disposes geometries/materials/textures on every mesh-like object in a scene. */
 export const disposeSceneObjects = (scene: THREE.Scene): void => {

@@ -37,6 +37,70 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-11 (Tier 1 fully static; desktop capability-tier dprClamp bug fixed — root cause of the "blurry globe" report)
+
+**Desktop blur/haze report, root-caused.** The Earth globe and ambient
+background shapes looked soft/hazy on desktop — not from any CSS `filter`/
+`backdrop-filter` on the canvas or hero/about wrappers (none exist; confirmed
+by grep), and not from `THREE.Fog` (the homepage ambient shapes have none).
+Root cause: `performance-tier.ts#detectPerformanceTier`'s desktop branch
+required `deviceMemory >= 8`/`>= 16` for "high"/"ultra" — but `deviceMemory`
+is Chromium-only, so on desktop Safari/Firefox the signal is always
+unreadable, defaulted to `4`, and silently failed that check. Any non-Chromium
+desktop with 8–15 cores landed at "medium" (`dprClamp: 1`) regardless of real
+hardware, rendering every WebGL canvas at half `devicePixelRatio` then
+CSS-upscaled — exactly what reads as blur. Fixed: when `deviceMemory` is
+unreadable, desktop now falls back to a cores-only read (`cores >= 8` → high)
+instead of letting the unreadable signal silently fail an AND check — same
+fix shape ADR-0078/79/80 already used for iOS's missing `deviceMemory`,
+applied to the desktop half of the same bug class. Chromium desktop (which
+does expose `deviceMemory`) is bit-for-bit unchanged.
+
+**Tier 1 (low capability) now disables every animation and heavy-CSS surface
+sitewide, not just WebGL** (`webglDisabled` already covered that half) —
+client report that the site "still lags on Tier 1 even with WebGL disabled."
+- `shared-viewport-renderer.ts#isReducedMotion()` now also returns `true` on
+  the low tier — every existing caller (ambient/globe mount gates, the
+  cursor trail, the scroll cue, the page-load intro) picks this up with zero
+  additional wiring.
+- `reduced-motion.tsx` now also forces react-spring's global `skipAnimation`
+  on the low tier (covers `Inview`/`SpringTrigger`/`Hover`/`Handle`/
+  `TextEngine`, the route-transition sweep, and every one-off `useSpring`
+  call), and toggles `data-perf-tier="low"` on `<html>`.
+- `globals.css`: `[data-perf-tier="low"]` flattens `.glass-panel` and every
+  `backdrop-blur-*` surface sitewide to a solid `rgba(4, 6, 15, 0.85)` fill,
+  no blur — `backdrop-filter` is GPU cost independent of WebGL.
+- `scroll-layout.tsx`: Lenis is no longer constructed at all on the low
+  tier — native scroll instead. Lenis's own per-frame easing math was the one
+  animation loop still running after WebGL/springs were already gated off.
+- `VideoBackground.tsx`: low tier renders the poster frame only (a plain
+  `<img>`, not a `<video>` element at all) — no autoplay, no video bytes
+  fetched or decoded. This fully supersedes the previous mobile-width-and-
+  low-tier-specific 480p video re-encode mechanism (now dead code, removed,
+  along with the `mobileMp4Src480`/`mobileWebmSrc480` props and their three
+  call sites) — low tier never reaches the `<video>` tag at all now,
+  regardless of width.
+- Images were already covered by `next/image`'s default lazy-loading (every
+  image in `src/` already goes through it — confirmed, zero raw `<img>`
+  tags before this turn); the handful of `priority` images are deliberately
+  eager (above-the-fold hero/first-visible images, for LCP) and were left
+  alone — forcing those lazy too would regress Core Web Vitals for no real
+  gain once Tier 1 has no animation competing for the main thread anyway.
+
+**iPhone 15 Pro Max "still Tier 1" report — investigated, not a detection
+bug.** Walked `detectPerformanceTier`/the iOS screen-signature table
+(ADR-0080, same day): a fresh detection on a real 15 Pro Max already resolves
+to `"ultra"` via `IOS_ULTRA_TIER_SCREEN_SIGNATURES` (430×932×3). Per
+ADR-0058/ADR-0067, a downgraded tier is persisted to `localStorage` and
+**deliberately never self-heals** — so a device that visited the site before
+today's ADR-0078/79/80 fixes landed and got `"low"` persisted will stay
+`"low"` forever until that storage key is cleared, by design, regardless of
+how correct today's fresh-detection logic is. Not changed: the detection
+thresholds themselves (the literal alternate numbers floated in this request
+would have regressed ADR-0080's already-reconciled, same-day iOS table for a
+symptom that isn't actually in the algorithm). Workaround for verifying on an
+affected device: clear `localStorage.getItem('geoporte:performance-tier')`.
+
 ## 2026-10-11 (Mobile optimization pass — new tier thresholds, particleScale/bloomScale actually wired into 14 scene builders, iOS resize-flicker guard, 44px tap-target fixes, 480p video tier)
 
 Urgent pre-meeting request: rework the 4-tier performance system to an

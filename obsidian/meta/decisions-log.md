@@ -17,6 +17,116 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0081 — Desktop capability tier no longer silently caps at MEDIUM when `deviceMemory` is unreadable; Tier 1 (low) now disables all motion/video/backdrop-blur sitewide, not just WebGL
+
+**Status:** Accepted · 2026-10-11 · **Extends ADR-0058/0078/0079/0080; does not change their iOS/Android thresholds.**
+
+**Context.** Two client reports in one turn: (1) the site "still lags on Tier
+1 even with WebGL disabled" — a request to kill scroll animation, parallax,
+springs, page transitions, video autoplay and `backdrop-filter` blur on that
+tier specifically, not just the 3D; (2) the homepage Earth globe and ambient
+shapes look blurry/hazy on desktop. Also investigated in the same turn: a
+report that a real iPhone 15 Pro Max was "still being assigned Tier 1."
+
+**Decision — desktop capability detection.** `performance-tier.ts#detectPerformanceTier`'s
+desktop branch required `deviceMemory >= 8`/`>= 16` for HIGH/ULTRA.
+`deviceMemory` is Chromium-only — exactly the same signal gap ADR-0078/79/80
+already fixed for *iOS* — but desktop Safari/Firefox hit it too, and nothing
+caught that half. The signal defaulted to `4` when unreadable, silently
+failing the `m >= 8` AND-check for any 8–15-core non-Chromium desktop and
+flooring it at MEDIUM (`dprClamp: 1`). That's the actual root cause of the
+"blurry globe" report: `build-planet-scene.ts`/`ambient-background-renderer.ts`
+both render at `min(devicePixelRatio, dprClamp)`, so a Retina/4K display on a
+capped tier renders every WebGL canvas at half resolution, CSS-upscaled — no
+`THREE.Fog`, no CSS `filter`/`backdrop-filter` was ever on the canvas or hero
+wrapper (confirmed by grep before concluding this). Fix: when `deviceMemory`
+is `null` (unreadable), desktop now falls back to a cores-only read
+(`cores >= 8` → HIGH) instead of letting the AND-check's defaulted operand
+fail it. Chromium desktop (which does expose the real signal) is unchanged —
+this only widens the fallback for the browsers that never had the signal.
+
+**Decision — Tier 1 now disables non-WebGL motion/weight too.**
+`isLowPowerDevice()`/`webglDisabled` already stopped every 3D scene on the
+low tier; nothing stopped the rest:
+- `shared-viewport-renderer.ts#isReducedMotion()` now ORs in
+  `isLowPowerDevice()` alongside the OS `prefers-reduced-motion` check — every
+  existing caller (`PageLoadIntro`, `ScrollCue`, `CustomCursor`,
+  `ProjectTicker`, the `AmbientBackground`/`PlanetBackground`/`SceneViewport`
+  mount gates) picks up Tier 1 with zero additional wiring, same "one module
+  decides" shape `device-tier.ts` already documents for `isLowPowerDevice()`
+  itself.
+- `reduced-motion.tsx` (unprotected — lives in `src/components/common/`, not
+  `springs/`/`hooks/animation/`) stopped using `@react-spring/web`'s own
+  `useReducedMotion()` hook — that hook owns its matchMedia listener
+  internally with no way to OR in a second condition, so it would race with a
+  tier-driven force. Re-implemented the same OS listener directly instead,
+  combined with the live tier (`usePerformanceTier()`) on every
+  re-evaluation, forcing `Globals.assign({ skipAnimation })`. This is the one
+  lever that reaches every spring-driven surface sitewide (`Inview`/
+  `SpringTrigger`/`Hover`/`Handle`/`TextEngine`, `RouteTransitionSweep`) with
+  no per-component changes, since `skipAnimation` is react-spring's own
+  global switch — not a new mechanism, just driven by a second input. Same
+  component also toggles `data-perf-tier="low"` on `<html>`, same
+  "attribute on `<html>`" convention `CustomCursor` already uses for
+  `.cursor-hidden`.
+- `globals.css`: new Tier 1 primitive `--raw-color-glass-fill-tier1: rgba(4,
+  6, 15, 0.85)` / Tier 2 `--glass-fill-tier1`, and a
+  `[data-perf-tier="low"] .glass-panel, [data-perf-tier="low"]
+  [class*="backdrop-blur"]` rule setting `backdrop-filter: none` and that
+  flat fill — one rule, not per-component edits, covering `.glass-panel` plus
+  every raw Tailwind `backdrop-blur-*` usage across Nav/MobileMenu/
+  ServiceHero/ProjectModal/CookieBanner/etc. Specificity (two compound
+  selectors) beats the single-class Tailwind utilities it overrides outright,
+  not just by source order the way `.glass-panel` itself relies on.
+  Browser-verified: `getComputedStyle` on a `backdrop-blur-xl` element goes
+  from `blur(24px)` to `none` with the attribute set.
+- `scroll-layout.tsx`: Lenis is no longer constructed on the low tier at all
+  — native scroll instead (`scrollTo()` already falls back to plain
+  `window.scrollTo` unconditionally, so this isn't a new fallback path).
+  Lenis's own per-frame easing math was the one remaining continuous rAF
+  loop once WebGL and springs were already gated off.
+- `VideoBackground.tsx`: low tier renders the poster frame only (`<img>`, no
+  `<video>` element at all — no autoplay, no bytes fetched/decoded). This
+  **fully supersedes** the previous mobile-width-and-low-tier 480p re-encode
+  mechanism from the same-day mobile-optimization pass (ADR-0080's sibling
+  changelog entry) — removed as dead code, along with the
+  `mobileMp4Src480`/`mobileWebmSrc480` props and all three call sites
+  (`BirdBackground`, `PurplePlanetBackground`, `ProjectControlBackground`),
+  since low tier now never reaches the `<video>` tag regardless of width.
+- Images: left alone. Every image in `src/` already goes through
+  `next/image` (confirmed — zero raw `<img>` tags existed before this turn),
+  which lazy-loads by default; the few `priority` images are deliberately
+  eager above-the-fold/LCP images, and forcing those lazy too would regress
+  Core Web Vitals for no real gain now that Tier 1 has nothing else competing
+  for the main thread.
+
+**iPhone 15 Pro Max "still Tier 1" — investigated, no threshold change made.**
+Traced `detectPerformanceTier` end to end: a fresh read on a real 15 Pro Max
+already resolves to `"ultra"` via `IOS_ULTRA_TIER_SCREEN_SIGNATURES`
+(430×932×3) — the algorithm is already correct as of ADR-0080, same day. Per
+ADR-0058/ADR-0067, a downgraded tier persists to `localStorage` and
+**deliberately never self-heals** ("no in-app reset control, by design").
+The far more likely explanation is a stale `"low"` persisted from a visit
+before today's ADR-0078/79/80 fixes landed, which will never correct itself
+regardless of how right the current algorithm is — not a code regression.
+**Declined to implement** the literal alternate threshold numbers given with
+this report (simpler width+cores-only cutoffs, no iOS screen-signature
+table) — doing so would have regressed ADR-0080's already-reconciled,
+same-day iOS table for a symptom that was never actually in the detection
+algorithm. Flagged to the user directly rather than silently either
+implementing the regressive version or silently doing nothing, per this
+project's own established practice for a literal request that conflicts with
+already-sound, recently-reasoned logic (see ADR-0079's identical call).
+
+**When building.** Don't add a second "disable motion" switch alongside
+`isReducedMotion()`/`ReducedMotion`'s `skipAnimation` — route any new
+motion-adjacent surface through one of those two instead, same as every
+existing caller. Don't reintroduce `navigator.deviceMemory` as a hard
+requirement on any desktop/iOS path without an unreadable-signal fallback —
+that's the exact bug class this ADR and ADR-0078/79/80 both fix.
+
+---
+
 ## ADR-0080 — Mobile-optimization pass: new explicit tier thresholds, particleScale/bloomScale actually wired into the 14 scene builders, iOS URL-bar resize-flicker guard
 
 **Status:** Accepted · 2026-10-11 · **Supersedes part of ADR-0058/0079's threshold numbers; keeps their architecture.**

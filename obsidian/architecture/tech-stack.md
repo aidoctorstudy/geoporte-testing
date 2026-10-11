@@ -293,12 +293,15 @@ As of ADR-0056 it also takes optional `mobileMp4Src`/`mobileWebmSrc` — a
 and a client-computed `preload="none"` on the mobile/low-power tier (see
 "Device tiering" below); both full-page video backgrounds (this one and
 Purple Planet) supply the mobile pair, the homepage card does not. As of
-ADR-0080 it also takes `mobileMp4Src480`/`mobileWebmSrc480` — an 854×480
-re-encode picked in JS via `usePerformanceTier()` specifically on the LOW
-*capability* tier (can't be a `media` width query like the 720p pair above —
-LOW vs MEDIUM is a capability split two same-width phones can land on either
-side of); all three full-page video backgrounds (this one, Purple Planet,
-and Bird) supply the 480p pair, the homepage card does not.
+ADR-0080 it briefly also took `mobileMp4Src480`/`mobileWebmSrc480` — an
+854×480 re-encode picked in JS via `usePerformanceTier()` specifically on the
+LOW *capability* tier. **Removed again under ADR-0081, same day**: the LOW
+tier now renders the `poster` frame only (a plain `<img>`, no `<video>`
+element, regardless of width) instead of a lighter video, which fully
+supersedes and obsoletes the 480p mechanism — the component never reaches
+the `<video>` tag on that tier anymore. The 480×854 assets
+(`public/assets/{bird,purple-planet,siloutte}/*-480.{mp4,webm}`) are now
+unreferenced; left on disk rather than deleted as part of a code change.
 Reuses the existing glass-route machinery rather than a parallel one:
 `schedule-network-graph` (this page's pre-existing `sceneTheme`) joined
 `GLASS_SCENE_THEMES`, so `ServiceHero.tsx` skips its own WebGL hero the

@@ -169,6 +169,17 @@ export const detectPerformanceTier = (): PerformanceTier => {
   const { cores, memory, width, isMobile } = readSignals();
   const c = cores ?? 4;
   const m = memory ?? 4;
+  // `deviceMemory` is Chromium-only — Safari and Firefox never expose it on
+  // *desktop* either, not just iOS (see the iOS comment above for that half).
+  // Defaulting the unreadable signal to `4` and then requiring `m >= 8`/`m
+  // >= 16` for "high"/"ultra" meant every non-Chromium desktop browser capped
+  // out at "medium" regardless of real cores — `getTierBudget`'s `dprClamp`
+  // for medium is `1`, so a genuine 8+-core Mac/PC on Safari or Firefox was
+  // rendering every WebGL canvas (the Earth globe, ambient background) at
+  // half its devicePixelRatio and reading as soft/blurry. When the signal is
+  // missing, fall back to a cores-only read instead of letting the default
+  // silently fail the memory half of an AND check.
+  const memoryKnown = memory !== null;
 
   if (isMobile) {
     if (isUltraTierIOSDevice(cores) || c >= 12) return "ultra";
@@ -178,9 +189,9 @@ export const detectPerformanceTier = (): PerformanceTier => {
     return "medium";
   }
 
-  if (c >= 16 || (c >= 8 && m >= 16)) return "ultra";
-  if (c >= 8 && m >= 8) return "high";
-  if (c < 4 || m < 4) return "low";
+  if (c >= 16 || (memoryKnown && c >= 8 && m >= 16)) return "ultra";
+  if (c >= 8 && (!memoryKnown || m >= 8)) return "high";
+  if (c < 4 || (memoryKnown && m < 4)) return "low";
   return "medium";
 };
 

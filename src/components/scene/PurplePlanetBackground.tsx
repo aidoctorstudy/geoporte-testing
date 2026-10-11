@@ -33,8 +33,6 @@ export const PurplePlanetBackground = () => {
       webmSrc="/assets/purple-planet/purple-planet-bg.webm"
       mobileMp4Src="/assets/purple-planet/purple-planet-bg-720.mp4"
       mobileWebmSrc="/assets/purple-planet/purple-planet-bg-720.webm"
-      mobileMp4Src480="/assets/purple-planet/purple-planet-bg-480.mp4"
-      mobileWebmSrc480="/assets/purple-planet/purple-planet-bg-480.webm"
       poster="/assets/purple-planet/purple-planet-bg.jpg"
       className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover"
     />

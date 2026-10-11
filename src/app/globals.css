@@ -39,6 +39,12 @@
      again. See obsidian/meta/decisions-log.md. */
   --raw-color-glass-fill: rgba(4, 6, 15, 0.65);
   --raw-color-glass-border: rgba(255, 255, 255, 0.1);
+  /* Tier 1 (low capability) perf mode only — replaces every glass/blur
+     surface's backdrop-filter with a flat near-opaque fill (no blur at all,
+     backdrop-filter is GPU-cost independent of WebGL). Toggled via
+     `[data-perf-tier="low"]` on `<html>`, set by `reduced-motion.tsx` from
+     the capability tier. See obsidian/meta/decisions-log.md. */
+  --raw-color-glass-fill-tier1: rgba(4, 6, 15, 0.85);
   /* Tailwind's own blur scale only steps 16px/24px (blur-lg/blur-xl); the
      glass-panel spec needs exactly 20px. */
   --raw-blur-glass: 20px;
@@ -217,6 +223,7 @@
   --glass-blur: var(--raw-blur-glass);
   --glass-saturate: var(--raw-saturate-glass);
   --glass-text-shadow: var(--raw-shadow-glass-text);
+  --glass-fill-tier1: var(--raw-color-glass-fill-tier1);
 
   --strata-clay: var(--raw-color-strata-clay);
   --strata-rock: var(--raw-color-strata-rock);
@@ -365,6 +372,23 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-2xl);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+
+  /* Tier 1 (low capability) perf mode — flattens every blurred surface to a
+     solid fill. Covers `.glass-panel` above plus every page's raw Tailwind
+     `backdrop-blur-*` utility (Nav, MobileMenu, ServiceHero, ProjectModal,
+     CookieBanner, etc.) via the attribute-selector catch-all, rather than
+     editing each call site — same "one rule, no per-component wiring" shape
+     as `.glass-panel` itself. Equal specificity to the Tailwind utilities it
+     overrides (both are a single class/attribute selector); wins on source
+     order because `@import "tailwindcss"` injects its generated utilities at
+     the top of this file, before this `@layer utilities` block — see
+     `.glass-panel`'s own comment above for the full reasoning. No `!important`
+     needed as a result. */
+  [data-perf-tier="low"] .glass-panel,
+  [data-perf-tier="low"] [class*="backdrop-blur"] {
+    backdrop-filter: none;
+    background: var(--glass-fill-tier1);
   }
 }
 

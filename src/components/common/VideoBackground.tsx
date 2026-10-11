@@ -23,15 +23,6 @@ export interface VideoBackgroundProps {
    * component that has no mobile-sized re-encode (none currently do not). */
   mobileMp4Src?: string;
   mobileWebmSrc?: string;
-  /** 854×480 re-encodes for the LOW performance tier specifically (see
-   * `performance-tier.ts`, 2026-10-11 spec) — unlike the 720p pair above,
-   * this can't be a plain `<source media>` width query: LOW vs MEDIUM is a
-   * *capability* split, not a viewport-width one, so two same-width phones
-   * can land on either side of it. Picked in JS via `usePerformanceTier()`
-   * instead, same accepted first-paint trade-off as the `preload` attribute
-   * below. Omit on a component with no low-tier-specific re-encode. */
-  mobileMp4Src480?: string;
-  mobileWebmSrc480?: string;
 }
 
 /**
@@ -55,6 +46,15 @@ export interface VideoBackgroundProps {
  * is a deliberately accepted limitation: the browser may already be
  * honouring the default preload hint for the first paint or two before the
  * client-measured value lands. See ADR-0056.
+ *
+ * Tier 1 (low capability — any viewport width, see `device-tier.ts`'s top
+ * comment on why this is capability- not width-gated) skips the `<video>`
+ * element entirely and renders just the poster frame: autoplaying video is
+ * decode + GPU-upload cost every frame for the life of the page, on a device
+ * that already dropped WebGL and every spring. This supersedes the previous
+ * mobile-width-and-low-tier-specific 480p re-encode mechanism (now dead code,
+ * removed) — Tier 1 no longer reaches the `<video>` tag at all, regardless
+ * of width.
  */
 export const VideoBackground = ({
   mp4Src,
@@ -64,18 +64,16 @@ export const VideoBackground = ({
   pauseWhenOffscreen,
   mobileMp4Src,
   mobileWebmSrc,
-  mobileMp4Src480,
-  mobileWebmSrc480,
 }: VideoBackgroundProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const width = useWindowWidth();
   const isMobile = width > 0 && getDeviceTier(width) === "mobile";
   const { tier } = usePerformanceTier();
-  const isLowTier = isMobile && tier === "low";
+  const posterOnly = tier === "low";
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || posterOnly) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       video.pause();
@@ -92,7 +90,16 @@ export const VideoBackground = ({
     );
     observer.observe(video);
     return () => observer.disconnect();
-  }, [pauseWhenOffscreen]);
+  }, [pauseWhenOffscreen, posterOnly]);
+
+  if (posterOnly) {
+    // Plain <img>, not next/image: a full-bleed decorative background
+    // matching the <video> it replaces pixel-for-pixel (object-cover via
+    // `className`), not a content image — no layout/responsive-sizing need
+    // next/image would otherwise earn its keep for here.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={poster} alt="" aria-hidden="true" className={className} />;
+  }
 
   return (
     <video
@@ -106,10 +113,8 @@ export const VideoBackground = ({
       className={className}
       aria-hidden="true"
     >
-      {isLowTier && mobileWebmSrc480 && <source src={mobileWebmSrc480} type="video/webm" />}
-      {isLowTier && mobileMp4Src480 && <source src={mobileMp4Src480} type="video/mp4" />}
-      {!isLowTier && mobileWebmSrc && <source media="(max-width: 768px)" src={mobileWebmSrc} type="video/webm" />}
-      {!isLowTier && mobileMp4Src && <source media="(max-width: 768px)" src={mobileMp4Src} type="video/mp4" />}
+      {mobileWebmSrc && <source media="(max-width: 768px)" src={mobileWebmSrc} type="video/webm" />}
+      {mobileMp4Src && <source media="(max-width: 768px)" src={mobileMp4Src} type="video/mp4" />}
       <source src={webmSrc} type="video/webm" />
       <source src={mp4Src} type="video/mp4" />
     </video>

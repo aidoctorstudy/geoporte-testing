@@ -31,8 +31,6 @@ export const BirdBackground = () => {
       webmSrc="/assets/bird/bird-bg.webm"
       mobileMp4Src="/assets/bird/bird-bg-720.mp4"
       mobileWebmSrc="/assets/bird/bird-bg-720.webm"
-      mobileMp4Src480="/assets/bird/bird-bg-480.mp4"
-      mobileWebmSrc480="/assets/bird/bird-bg-480.webm"
       poster="/assets/bird/bird-bg.jpg"
       className="pointer-events-none fixed inset-0 z-0 h-full w-full object-cover"
     />
