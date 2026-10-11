@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
 
@@ -11,11 +12,22 @@ export interface StatCounterProps {
   prefix?: string;
 }
 
-/** Spring count-up, triggered once the stat scrolls into view. */
+/** Spring count-up, triggered once the stat scrolls into view. A low
+ * threshold plus a one-way `hasAnimated` latch (rather than driving the
+ * spring straight off `inView`) keeps the count-up reliable on mobile: a
+ * fast or bouncy scroll can drop the element below the intersection
+ * threshold again before/while the spring is running, which — wired
+ * directly to `inView` — snapped the number back to 0 mid-animation. */
 export const StatCounter = ({ value, label, suffix = "+", prefix = "" }: StatCounterProps) => {
-  const [setNode, inView] = useDynamicInView({ threshold: 0.4 });
+  const [setNode, inView] = useDynamicInView({ threshold: 0.15 });
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    if (inView) setHasAnimated(true);
+  }, [inView]);
+
   const { number } = useSpring({
-    number: inView ? value : 0,
+    number: hasAnimated ? value : 0,
     config: { tension: 60, friction: 26 },
   });
 

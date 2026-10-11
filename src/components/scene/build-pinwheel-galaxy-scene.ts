@@ -134,8 +134,8 @@ const CONFIG = {
 };
 
 const LAYERS = { NONE: 0, TORUS_SCENE: 1, BLOOM_SCENE: 2, ENTIRE_SCENE: 3 };
-const ARMS_COUNT = 120000;
-const BULGE_COUNT = 2500;
+const BASE_ARMS_COUNT = 120000;
+const BASE_BULGE_COUNT = 2500;
 const GALAXY_R = 1.9;
 const GALAXY_H = 0.12;
 const BASE_CAMERA_Z = 3;
@@ -330,12 +330,16 @@ const buildPinwheelGalaxyScene = (container: HTMLElement): HeroSceneHandle => {
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
   // Kept verbatim per the source; inert — see file header.
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
+  const ARMS_COUNT = Math.round(BASE_ARMS_COUNT * particleScale);
+  const BULGE_COUNT = Math.round(BASE_BULGE_COUNT * particleScale);
+  const sparkCount = Math.round(CONFIG.sparkCount * particleScale);
+  const atmoCount = Math.round(CONFIG.atmoCount * particleScale);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
@@ -354,7 +358,7 @@ const buildPinwheelGalaxyScene = (container: HTMLElement): HeroSceneHandle => {
   torusComposer.addPass(renderScene);
   torusComposer.addPass(new ShaderPass(GammaCorrectionShader));
   torusComposer.addPass(
-    new UnrealBloomPass(new THREE.Vector2(clientWidth || 1, clientHeight || 1), 0.22, 0.2, 0),
+    new UnrealBloomPass(new THREE.Vector2(clientWidth || 1, clientHeight || 1), 0.22 * bloomScale, 0.2, 0),
   );
   torusComposer.addPass(new ShaderPass(CopyShader));
 
@@ -363,7 +367,7 @@ const buildPinwheelGalaxyScene = (container: HTMLElement): HeroSceneHandle => {
   bloomComposer.addPass(renderScene);
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(clientWidth || 1, clientHeight || 1),
-    0.38,
+    0.38 * bloomScale,
     0.55,
     0,
   );
@@ -488,10 +492,10 @@ const buildPinwheelGalaxyScene = (container: HTMLElement): HeroSceneHandle => {
   bulge.layers.enable(LAYERS.ENTIRE_SCENE);
 
   // ---- sparks ----
-  const sparkPositions = new Float32Array(CONFIG.sparkCount * 3);
-  const sparkSizes = new Float32Array(CONFIG.sparkCount);
-  const sparkSpeeds = new Float32Array(CONFIG.sparkCount);
-  for (let i = 0; i < CONFIG.sparkCount; i++) {
+  const sparkPositions = new Float32Array(sparkCount * 3);
+  const sparkSizes = new Float32Array(sparkCount);
+  const sparkSpeeds = new Float32Array(sparkCount);
+  for (let i = 0; i < sparkCount; i++) {
     const arm = Math.floor(Math.random() * CONFIG.armCount);
     const r = GALAXY_R * Math.pow(Math.random(), CONFIG.coreConcentration);
     const armOffset = arm * ((2 * Math.PI) / CONFIG.armCount);
@@ -541,9 +545,9 @@ const buildPinwheelGalaxyScene = (container: HTMLElement): HeroSceneHandle => {
   scene.add(instance);
 
   // ---- ambient atmosphere motes (camera-attached) ----
-  const atmoPositions = new Float32Array(CONFIG.atmoCount * 3);
-  const atmoSizes = new Float32Array(CONFIG.atmoCount);
-  for (let i = 0; i < CONFIG.atmoCount; i++) {
+  const atmoPositions = new Float32Array(atmoCount * 3);
+  const atmoSizes = new Float32Array(atmoCount);
+  for (let i = 0; i < atmoCount; i++) {
     atmoPositions[i * 3] = 2 * Math.random() - 1;
     atmoPositions[i * 3 + 1] = 2 * Math.random() - 1;
     atmoPositions[i * 3 + 2] = 2 * Math.random() - 1;

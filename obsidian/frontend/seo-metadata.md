@@ -1,6 +1,6 @@
 ---
 tags: [frontend, seo, stable]
-updated: 2026-05-21
+updated: 2026-10-10
 ---
 
 # SEO & Metadata
@@ -13,7 +13,10 @@ metadata generator, `robots.ts`, `sitemap.ts`, and the JSON-LD helper all read
 from it. **Update the placeholder values per project.** `#todo`
 
 `siteConfig.url` comes from `NEXT_PUBLIC_SITE_URL` (see [[environment-variables]]),
-falling back to `http://localhost:3000`.
+falling back to `https://geoporte-testing.vercel.app` — this project's deployed
+origin, not the generic starter default, since the env var was never set on
+Vercel and the old `http://localhost:3000` fallback was leaking into the live
+canonical/OG/Twitter tags (see [[changelog]], 2026-10-10).
 
 ## Metadata generator
 

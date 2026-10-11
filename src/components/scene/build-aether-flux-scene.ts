@@ -322,7 +322,7 @@ const buildAetherFluxScene = (container: HTMLElement, options: AetherFluxOptions
   const { clientWidth, clientHeight } = container;
   // Tier-based, not the source's flat, unclamped devicePixelRatio — the one
   // deliberate perf deviation, invisible to the rendered look. See file header.
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale } = getTierBudget(clientWidth || window.innerWidth);
   const pixelRatio = Math.min(window.devicePixelRatio, dprClamp);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(clientWidth || 1, clientHeight || 1);
@@ -441,7 +441,7 @@ const buildAetherFluxScene = (container: HTMLElement, options: AetherFluxOptions
   uniforms.uRodRad.value = spacing * 0.34 * CONFIG.rodRadius;
 
   // ---- ambient dust (camera-attached faint motes) ----
-  const DUST_COUNT = 420;
+  const DUST_COUNT = Math.round(420 * particleScale);
   const dustPositions = new Float32Array(DUST_COUNT * 3);
   const dustSizes = new Float32Array(DUST_COUNT);
   for (let i = 0; i < DUST_COUNT; i++) {

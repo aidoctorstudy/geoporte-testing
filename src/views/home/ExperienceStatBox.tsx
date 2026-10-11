@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
 import type { ExperienceStat } from "@/data/mocks/experience";
@@ -15,11 +16,19 @@ export interface ExperienceStatBoxProps {
 
 /** One colour-block callout in the "Project Experience" section — same
  * spring count-up idiom as `StatCounter`, styled as a flat solid card
- * instead of a plain centred number. */
+ * instead of a plain centred number. Same `hasAnimated` latch as
+ * `StatCounter` — see its comment for why driving the spring straight off
+ * `inView` was unreliable on mobile. */
 export const ExperienceStatBox = ({ stat }: ExperienceStatBoxProps) => {
-  const [setNode, inView] = useDynamicInView({ threshold: 0.4 });
+  const [setNode, inView] = useDynamicInView({ threshold: 0.15 });
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    if (inView) setHasAnimated(true);
+  }, [inView]);
+
   const { number } = useSpring({
-    number: inView ? stat.value : 0,
+    number: hasAnimated ? stat.value : 0,
     config: { tension: 60, friction: 26 },
   });
 

@@ -55,6 +55,7 @@ export const HeroHeading = ({ id, text, className }: HeroHeadingProps) => {
         wordOut={{ y: 40, opacity: 0 }}
         wordStagger={90}
         wordConfig={{ duration: 700, easing: easings.easeOutCubic }}
+        overflow
       >
         {text}
       </TextEngine>

@@ -84,7 +84,7 @@ export const ProjectModal = () => {
               type="button"
               onClick={close}
               aria-label="Close project details"
-              className="border-line bg-background/80 text-foreground hover:bg-surface absolute top-4 right-4 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              className="border-line bg-background/80 text-foreground hover:bg-surface absolute top-4 right-4 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
                 <path

@@ -71,8 +71,16 @@ const handleVisibility = (): void => {
   pageVisible = document.visibilityState === "visible";
 };
 
+// Width-only guard (optimize-3d-scene skill §13): iOS Safari fires `resize`
+// whenever the URL bar collapses/expands during scroll, changing
+// `innerHeight` with no real resize happening — resizing the WebGL drawing
+// buffer on every one of those reads as a flicker. A genuine resize
+// (rotation, responsive breakpoint) always changes width too.
+let lastResizeWidth = typeof window !== "undefined" ? window.innerWidth : 0;
 const handleResize = (): void => {
   if (!renderer || !camera) return;
+  if (window.innerWidth === lastResizeWidth) return;
+  lastResizeWidth = window.innerWidth;
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();

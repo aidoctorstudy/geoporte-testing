@@ -929,7 +929,8 @@ const buildNegentropyScene = (container: HTMLElement, options: NegentropyOptions
   renderer.setSize(clientWidth || 1, clientHeight || 1);
   renderer.setClearColor(0x050608, 1);
 
-  const densityScale = getDeviceTier(clientWidth || window.innerWidth) === "desktop" ? 1 : 0.4;
+  const widthDensityScale = getDeviceTier(clientWidth || window.innerWidth) === "desktop" ? 1 : 0.4;
+  const densityScale = widthDensityScale * getTierBudget(clientWidth || window.innerWidth).particleScale;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x050608);

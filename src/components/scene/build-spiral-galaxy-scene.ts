@@ -249,11 +249,24 @@ interface SpiralGalaxyOptions {
 }
 
 const buildSpiralGalaxyScene = (container: HTMLElement, options: SpiralGalaxyOptions): HeroSceneHandle => {
-  const { widthSegments, heightSegments, atmoCount, scrollDriven, torusBloom, mainBloom } = options;
+  const { scrollDriven } = options;
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
+  // Segment counts drive the galaxy sphere's vertex (point) count on both
+  // axes, so the scale applies as sqrt() to land on the right total.
+  const segmentScale = Math.sqrt(particleScale);
+  const widthSegments = Math.max(4, Math.round(options.widthSegments * segmentScale));
+  const heightSegments = Math.max(4, Math.round(options.heightSegments * segmentScale));
+  const atmoCount = Math.round(options.atmoCount * particleScale);
+  // Scaling only `strength` (not skipping the composer passes) — this
+  // scene's 3-composer selective-bloom chain composites `bloomTexture`/
+  // `torusTexture` unconditionally in `finalPass`'s shader, so an
+  // `enabled = false` toggle here wouldn't skip the sample, just blank it;
+  // a strength near 0 already reads as no bloom either way.
+  const torusBloom = { ...options.torusBloom, strength: options.torusBloom.strength * bloomScale };
+  const mainBloom = { ...options.mainBloom, strength: options.mainBloom.strength * bloomScale };
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
   // Kept verbatim per the source; inert — see file header.

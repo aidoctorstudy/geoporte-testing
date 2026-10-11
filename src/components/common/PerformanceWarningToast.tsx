@@ -67,7 +67,7 @@ export const PerformanceWarningToast = () => {
             type="button"
             onClick={() => setVisible(false)}
             aria-label="Dismiss"
-            className="text-foreground-muted hover:text-foreground flex h-5 w-5 shrink-0 items-center justify-center transition-colors duration-[var(--duration-fast)] ease-entrance"
+            className="text-foreground-muted hover:text-foreground flex h-11 w-11 shrink-0 items-center justify-center transition-colors duration-[var(--duration-fast)] ease-entrance"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path

@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-09-02
+updated: 2026-10-11
 ---
 
 # Tech Stack
@@ -292,7 +292,13 @@ As of ADR-0056 it also takes optional `mobileMp4Src`/`mobileWebmSrc` — a
 1280×720 re-encode swapped in via `<source media="(max-width: 768px)">`,
 and a client-computed `preload="none"` on the mobile/low-power tier (see
 "Device tiering" below); both full-page video backgrounds (this one and
-Purple Planet) supply the mobile pair, the homepage card does not.
+Purple Planet) supply the mobile pair, the homepage card does not. As of
+ADR-0080 it also takes `mobileMp4Src480`/`mobileWebmSrc480` — an 854×480
+re-encode picked in JS via `usePerformanceTier()` specifically on the LOW
+*capability* tier (can't be a `media` width query like the 720p pair above —
+LOW vs MEDIUM is a capability split two same-width phones can land on either
+side of); all three full-page video backgrounds (this one, Purple Planet,
+and Bird) supply the 480p pair, the homepage card does not.
 Reuses the existing glass-route machinery rather than a parallel one:
 `schedule-network-graph` (this page's pre-existing `sceneTheme`) joined
 `GLASS_SCENE_THEMES`, so `ServiceHero.tsx` skips its own WebGL hero the
@@ -611,9 +617,20 @@ React context" mechanism — for reactive consumers that need to notice a
 *live* tier change; scene builders still read the synchronous
 `getDeviceTier()`/`getTierBudget()` API at construction time, unchanged,
 since a scene is built once per mount. `PERFORMANCE_TIER_BUDGETS` also
-exports `particleScale`/`bloomScale` multipliers per tier, not yet wired
-into any of the 9 dedicated scene builders — see ADR-0058's "not done"
-section for why.
+exports `particleScale`/`bloomScale` multipliers per tier — as of ADR-0080
+these are actually wired (merged into `getTierBudget`'s return value, so
+every existing consumer gets them for free) into the point/bloom code of 14
+scene builders; see ADR-0080 for the per-file list and the two it was
+deliberately left out of.
+
+As of ADR-0080, the mobile LOW/MEDIUM/HIGH cutoffs read `screen.width`
+directly (not just `hardwareConcurrency`/`deviceMemory`) on top of the
+cores/memory checks above — `cores<=4 OR memory<=3 OR screen.width<=390` for
+LOW, `cores>=8 AND memory>=6` for HIGH, the band between for MEDIUM — and
+`PERFORMANCE_TIER_BUDGETS`' HIGH/MEDIUM multipliers were retuned
+(`particleScale` 0.8→0.7 / 0.4→0.3, `bloomScale` 1→0.5 / 0.5→0) to match an
+explicit mobile-optimization spec's stated percentages. See ADR-0080 for why
+`screen.width<=390` doesn't catch real "standard"/Pro iPhone widths (393px).
 
 As of ADR-0079, a mobile-UA device can also resolve straight to `"ultra"` —
 previously the mobile branch capped out at `"high"` no matter how capable
@@ -627,17 +644,26 @@ paths before the ordinary cores/memory ladder runs —
     `hardwareConcurrency` has read a flat `6` on every iPhone since the A13
     (iPhone 11, 2019), so neither can distinguish a 15 Pro Max from a 12
     mini. The only proxy available is the device's logical screen size ×
-    `devicePixelRatio` — `IOS_FLAGSHIP_SCREEN_SIGNATURES`, a hand-maintained
-    table of `[shortSide, longSide, dpr]` triples (normalized so portrait/
-    landscape both match) covering 14 Pro/14 Pro Max/15/15 Plus/15 Pro/15
-    Pro Max/16/16 Plus/16 Pro/16 Pro Max. Plain "14"/"14 Plus" (older,
-    different screen signature, shared with 12/13) are deliberately not in
-    the table. An unrecognized future iPhone falls through to the normal
-    ladder — safe by construction, never silently mis-promoted; **update
-    this table when a new iPhone generation ships**. See ADR-0079 for why a
-    UA-string model check was requested but isn't implementable, and why
-    this proxy was chosen over the alternatives (treat every 6-core iOS
-    device as flagship; or leave iOS unhandled).
+    `devicePixelRatio`. As of ADR-0080 this is **two** tables, not one —
+    `IOS_HIGH_TIER_SCREEN_SIGNATURES` (393×852×3, 402×874×3 — "14 Pro/15/15
+    Pro/16, 16 Pro") resolves to `"high"`; `IOS_ULTRA_TIER_SCREEN_SIGNATURES`
+    (430×932×3, 440×956×3 — "14 Pro Max/15 Plus/15 Pro Max/16 Plus, 16 Pro
+    Max") stays `"ultra"`. Splitting them was forced by Apple reusing one
+    panel size across a Pro and non-Pro model in the same generation — the
+    old single-bucket table couldn't tell "15 Pro" from plain "15", so it had
+    to either over- or under-promote one of them; demoted the smaller bucket
+    to HIGH per an explicit later spec naming "iPhone 15 Pro" as a HIGH
+    example (ADR-0080). An unrecognized future iPhone falls through to the
+    normal ladder — safe by construction, never silently mis-promoted;
+    **update these tables when a new iPhone generation ships** (ADR-0080's
+    440×956×3 entry is an unverified assumption for 17 Pro Max — fix it once
+    that can be confirmed against a real device). iPad gets a separate,
+    simpler rule (`isUltraTierIPad`, ADR-0080): `cores >= 8` — iPadOS Safari,
+    unlike iOS Safari, does report the chip's true core count, so no
+    screen-signature table is needed there. See ADR-0079 for why a UA-string
+    model check was requested but isn't implementable, and why this proxy
+    was chosen over the alternatives (treat every 6-core iOS device as
+    flagship; or leave iOS unhandled).
 
 `VideoBackground.tsx` (`src/components/common/`) also reads the mobile
 check for a client-computed `preload="none"` (ADR-0056) — separate from

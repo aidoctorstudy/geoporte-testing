@@ -358,11 +358,12 @@ const buildGoldenParthenonScene = (
   container: HTMLElement,
   options: GoldenParthenonOptions,
 ): HeroSceneHandle => {
-  const { includeGroundDisplacement, includeDust, bloomStrength, bloomRadius, bloomThreshold } = options;
+  const { includeGroundDisplacement, includeDust, bloomRadius, bloomThreshold } = options;
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
+  const bloomStrength = options.bloomStrength * bloomScale;
   const pixelRatio = Math.min(window.devicePixelRatio, dprClamp);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(clientWidth || 1, clientHeight || 1);
@@ -524,7 +525,7 @@ const buildGoldenParthenonScene = (
   // ---------------------------------------------------------------------
   let dust: THREE.Points | null = null;
   if (includeDust) {
-    const n = Math.max(0, Math.round(CONFIG.dustAmount));
+    const n = Math.max(0, Math.round(CONFIG.dustAmount * particleScale));
     const pos = new Float32Array(n * 3);
     const ph = new Float32Array(n);
     for (let i = 0; i < n; i++) {
@@ -639,6 +640,10 @@ const buildGoldenParthenonScene = (
     bloomRadius,
     bloomThreshold,
   );
+  // Skip the pass entirely rather than running a full-screen bloom chain
+  // that contributes nothing — the MEDIUM performance tier zeroes
+  // `bloomScale` specifically to disable bloom (see performance-tier.ts).
+  bloom.enabled = bloomStrength > 0.001;
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   const grainPass = new ShaderPass(GrainShader);

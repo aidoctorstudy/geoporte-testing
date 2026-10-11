@@ -105,8 +105,15 @@ const clearRegistrationRect = (element: HTMLElement): void => {
   renderer.clear();
 };
 
+// Width-only guard (optimize-3d-scene skill §13) — see the identical fix in
+// `ambient-background-renderer.ts` for why: iOS URL-bar collapse during
+// scroll fires `resize` with the width unchanged, and resizing the drawing
+// buffer on that reads as a flicker.
+let lastResizeWidth = typeof window !== "undefined" ? window.innerWidth : 0;
 const handleResize = () => {
   if (!renderer) return;
+  if (window.innerWidth === lastResizeWidth) return;
+  lastResizeWidth = window.innerWidth;
   renderer.setSize(window.innerWidth, window.innerHeight, false);
 };
 

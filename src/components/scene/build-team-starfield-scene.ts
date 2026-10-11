@@ -24,6 +24,7 @@
  * in the fragment shader instead of a bare square.
  */
 import * as THREE from "three";
+import { getTierBudget } from "@/lib/scene/device-tier";
 import type { HeroSceneHandle } from "./hero-scene-types";
 
 const STAR_VERT = /* glsl */ `
@@ -177,10 +178,15 @@ const buildTeamStarfieldScene = (
   return { renderStatic, renderFrame: renderFrameFromHeroScene, resize, setPointer, dispose, canvas };
 };
 
-/** Desktop/tablet particle counts — mobile never reaches this factory at
- * all (`HeroScene.tsx` shows the fallback gradient below the mobile
- * breakpoint, same as every other full-page scene in this codebase). */
+/** Desktop/tablet particle counts — mobile *width* never reaches this
+ * factory at all (`HeroScene.tsx` shows the fallback gradient below the
+ * mobile breakpoint, same as every other full-page scene in this codebase).
+ * A tablet-*width* device can still be a low/medium-*capability* one though
+ * (an Android tablet, say) — `particleScale` from `getTierBudget` still
+ * applies on top, independent of the width split above. */
 export const createTeamStarfieldScene = (container: HTMLElement): HeroSceneHandle => {
-  const isTablet = (container.clientWidth || window.innerWidth) < 1024;
-  return buildTeamStarfieldScene(container, isTablet ? 550 : 950);
+  const width = container.clientWidth || window.innerWidth;
+  const isTablet = width < 1024;
+  const { particleScale } = getTierBudget(width);
+  return buildTeamStarfieldScene(container, Math.round((isTablet ? 550 : 950) * particleScale));
 };

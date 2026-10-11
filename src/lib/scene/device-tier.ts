@@ -67,34 +67,53 @@ export interface TierBudget {
    * produces (unlike a `<=` check, which measures a few fps under the
    * nominal number — see obsidian/workflows/optimize-3d-scene.md §5). */
   heroFrameIntervalMs: number;
+  /** Multiplier a scene builder applies to its own baseline particle/point
+   * count — sourced from the *capability* tier (`performance-tier.ts`), not
+   * the width tier this interface is otherwise keyed by; merged in here so
+   * every existing `getTierBudget` consumer picks it up with zero additional
+   * wiring, the same way `dprClamp` below already combines both axes. */
+  particleScale: number;
+  /** Multiplier a scene builder applies to its own baseline bloom
+   * strength/radius. Same capability-tier source as `particleScale`. */
+  bloomScale: number;
 }
 
+// particleScale/bloomScale below are neutral (1) placeholders — `getTierBudget`
+// always overwrites both from the capability tier (`performance-tier.ts`)
+// before returning, same as it already does for `dprClamp`.
 const TIER_BUDGETS: Record<DeviceTier, TierBudget> = {
   mobile: {
     dprClamp: 1.5,
     ambientShapeCount: 6,
     particleTrailEnabled: false,
     heroFrameIntervalMs: 1000 / 30,
+    particleScale: 1,
+    bloomScale: 1,
   },
   tablet: {
     dprClamp: 1.5,
     ambientShapeCount: 8,
     particleTrailEnabled: false,
     heroFrameIntervalMs: 1000 / 45,
+    particleScale: 1,
+    bloomScale: 1,
   },
   desktop: {
     dprClamp: 2,
     ambientShapeCount: 18,
     particleTrailEnabled: true,
     heroFrameIntervalMs: 0,
+    particleScale: 1,
+    bloomScale: 1,
   },
 };
 
 /**
  * A "low" capability device overrides width toward `"mobile"` (see the top
- * comment); a **flagship** ("ultra" capability — recent Pro-tier iPhones,
- * 8-core/8GB Android, see `performance-tier.ts#isFlagshipMobileDevice`)
- * overrides width the other direction, toward `"desktop"`. This is the one
+ * comment); a **flagship** ("ultra" capability — Plus/Pro-Max-class iPhones,
+ * M-series iPads, 12-core-and-up Android, see
+ * `performance-tier.ts#detectPerformanceTier`) overrides width the other
+ * direction, toward `"desktop"`. This is the one
  * place "no simplification for flagship phones" (ADR-0079) is implemented —
  * every consumer keyed off `getDeviceTier`/`getTierBudget` (DPR clamp,
  * ambient shape count, hero frame cap, the globe's star/atmo/marker counts,
@@ -125,6 +144,17 @@ export const getDeviceTier = (viewportWidth: number): DeviceTier => {
 export const getTierBudget = (viewportWidth: number): TierBudget => {
   const widthBudget = TIER_BUDGETS[getDeviceTier(viewportWidth)];
   if (viewportWidth <= 0) return widthBudget;
-  const capabilityDprClamp = PERFORMANCE_TIER_BUDGETS[getOrDetectTier()].dprClamp;
-  return { ...widthBudget, dprClamp: Math.min(widthBudget.dprClamp, capabilityDprClamp) };
+  const capabilityBudget = PERFORMANCE_TIER_BUDGETS[getOrDetectTier()];
+  return {
+    ...widthBudget,
+    dprClamp: Math.min(widthBudget.dprClamp, capabilityBudget.dprClamp),
+    particleScale: capabilityBudget.particleScale,
+    bloomScale: capabilityBudget.bloomScale,
+    // The ambient background's shapes are a particle-ish count too — scale
+    // them by the same capability multiplier, floored at 1 so a MEDIUM/HIGH
+    // capability device never loses the shapes entirely (LOW doesn't reach
+    // this at all — `AmbientBackground` gates the whole scene on
+    // `isLowPowerDevice()` before ever reading this budget).
+    ambientShapeCount: Math.max(1, Math.round(widthBudget.ambientShapeCount * capabilityBudget.particleScale)),
+  };
 };

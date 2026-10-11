@@ -74,7 +74,7 @@ export const GeotechnicalFeaScene = ({ className }: GeotechnicalFeaSceneProps) =
               onClick={() => goToStage(stageIndex - 1)}
               disabled={stageIndex === 0}
               aria-label="Previous construction stage"
-              className="text-ink-engineering-muted hover:text-ink-engineering disabled:opacity-30 flex h-8 w-8 items-center justify-center rounded transition-colors duration-[var(--duration-fast)] ease-entrance disabled:pointer-events-none"
+              className="text-ink-engineering-muted hover:text-ink-engineering disabled:opacity-30 flex h-11 w-11 items-center justify-center rounded transition-colors duration-[var(--duration-fast)] ease-entrance disabled:pointer-events-none"
             >
               ‹
             </button>
@@ -86,7 +86,7 @@ export const GeotechnicalFeaScene = ({ className }: GeotechnicalFeaSceneProps) =
               onClick={() => goToStage(stageIndex + 1)}
               disabled={stageIndex === CONSTRUCTION_STAGES.length - 1}
               aria-label="Next construction stage"
-              className="text-ink-engineering-muted hover:text-ink-engineering disabled:opacity-30 flex h-8 w-8 items-center justify-center rounded transition-colors duration-[var(--duration-fast)] ease-entrance disabled:pointer-events-none"
+              className="text-ink-engineering-muted hover:text-ink-engineering disabled:opacity-30 flex h-11 w-11 items-center justify-center rounded transition-colors duration-[var(--duration-fast)] ease-entrance disabled:pointer-events-none"
             >
               ›
             </button>

@@ -39,8 +39,8 @@ export const PlanetBackground = (): null => {
 
   useEffect(() => {
     if (!enabled) return;
-    return startPlanetBackground({ dprClamp: budget.dprClamp, tier });
-  }, [enabled, tier, budget.dprClamp]);
+    return startPlanetBackground({ dprClamp: budget.dprClamp, tier, particleScale: budget.particleScale });
+  }, [enabled, tier, budget.dprClamp, budget.particleScale]);
 
   return null;
 };

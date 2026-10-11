@@ -318,7 +318,6 @@ interface SolarisOptions {
 const buildSolarisScene = (container: HTMLElement, options: SolarisOptions): HeroSceneHandle => {
   const {
     includeAurora,
-    bloom,
     cameraDistance,
     cameraOffsetY,
     sphereOffsetY,
@@ -327,7 +326,6 @@ const buildSolarisScene = (container: HTMLElement, options: SolarisOptions): Her
     cursorRadius,
     cursorFlare,
     cursorHeat,
-    sphereSegments,
   } = options;
 
   const canvas = document.createElement("canvas");
@@ -335,7 +333,19 @@ const buildSolarisScene = (container: HTMLElement, options: SolarisOptions): Her
   const { clientWidth, clientHeight } = container;
   // Tier-based, not the template's flat 2x — the one deliberate perf
   // deviation, invisible to the rendered look. See file header.
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
+  // Segment counts drive the sphere's vertex (point) count on both axes —
+  // sqrt() of the scalar lands on the right total point reduction. Safe
+  // regardless of the "fixed vertex count" note on `SolarisOptions.sphereSegments`
+  // above — that note is about NOT scaling by container size (overdraw at
+  // small buffers), unrelated to this capability-tier reduction, which only
+  // ever reduces the count further.
+  const segmentScale = Math.sqrt(particleScale);
+  const sphereSegments = {
+    width: Math.max(4, Math.round(options.sphereSegments.width * segmentScale)),
+    height: Math.max(4, Math.round(options.sphereSegments.height * segmentScale)),
+  };
+  const bloom = { ...options.bloom, strength: options.bloom.strength * bloomScale };
   const pixelRatio = Math.min(window.devicePixelRatio, dprClamp);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(clientWidth || 1, clientHeight || 1);

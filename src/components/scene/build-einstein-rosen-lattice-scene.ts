@@ -334,13 +334,14 @@ const buildEinsteinRosenLatticeScene = (
   container: HTMLElement,
   options: EinsteinRosenLatticeOptions,
 ): HeroSceneHandle => {
-  const { torusStrength, bloomStrength } = options;
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   const { clientWidth, clientHeight } = container;
   // Tier-based, not the source's flat min(dpr, 1.5) — the one deliberate
   // perf deviation, invisible to the rendered look. See file header.
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
+  const torusStrength = options.torusStrength * bloomScale;
+  const bloomStrength = options.bloomStrength * bloomScale;
   const pixelRatio = Math.min(window.devicePixelRatio, dprClamp);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(clientWidth || 1, clientHeight || 1);

@@ -1,6 +1,6 @@
 ---
 tags: [architecture, config, stable]
-updated: 2026-07-17
+updated: 2026-10-10
 ---
 
 # Environment Variables
@@ -19,7 +19,7 @@ Rules for handling configuration and secrets.
 
 | Name | Scope | Purpose |
 |------|-------|---------|
-| `NEXT_PUBLIC_SITE_URL` | public | Site origin (no trailing slash). Drives canonical URLs, OG/Twitter tags, `robots.txt`, `sitemap.xml`, JSON-LD. Falls back to `http://localhost:3000` when unset — **set it in production**. See [[seo-metadata]]. |
+| `NEXT_PUBLIC_SITE_URL` | public | Site origin (no trailing slash). Drives canonical URLs, OG/Twitter tags, `robots.txt`, `sitemap.xml`, JSON-LD. Falls back to `https://geoporte-testing.vercel.app` when unset (this project's deployed origin — was `http://localhost:3000` until the 2026-10-10 fix in [[changelog]], which was leaking into production canonical tags because the var was never actually set on Vercel) — **set this var in the Vercel project regardless; the fallback is a safety net, not a substitute**. See [[seo-metadata]]. |
 | `CONTACT_ENDPOINT` | server-only | Optional upstream the `/api/contact` route forwards leads to (CRM / webhook). When unset, submissions are logged server-side. See [[api-architecture]]. |
 
 Documented in `.env.example` (committed). Validated by `src/env.ts` (zod):

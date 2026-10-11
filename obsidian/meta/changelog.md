@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-09-02
+updated: 2026-10-11
 ---
 
 # Changelog
@@ -36,6 +36,88 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-10-11 (Mobile optimization pass — new tier thresholds, particleScale/bloomScale actually wired into 14 scene builders, iOS resize-flicker guard, 44px tap-target fixes, 480p video tier)
+
+Urgent pre-meeting request: rework the 4-tier performance system to an
+explicit new spec (named `hardwareConcurrency`/`deviceMemory`/`screen.width`
+cutoffs and example devices per tier), make sure the per-tier budgets
+(particle counts, bloom, DPR, cursor, parallax) actually take effect, audit
+the mobile layout end-to-end, and deploy. Full reasoning — including why the
+spec's literal numbers are unreachable on Safari and how that was reconciled,
+and the complete list of touched scene builders — is in
+[[decisions-log]] ADR-0080; this entry is the short version.
+
+- **`performance-tier.ts`** — new LOW/MEDIUM/HIGH/ULTRA cutoffs matching the
+  spec; Android uses the literal numbers, iOS/iPad use a revised
+  screen-signature/cores proxy (Safari can't clear the literal `cores>=12`
+  ULTRA bar at all). `PERFORMANCE_TIER_BUDGETS`' `particleScale`/`bloomScale`
+  retuned to the spec's stated percentages (HIGH -30%/reduced-bloom, MEDIUM
+  -70%/bloom-off).
+- **`device-tier.ts`** — `getTierBudget` now also merges `particleScale`/
+  `bloomScale`/a scaled `ambientShapeCount` in, so every existing consumer
+  picks them up for free.
+- **14 scene builders** now actually read `particleScale`/`bloomScale` (were
+  declared since ADR-0058 but never consumed anywhere, confirmed via grep) —
+  see ADR-0080 for the full per-file list.
+- **iOS URL-bar resize-flicker guard** on every full-page WebGL resize path
+  (`ambient-background-renderer.ts`, `shared-viewport-renderer.ts`,
+  `build-planet-scene.ts`, `HeroScene.tsx`) — skips the resize unless the
+  width actually changed, per optimize-3d-scene skill §13.
+- **5 tap targets** bumped from ~20-32px to 44px (`h-11 w-11`):
+  `ProjectModal`/`CookiePreferencesModal` close buttons,
+  `PerformanceWarningToast` dismiss, `GeotechnicalFeaScene`'s stage stepper
+  (×2). Nav/grid/footer/stats audit found nothing else to fix.
+- **480p video tier**: new `ffmpeg`-encoded 854×480 mp4+webm pairs for the
+  three background videos (bird/siloutte/purple-planet), picked in JS by
+  `VideoBackground.tsx` specifically on the LOW capability tier — the
+  existing 720p pair is a pure width-media-query swap and can't express a
+  capability-only split.
+- `next build`/`npx eslint src` clean; `.claude/scripts/verify.sh` unchanged
+  from before this turn (same pre-existing FAIL/WARNs, nothing new).
+  **Could not get reliable mobile-width device emulation** from the browser
+  tooling available this session — see ADR-0080's verification section for
+  what layout correctness rests on instead.
+
+## 2026-10-10 (Fixed: stats counters stuck at "0+" on mobile, hero heading unclipped during entrance, canonical URL pointing at localhost on Vercel)
+
+Bug report against the deployed site (`https://geoporte-testing.vercel.app`):
+the homepage/service-page stat counters never counted up on mobile, the hero
+heading looked doubled, and `<link rel="canonical">` resolved to
+`http://localhost:3000`.
+
+- **Stats counters** (`StatCounter.tsx`, `ExperienceStatBox.tsx`): both drove
+  the count-up spring straight off the live `inView` boolean from
+  `useDynamicInView` (`number: inView ? value : 0`) with `threshold: 0.4`. A
+  fast or bouncy mobile scroll can drop below that threshold again before or
+  during the spring, snapping the number back to 0 — there was no "already
+  played" latch, unlike every `mode="once"` animation elsewhere in the
+  codebase. Added a one-way `hasAnimated` state (`useEffect` sets it true the
+  first time `inView` is true, spring target reads off that instead) and
+  lowered the threshold to `0.15` so it fires more reliably when the stat grid
+  is taller than a short mobile viewport.
+- **Canonical URL** (`src/lib/site.ts`): `siteConfig.url` falls back to
+  `http://localhost:3000` when `NEXT_PUBLIC_SITE_URL` is unset — confirmed via
+  the live deployed HTML that the env var isn't set on Vercel for this
+  project. Changed the fallback to `https://geoporte-testing.vercel.app`.
+  `NEXT_PUBLIC_SITE_URL` should still be set in the Vercel project's env vars
+  per [[environment-variables]] — the fallback is a safety net, not a
+  replacement for that.
+- **Hero heading** (`HeroHeading.tsx`): added the `overflow` prop to its
+  `TextEngine`. It was the only `TextEngine` heading in the codebase *not*
+  setting `overflow` (`SectionHeading.tsx` and `GeotechnicalPlexusHeading.tsx`
+  both do), so its word-slide entrance wasn't clipped to the line-height box
+  during animation, unlike every other heading. Reported as "doubled" text on
+  mobile; the vendored `spring-text-engine` visually-hidden SEO copy was
+  independently confirmed correctly hidden (inline `position:absolute` +
+  `clip:rect(0,0,0,0)`, unaffected by any stylesheet) on the live site via raw
+  HTML inspection, so this brings the heading in line with the rest of the
+  codebase's convention rather than fixing a confirmed root cause — no live
+  browser was available this session to reproduce the glitch directly. Flagged
+  to the user as a best-guess fix pending a screenshot if it recurs.
+- `yarn lint` (via `npx eslint` on the changed files) clean; `next build`
+  (Turbopack) clean; confirmed in the compiled output that the canonical tag
+  and the hero heading's `overflow` styling both changed as expected.
 
 ## 2026-10-09 (Fixed: clicking a project card on `/projects` did nothing)
 

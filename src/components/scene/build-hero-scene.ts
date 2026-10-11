@@ -272,8 +272,8 @@ const buildConstructionRig = (): {
 };
 
 /** Dust motes drifting upward through the scene, wrapping once they clear the top. */
-const buildDust = (): THREE.Points => {
-  const count = 260;
+const buildDust = (particleScale: number): THREE.Points => {
+  const count = Math.round(260 * particleScale);
   const positions = new Float32Array(count * 3);
   const speeds = new Float32Array(count);
   const drift = new Float32Array(count);
@@ -304,8 +304,8 @@ const buildDust = (): THREE.Points => {
   return points;
 };
 
-const buildPointCloud = (): THREE.Points => {
-  const count = 1200;
+const buildPointCloud = (particleScale: number): THREE.Points => {
+  const count = Math.round(1200 * particleScale);
   const positions = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
     const radius = Math.pow(Math.random(), 0.5) * 13;
@@ -368,7 +368,7 @@ export const createHeroScene = (
   // Tier-based, not a flat 2x — see the identical fix in
   // `service-heroes/hero-scene-runtime.ts`.
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale } = getTierBudget(clientWidth || window.innerWidth);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
@@ -383,10 +383,10 @@ export const createHeroScene = (
   const { group: rig, jibGroup, girders, girdersRestX, scaffolding } = buildConstructionRig();
   scene.add(rig);
 
-  const points = buildPointCloud();
+  const points = buildPointCloud(particleScale);
   scene.add(points);
 
-  const dust = buildDust();
+  const dust = buildDust(particleScale);
   scene.add(dust);
 
   const { ring: lidarRing, material: lidarMaterial } = buildLidarPulseRing();

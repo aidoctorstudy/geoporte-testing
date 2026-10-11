@@ -182,11 +182,13 @@ interface AureoleOptions {
 }
 
 const buildAureoleScene = (container: HTMLElement, options: AureoleOptions): HeroSceneHandle => {
-  const { count, bloomStrength, bloomRadius, bloomThreshold } = options;
+  const { bloomRadius, bloomThreshold } = options;
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
+  const count = Math.round(options.count * particleScale);
+  const bloomStrength = options.bloomStrength * bloomScale;
   const pixelRatio = Math.min(window.devicePixelRatio, dprClamp);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(clientWidth || 1, clientHeight || 1);
@@ -276,6 +278,7 @@ const buildAureoleScene = (container: HTMLElement, options: AureoleOptions): Her
     bloomRadius,
     bloomThreshold,
   );
+  bloomPass.enabled = bloomStrength > 0.001;
   composer.addPass(bloomPass);
 
   // ---- interaction — window listeners, since the canvas is always

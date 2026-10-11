@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-09-01
+updated: 2026-10-11
 ---
 
 # Decisions Log (ADRs)
@@ -16,6 +16,158 @@ fine; write a new ADR that says so rather than editing the old one.
 Template: [[templates/adr-note]].
 
 ---
+
+## ADR-0080 — Mobile-optimization pass: new explicit tier thresholds, particleScale/bloomScale actually wired into the 14 scene builders, iOS URL-bar resize-flicker guard
+
+**Status:** Accepted · 2026-10-11 · **Supersedes part of ADR-0058/0079's threshold numbers; keeps their architecture.**
+
+**Context.** Urgent client-facing request: make the site "perfect on mobile"
+before a Monday meeting, with an explicit 4-tier spec (LOW/MEDIUM/HIGH/ULTRA,
+named `hardwareConcurrency`/`deviceMemory`/`screen.width` cutoffs per tier,
+named example devices per tier) plus a mobile-layout checklist (hamburger nav,
+1-column grids, 44px tap targets, no horizontal scroll, canvas resize,
+performance-warning toast gating) and a request to deploy to Vercel after.
+
+**The literal spec doesn't survive contact with Safari.** The request's ULTRA
+rule (`mobile AND hardwareConcurrency >= 12`) is unreachable for *any* iPhone
+or iPad — Safari reports a flat `hardwareConcurrency: 6` on every iPhone
+since the A13 and never implements `deviceMemory` at all (see ADR-0079) — yet
+the request's own named ULTRA examples are "iPad Pro M1" and "iPhone 17 Pro
+Max," both Safari devices. Taken completely literally, the spec makes its own
+named examples impossible. Separately, the existing `IOS_FLAGSHIP_SCREEN_SIGNATURES`
+table (ADR-0079) put the whole 393×852×3 screen bucket — which Apple gives to
+both "14 Pro" and plain "15" and plain "16", not just Pro models — at
+`"ultra"`, but the new spec's own example list puts "iPhone 15 Pro" at HIGH,
+not ULTRA. Reconciled rather than either blindly implementing an
+unsatisfiable literal rule or silently keeping the old (now contradicted)
+table:
+
+- **Android/Chromium** (trustworthy `hardwareConcurrency`/`deviceMemory`):
+  implements the spec's numeric cutoffs verbatim — LOW
+  `cores<=4 OR memory<=3 OR screen.width<=390`, MEDIUM the `cores>=5 AND
+  memory>=4` band above that, HIGH `cores>=8 AND memory>=6`, ULTRA
+  `cores>=12`. In practice this means most flagship Android phones (8 real
+  cores) land at HIGH, not ULTRA — matches the spec's own "flagship
+  Androids" → HIGH example.
+- **iOS** (unreliable numeric signals): `IOS_FLAGSHIP_SCREEN_SIGNATURES`
+  split into two buckets instead of one — `IOS_HIGH_TIER_SCREEN_SIGNATURES`
+  (393×852×3, 402×874×3 — the "14 Pro/15/15 Pro/16, 16 Pro" bucket) now
+  resolves to `"high"`, matching the new spec's "iPhone 15 Pro" example;
+  `IOS_ULTRA_TIER_SCREEN_SIGNATURES` (430×932×3, 440×956×3 — the Plus/Pro-Max
+  bucket) stays at `"ultra"`. iPad gets its own simpler rule
+  (`isUltraTierIPad`): `cores >= 8`, since iPadOS Safari — unlike iOS Safari —
+  does report the chip's real core count, making a screen-signature table
+  unnecessary there. **Caveat, stated plainly rather than silently assumed:**
+  the ULTRA screen bucket's 440×956×3 entry is extended in comment to cover
+  "17 Pro Max" on the assumption Apple kept that generation's Pro Max panel
+  size unchanged from 16 Pro Max — **not independently verified against a
+  real 17 Pro Max device.** Fix the table if that assumption turns out wrong.
+  `screen.width <= 390` (LOW, width-based) does *not* catch real iPhone
+  "standard"/Pro widths (393px, one bucket up) — it only catches genuinely
+  small/old phones (iPhone SE/6/7/8 at 375px, "Samsung/Android standard" at
+  360px) — so this isn't the ADR-0078 width-forces-low regression it might
+  look like; it was re-derived from real device widths, not applied blindly.
+- **Desktop's own LOW/MEDIUM/HIGH/ULTRA thresholds are intentionally
+  untouched** — the request's ULTRA rule reads as "desktop = automatically
+  ULTRA regardless of specs," which would have *regressed* weak-desktop
+  downgrading (ADR-0058's whole point) for a request that was explicitly
+  about mobile. Flagged in the summary to the user rather than silently
+  applied.
+- `PERFORMANCE_TIER_BUDGETS` values changed to match the spec's stated
+  percentages precisely: HIGH `particleScale: 0.8→0.7`, `bloomScale: 1→0.5`
+  (spec: "-30% particles, bloom kept but reduced"); MEDIUM `particleScale:
+  0.4→0.3`, `bloomScale: 0.5→0` (spec: "-70% particles, bloom/post disabled
+  entirely," not just reduced).
+
+**particleScale/bloomScale were declared but never read anywhere (confirmed
+by grep) — ADR-0058 shipped the budget numbers but explicitly deferred wiring
+them into the 9 (now 14, see below) scene builders.** This turn actually
+wires them, merged into `device-tier.ts#getTierBudget` (alongside the
+existing `dprClamp` combination) so every existing consumer picks up
+`particleScale`/`bloomScale` with zero additional imports — same "one module
+decides" pattern the file already used for `dprClamp`. Also folded
+`ambientShapeCount` into the same multiplication (floored at 1), since it's a
+particle-ish count too. Wired into the actual point/bloom code in: `build-hero-scene.ts`
+(homepage dust + point cloud), `build-negentropy-scene.ts`/`build-geotechnical-plexus-scene.ts`/
+`build-geotechnical-fea-scene.ts` (multiplied onto their *existing*
+width-based `densityScale`, not a new parallel mechanism), `build-planet-scene.ts`
+(star/atmo/marker `TIER_COUNTS`, now also capability-scaled — `PlanetBackgroundOptions`
+gained a `particleScale` field), `build-team-starfield-scene.ts`,
+`build-golden-parthenon-scene.ts`, `build-aureole-scene.ts`,
+`build-solaris-scene.ts` (sphere segment count, `sqrt(particleScale)` since
+segments drive point count on two axes), `build-aether-flux-scene.ts` (its
+dust field only — its two bloom composers are already documented
+"structurally dead" in the file header, not worth touching),
+`build-spiral-galaxy-scene.ts`/`build-pinwheel-galaxy-scene.ts` (segment/point
+counts + both halves of their 3-composer selective-bloom rigs — strength
+only, not `enabled` toggling, since their `finalPass` shader samples
+`bloomTexture`/`torusTexture` unconditionally), `build-aurum-peak-scene.ts`/
+`build-einstein-rosen-lattice-scene.ts` (bloom strength only — no particle
+field in either). Left alone: `build-advisory-lifecycle-network-scene.ts`
+and `service-heroes/build-telecom-signal-network-scene.ts` (pin/arc/node
+geometry, not a fill-rate particle field — scaling a 27-node lattice or a
+7-pin globe has no real perf benefit and real visual-breakage risk) and
+`build-schedule-network-graph-scene.ts` (video-backed, not WebGL at all).
+Added `bloomPass.enabled = bloomStrength > 0.001` (skip the pass, not just
+zero its visible contribution — optimize-3d-scene skill §7) everywhere a
+single `UnrealBloomPass` feeds `composer.render()` directly; left as
+strength-only where a selective-bloom composite shader always samples the
+bloom texture regardless (see above).
+
+**iOS URL-bar resize-flicker guard (optimize-3d-scene skill §13), found
+while auditing canvas resize behaviour, not something the request named
+directly:** `ambient-background-renderer.ts`, `shared-viewport-renderer.ts`,
+and `build-planet-scene.ts`'s own `handleResizeFactory` all resized their
+renderer (the globe's case: three `EffectComposer`s) on every raw
+`window.resize` event, with no guard — and iOS Safari fires `resize` on
+every URL-bar collapse/expand during scroll, which changes `innerHeight` with
+the width unchanged. All three, plus `HeroScene.tsx`'s `ResizeObserver`
+(container-based, same trap via `min-h-screen`), now skip the resize unless
+width actually changed.
+
+**Mobile layout audit (nav, grid stacking, footer, stats, touch targets,
+horizontal scroll)** found the hamburger breakpoint, grid-cols-1 bases, and
+footer/stats stacking already correct throughout — no changes needed there.
+Five icon-only buttons were below the project's own 44px tap-target
+convention (`ProjectModal`'s close button, `CookiePreferencesModal`'s close
+button, `PerformanceWarningToast`'s dismiss button, and
+`GeotechnicalFeaScene`'s two construction-stage stepper buttons, the last of
+which renders on any mobile device capable enough to mount that scene's
+WebGL at all) — bumped to `h-11 w-11` (44px).
+
+**Video quality tiers:** the existing 720p mobile `<source media>` re-encodes
+(ADR-0056) only ever express a *width* split — the new spec wants a further
+480p tier specifically for LOW *capability*, which two same-width phones can
+land on either side of. Generated 854×480 h264+vp9 re-encodes for the three
+background videos (`bird`, `siloutte`, `purple-planet`) via local `ffmpeg`,
+and `VideoBackground.tsx` now picks the 480p pair in JS via
+`usePerformanceTier()` when the resolved tier is `"low"` (can't be a plain
+`media` query for the same reason the LOW/MEDIUM capability split can't be —
+see above), falling back to the existing width-based 720p pair for every
+other mobile case.
+
+**What was NOT changed:** cursor effects, the particle trail, and magnetic
+buttons were already universally off on any touch/coarse-pointer device
+(gated on `isFinePointer`, not on performance tier) — already a superset of
+what the spec asked for (LOW-tier-only), left alone rather than narrowed.
+Parallax is exclusively WebGL-camera-driven in this codebase (confirmed: the
+only real `<SpringTrigger>` with a *visual* transform is `HeroScene.tsx`'s
+own camera motion; `GeologicalCrossSection.tsx`'s `<SpringTrigger>` only
+reads scroll progress into a `setControl` call, no DOM transform) — already
+fully gated off on LOW via the existing `isLowPowerDevice()` WebGL-mount
+gate, so no separate "disable parallax" wiring was needed.
+
+**Verification:** `next build` (Turbopack) and `npx eslint src` both clean;
+`.claude/scripts/verify.sh` shows the same pre-existing 1 FAIL (a `@keyframes`
+mention inside a code *comment*, unrelated to this turn) and 4 WARNs as
+before this turn — no new ones introduced. Could not get reliable mobile-
+width device emulation from the available browser tooling this session
+(`resize_window` reported success but the page's actual `innerWidth` never
+changed) — layout correctness at 360/375/390/430/768/1024 rests on Tailwind's
+*stock, unmodified* breakpoints (confirmed no `--breakpoint-*` override in
+`globals.css`) applied to the already-`grid-cols-1`-based markup, not on a
+live screenshot at each width. Flagged to the user rather than claimed as
+visually confirmed.
 
 ## ADR-0079 — Flagship phones (recent Pro-tier iPhones, 8-core/8GB Android) get the full desktop budget, not just "not gated off"
 

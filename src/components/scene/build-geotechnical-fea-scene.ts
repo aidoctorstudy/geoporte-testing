@@ -147,7 +147,8 @@ export const createGeotechnicalFeaHeroScene = (container: HTMLElement): Geotechn
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp, 2));
   renderer.setSize(containerWidth || 1, containerHeight || 1);
 
-  const densityScale = getDeviceTier(containerWidth) === "desktop" ? 1 : 0.5;
+  const widthDensityScale = getDeviceTier(containerWidth) === "desktop" ? 1 : 0.5;
+  const densityScale = widthDensityScale * getTierBudget(containerWidth).particleScale;
 
   const scene = new THREE.Scene();
   const cameraController = createCameraController(canvas, (containerWidth || 1) / (containerHeight || 1));

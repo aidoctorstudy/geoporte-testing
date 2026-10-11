@@ -146,7 +146,8 @@ export const createGeotechnicalPlexusScene = (container: HTMLElement): HeroScene
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp, 2));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
-  const densityScale = getDeviceTier(measuredWidth) === "desktop" ? 1 : 0.55;
+  const widthDensityScale = getDeviceTier(measuredWidth) === "desktop" ? 1 : 0.55;
+  const densityScale = widthDensityScale * getTierBudget(measuredWidth).particleScale;
 
   const scene = new THREE.Scene();
   const sceneRoot = new THREE.Group();

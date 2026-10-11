@@ -384,7 +384,7 @@ const buildAurumPeakScene = (container: HTMLElement): HeroSceneHandle => {
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   const { clientWidth, clientHeight } = container;
-  const { dprClamp } = getTierBudget(clientWidth || window.innerWidth);
+  const { dprClamp, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
   // Kept verbatim per the brief; inert — nothing in this scene casts or
@@ -408,7 +408,7 @@ const buildAurumPeakScene = (container: HTMLElement): HeroSceneHandle => {
   torusComposer.addPass(renderScene);
   torusComposer.addPass(new ShaderPass(GammaCorrectionShader));
   torusComposer.addPass(
-    new UnrealBloomPass(new THREE.Vector2(clientWidth || 1, clientHeight || 1), 0.22, 0.2, 0),
+    new UnrealBloomPass(new THREE.Vector2(clientWidth || 1, clientHeight || 1), 0.22 * bloomScale, 0.2, 0),
   );
   torusComposer.addPass(new ShaderPass(CopyShader));
 
@@ -417,7 +417,7 @@ const buildAurumPeakScene = (container: HTMLElement): HeroSceneHandle => {
   bloomComposer.addPass(renderScene);
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(clientWidth || 1, clientHeight || 1),
-    CONFIG.bloomStr,
+    CONFIG.bloomStr * bloomScale,
     CONFIG.bloomRadius,
     CONFIG.bloomThresh,
   );

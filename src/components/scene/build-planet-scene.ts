@@ -191,6 +191,12 @@ const firstMesh = (obj: THREE.Object3D): THREE.Mesh | null => {
 export interface PlanetBackgroundOptions {
   dprClamp: number;
   tier: "mobile" | "tablet" | "desktop";
+  /** Capability-tier multiplier (`performance-tier.ts`, via `getTierBudget`)
+   * applied on top of `TIER_COUNTS`' width-tier numbers below — the two axes
+   * are independent (see `device-tier.ts`'s top comment), so a narrow-but-
+   * capable phone isn't held to the width-only mobile count, and a wide-but-
+   * weak device doesn't get the full desktop count just for its screen size. */
+  particleScale: number;
 }
 
 /** Module-level singleton state — ref-counted, same pattern as
@@ -203,10 +209,17 @@ let disposeContent: (() => void) | null = null;
 let refCount = 0;
 
 const handleResizeFactory = (camera: THREE.PerspectiveCamera, composers: EffectComposer[]) => {
+  // Width-only guard (optimize-3d-scene skill §13) — same iOS URL-bar trap
+  // as `ambient-background-renderer.ts`/`shared-viewport-renderer.ts`, more
+  // costly to skip here specifically since this scene resizes three
+  // `EffectComposer`s (each its own render-target reallocation) on every fire.
+  let lastResizeWidth = window.innerWidth;
   return () => {
     if (!renderer) return;
     const w = window.innerWidth;
     const h = window.innerHeight;
+    if (w === lastResizeWidth) return;
+    lastResizeWidth = w;
     const dpr = renderer.getPixelRatio();
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
@@ -219,7 +232,12 @@ const handleResizeFactory = (camera: THREE.PerspectiveCamera, composers: EffectC
 };
 
 const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions) => {
-  const counts = TIER_COUNTS[options.tier];
+  const widthCounts = TIER_COUNTS[options.tier];
+  const counts: PlanetTierCounts = {
+    starCount: Math.round(widthCounts.starCount * options.particleScale),
+    atmoCount: Math.round(widthCounts.atmoCount * options.particleScale),
+    markerCount: Math.round(widthCounts.markerCount * options.particleScale),
+  };
 
   /* ---------- RENDERER / SCENE / CAMERA ----------
      Two fixes from the canonical `three@0.143.0` source, both confirmed

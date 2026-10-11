@@ -138,8 +138,17 @@ export const HeroScene = ({
       startLoop();
     }
 
+    // Width-only guard (optimize-3d-scene skill §13): iOS Safari collapses/
+    // expands the URL bar during scroll, which changes the container's
+    // *height* (via `min-h-screen`/`100vh`) with no real resize happening —
+    // without this, every such scroll-triggered height wobble re-sizes the
+    // WebGL drawing buffer, which reads as a flicker. A genuine resize
+    // (rotation, responsive breakpoint) always changes width too.
+    let lastWidth = container.clientWidth;
     const resizeObserver = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
+      if (width === lastWidth) return;
+      lastWidth = width;
       scene.resize(width, height);
       if (reducedMotion) scene.renderStatic();
     });

@@ -38,8 +38,8 @@ export interface TierParticleBudget {
 
 export const PERFORMANCE_TIER_BUDGETS: Record<PerformanceTier, TierParticleBudget> = {
   ultra: { particleScale: 1, bloomScale: 1, dprClamp: 2, webglDisabled: false },
-  high: { particleScale: 0.8, bloomScale: 1, dprClamp: 2, webglDisabled: false },
-  medium: { particleScale: 0.4, bloomScale: 0.5, dprClamp: 1, webglDisabled: false },
+  high: { particleScale: 0.7, bloomScale: 0.5, dprClamp: 2, webglDisabled: false },
+  medium: { particleScale: 0.3, bloomScale: 0, dprClamp: 1, webglDisabled: false },
   low: { particleScale: 0, bloomScale: 0, dprClamp: 1, webglDisabled: true },
 };
 
@@ -55,8 +55,11 @@ interface NavigatorWithMemory extends Navigator {
 const isMobileUserAgent = (): boolean =>
   typeof navigator !== "undefined" && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-const isIOSDevice = (): boolean =>
+const isIPhoneDevice = (): boolean =>
   typeof navigator !== "undefined" && /iPhone/i.test(navigator.userAgent);
+
+const isIPadDevice = (): boolean =>
+  typeof navigator !== "undefined" && /iPad/i.test(navigator.userAgent);
 
 /**
  * Safari never puts the device model in `navigator.userAgent` (every iPhone
@@ -64,50 +67,77 @@ const isIOSDevice = (): boolean =>
  * OS X)…"` string, model-free), never implements `navigator.deviceMemory`
  * (Chromium-only), and has reported a flat `hardwareConcurrency: 6` on every
  * iPhone since the A13 (iPhone 11, 2019) — so none of the usual capability
- * signals can tell a 15 Pro Max from a 12 mini. The only proxy left is the
- * device's logical screen size × `devicePixelRatio`, which Apple ties to a
- * specific screen panel/chip generation.
+ * signals can tell a 15 Pro Max from a 12 mini, and `deviceMemory` defaulting
+ * to 4 (see `readSignals`) means NO iPhone can ever clear a `memory >= 6`
+ * gate. The only proxy left is the device's logical screen size ×
+ * `devicePixelRatio`, which Apple ties to a specific screen panel/chip
+ * generation.
  *
  * `[shortSide, longSide, dpr]` in CSS px, normalized (sorted) so portrait vs
  * landscape both match — `screen.width`/`height`'s order isn't reliably
  * orientation-stable across mobile Safari versions.
  *
+ * Two buckets, not one: Apple gives the same panel to a Pro and a non-Pro
+ * model in the same generation (14 Pro/15/15 Pro/16 all share 393×852×3), so
+ * screen signature alone cannot isolate "Pro" within that bucket — it is
+ * demoted to HIGH rather than ULTRA for that reason (see the 2026-10-11 ADR
+ * in decisions-log.md, which also covers why the Plus/Pro-Max bucket below
+ * still reads ULTRA despite the identical ambiguity against the non-Pro
+ * "Plus"). Reserve ULTRA for the larger Plus/Pro-Max panel class, which is
+ * also where a new flagship generation is most likely to land if Apple keeps
+ * the panel size stable across a generation (unverified for any iPhone this
+ * table doesn't explicitly list — see the MAINTENANCE note).
+ *
  * MAINTENANCE: update this table when a new iPhone generation ships. An
  * unrecognized (future) iPhone falls through to the normal cores/memory
- * tiering below — safe by construction, never silently mis-promoted to
- * "ultra"; worst case a new flagship reads as "medium" until this table is
- * updated, not "low"/broken.
+ * tiering below — safe by construction, never silently mis-promoted; worst
+ * case a new flagship reads as "medium" until this table is updated, not
+ * "low"/broken.
  */
-const IOS_FLAGSHIP_SCREEN_SIGNATURES: ReadonlyArray<readonly [number, number, number]> = [
+const IOS_HIGH_TIER_SCREEN_SIGNATURES: ReadonlyArray<readonly [number, number, number]> = [
   [393, 852, 3], // iPhone 14 Pro, 15, 15 Pro, 16
-  [430, 932, 3], // iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus
   [402, 874, 3], // iPhone 16 Pro
-  [440, 956, 3], // iPhone 16 Pro Max
+];
+const IOS_ULTRA_TIER_SCREEN_SIGNATURES: ReadonlyArray<readonly [number, number, number]> = [
+  [430, 932, 3], // iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus
+  [440, 956, 3], // iPhone 16 Pro Max — also assumed to cover 17 Pro Max if the
+  // panel didn't change generation-over-generation; NOT independently
+  // verified against a real 17 Pro Max. Correct this entry (or add a new one)
+  // once that can be confirmed.
 ];
 
-const isFlagshipIOSDevice = (): boolean => {
-  if (!isIOSDevice()) return false;
+const matchesIPhoneScreenSignature = (
+  table: ReadonlyArray<readonly [number, number, number]>,
+): boolean => {
+  if (!isIPhoneDevice()) return false;
   if (typeof screen === "undefined" || typeof window === "undefined") return false;
   const [shortSide, longSide] = [screen.width, screen.height].sort((a, b) => a - b);
   const dpr = window.devicePixelRatio;
-  return IOS_FLAGSHIP_SCREEN_SIGNATURES.some(
-    ([s, l, d]) => s === shortSide && l === longSide && d === dpr,
-  );
+  return table.some(([s, l, d]) => s === shortSide && l === longSide && d === dpr);
 };
 
-/** Android (and other Chromium-mobile) flagships report real
- * `hardwareConcurrency`/`deviceMemory` — no proxy needed, unlike iOS above. */
-const isFlagshipAndroidDevice = (cores: number | null, memory: number | null): boolean =>
-  cores !== null && cores >= 8 && memory !== null && memory >= 8;
+/**
+ * iPad, unlike iPhone, reports its chip's real core count on Safari (M-series
+ * iPads: 8+) — `deviceMemory` is still never exposed, so cores alone is the
+ * only usable signal there. `cores >= 8` is the M-series cutoff (the user's
+ * named "iPad Pro M1" example is exactly this); an A-series iPad (fewer
+ * cores) falls through to the normal numeric tiering below like any other
+ * unrecognized device.
+ */
+const isUltraTierIPad = (cores: number | null): boolean =>
+  isIPadDevice() && cores !== null && cores >= 8;
 
-const isFlagshipMobileDevice = (cores: number | null, memory: number | null): boolean =>
-  isFlagshipIOSDevice() || isFlagshipAndroidDevice(cores, memory);
+const isHighTierIOSDevice = (): boolean => matchesIPhoneScreenSignature(IOS_HIGH_TIER_SCREEN_SIGNATURES);
+
+const isUltraTierIOSDevice = (cores: number | null): boolean =>
+  matchesIPhoneScreenSignature(IOS_ULTRA_TIER_SCREEN_SIGNATURES) || isUltraTierIPad(cores);
 
 const readSignals = () => {
   const nav = typeof navigator !== "undefined" ? (navigator as NavigatorWithMemory) : null;
   const cores = nav && typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
   const memory = nav && typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
-  return { cores, memory, isMobile: isMobileUserAgent() };
+  const width = typeof screen !== "undefined" ? screen.width : null;
+  return { cores, memory, width, isMobile: isMobileUserAgent() };
 };
 
 /**
@@ -116,26 +146,34 @@ const readSignals = () => {
  * browser) default to 4/4, the medium/low boundary — a conservative middle
  * ground rather than assuming either extreme.
  *
- * Mobile devices are judged on actual `cores`/`memory` signals, the same as
- * desktop — not auto-floored to "low" purely for being under the mobile
- * width/UA check (ADR-0078 removed that forcing rule: it was catching every
- * phone, including high-end ones like iPhone 14+/15 Pro, since Safari never
- * exposes `deviceMemory` and `width < 768` is true for essentially all
- * phones in portrait). A phone's GPU/thermal envelope is generally weaker
- * than a desktop's at the same core count, so the ordinary mobile ceiling is
- * capped at "high" — except a *flagship* device (see
- * `isFlagshipMobileDevice`: recent Pro-tier iPhones by screen signature,
- * Android by real 8-core/8GB signals), which reaches "ultra" — the same
- * uncapped budget desktop gets, no simplification (ADR-0079).
+ * Mobile thresholds (2026-10-11 spec, see decisions-log.md): LOW is
+ * `cores <= 4 OR memory <= 3 OR screen.width <= 390`; MEDIUM is the
+ * `cores >= 5 AND memory >= 4` band above that; HIGH is `cores >= 8 AND
+ * memory >= 6`; ULTRA is `cores >= 12`. That last number is real for Android
+ * (Chromium reports true `hardwareConcurrency`/`deviceMemory`) but
+ * unreachable for *any* iPhone or iPad — Safari's signals can't clear it (see
+ * the iOS comment above) — so ULTRA there is reached through the screen-
+ * signature/iPad-cores proxy instead (`isUltraTierIOSDevice`), and the same
+ * proxy's HIGH bucket (`isHighTierIOSDevice`) covers Pro-class iPhones that
+ * the numeric check alone would misclassify as MEDIUM. Width is not part of
+ * the HIGH/ULTRA path by design — only LOW's `<= 390` cutoff reads it
+ * directly (real iPhone "standard"/Pro widths are 393+, so that cutoff
+ * doesn't catch them; see decisions-log.md for why this isn't the ADR-0078
+ * regression it looks like at first glance).
+ *
+ * A phone's GPU/thermal envelope is generally weaker than a desktop's at the
+ * same core count, so desktop's own thresholds below are intentionally more
+ * permissive and unrelated to the mobile ones above.
  */
 export const detectPerformanceTier = (): PerformanceTier => {
-  const { cores, memory, isMobile } = readSignals();
+  const { cores, memory, width, isMobile } = readSignals();
   const c = cores ?? 4;
   const m = memory ?? 4;
 
   if (isMobile) {
-    if (isFlagshipMobileDevice(cores, memory)) return "ultra";
-    if (c < 6 || m < 4) return "low";
+    if (isUltraTierIOSDevice(cores) || c >= 12) return "ultra";
+    if (c <= 4 || m <= 3 || (width !== null && width <= 390)) return "low";
+    if (isHighTierIOSDevice()) return "high";
     if (c >= 8 && m >= 6) return "high";
     return "medium";
   }
