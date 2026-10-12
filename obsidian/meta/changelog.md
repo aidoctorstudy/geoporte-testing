@@ -37,6 +37,30 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (A pushed commit silently never deployed on Vercel — no code change, just the incident)
+
+Report: "nothing changed on the live site" after the font/colour/particle-
+logo/contact-form commit (`1729514`, previous entry below) was pushed.
+Investigated by curling the live site directly rather than guessing:
+confirmed the two commits before it *were* live (the i18n rebuild and the
+Tier 1 background fix both showed up in the deployed HTML/CSS), but
+`1729514` itself never did — the deployed page still had the old
+"Eight disciplines, one team" text, the old Fontshare link, none of the
+new colour tokens. The commit built cleanly locally under both the
+webpack fallback and the default Turbopack path (the one Vercel actually
+uses) — no reproducible build error found. Since the commit was already
+on `origin/master`, a plain `git push` does nothing (no new push event,
+no fresh webhook); pushed an empty commit (`800392d`) specifically to
+force a new build attempt. That attempt succeeded and the live site now
+has everything from `1729514` — confirmed again via direct `curl`
+(heading text, fonts, colour tokens, the contact form's new field all
+present). Root cause of the original non-deploy is still unknown — no
+Vercel dashboard/API access from this environment to see why that one
+build was dropped or failed silently. Noted here specifically so a
+future "I pushed but the site didn't change" report isn't assumed to be
+a code bug first — check whether the commit actually deployed before
+re-debugging the code.
+
 ## 2026-10-12 (Heading/body font pair + heading colour retint + a particle GEOPORTE logo in the hero + services-heading copy + a Company field on the contact form)
 
 Five-part brief. Full reasoning (including what was already true vs what
