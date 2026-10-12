@@ -32,6 +32,7 @@ import { HERO_SCENE_COLORS as COLOR } from "./hero-scene-colors";
 import { PROJECT_LOCATIONS, latLonToVector3 } from "./world-globe";
 import { disposeSceneObjects } from "@/lib/scene/shared-viewport-renderer";
 import { getScrollSignalSnapshot } from "@/hooks/scroll/use-scroll-signal";
+import { reportHeroSceneFrame } from "@/lib/scene/performance-monitor";
 
 const CONFIG = {
   rimColor: "#c1faff",
@@ -961,9 +962,30 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
   /* ---------- RENDER LOOP ---------- */
   let disposed = false;
   let t0 = performance.now() / 1000;
+  // This scene is a persistent, app-lifetime singleton (unlike `HeroScene`,
+  // which already gates its own loop on `visibilitychange`) — nothing was
+  // pausing its rAF loop, three `EffectComposer` renders included, while the
+  // tab sat in the background. Same `pageVisible` shape
+  // `ambient-background-renderer.ts`/`shared-viewport-renderer.ts` already
+  // use: keep rescheduling the frame so it resumes instantly when the tab
+  // comes back, just skip the actual render work while hidden. Also reports
+  // its own frame timestamps to the sitewide low-FPS watchdog
+  // (`performance-monitor.ts`) — previously only `HeroScene.tsx` did, so a
+  // globe-specific slowdown (this is the heaviest scene on the page: three
+  // composers, a GLTF, custom shaders) never contributed to the automatic
+  // tier downgrade. See obsidian/meta/decisions-log.md.
+  let pageVisible = typeof document === "undefined" || !document.hidden;
+  const handleVisibility = () => {
+    pageVisible = !document.hidden;
+  };
+  document.addEventListener("visibilitychange", handleVisibility);
 
-  const renderFrame = () => {
+  const renderFrame = (nowMs: number) => {
     if (disposed) return;
+    rafId = requestAnimationFrame(renderFrame);
+    if (!pageVisible) return;
+    reportHeroSceneFrame(nowMs);
+
     const t = performance.now() / 1000;
     const dt = Math.min(0.05, t - t0);
     t0 = t;
@@ -1009,14 +1031,13 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
     bloomComposer.render();
     camera.layers.set(LAYERS.ENTIRE_SCENE);
     finalComposer.render();
-
-    rafId = requestAnimationFrame(renderFrame);
   };
   rafId = requestAnimationFrame(renderFrame);
 
   return function cleanup() {
     disposed = true;
     if (rafId !== null) cancelAnimationFrame(rafId);
+    document.removeEventListener("visibilitychange", handleVisibility);
     window.removeEventListener("resize", resizeAll);
     controls.dispose();
     torusComposer.dispose();

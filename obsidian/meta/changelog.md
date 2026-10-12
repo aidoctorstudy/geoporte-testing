@@ -37,7 +37,77 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
-## 2026-10-12 ("Baqala mode" — Tier 1 reduced to pure static HTML/CSS/text/images; Tier 1 trigger kept capability-based, not reintroduced as a width rule)
+## 2026-10-12 (Globe render loop now pauses on a hidden tab and reports its own FPS; dedicated card WebGL contexts deferred to near-viewport — 12→5 canvases on initial homepage load)
+
+Two bundled reports: (1) "Tier 1 content below the fold not loading" and
+(2) "iPhone 15 Pro Max lagging, should be Tier 4" with a checklist about
+WebGL context counts, 4K rendering, background-tab rAF loops, memory leaks,
+particle counts, and an FPS monitor. Report (2) is a 3D-performance request
+on a project with WebGL, so the `optimize-3d-scene` skill was loaded first
+per the hard rule, then mapped onto what's actually confirmable in this
+codebase (§0 audit) rather than applying its checklist blind.
+
+**Confirmed and fixed:**
+- `build-planet-scene.ts`'s render loop had no `visibilitychange` gate at
+  all — grepped every scene file; it was the one exception (`ambient-
+  background-renderer.ts`, `shared-viewport-renderer.ts`, and `HeroScene.tsx`
+  all already pause on a hidden tab). The heaviest scene on the page (three
+  `EffectComposer`s, a GLTF, custom shaders) kept rendering every frame in a
+  background tab. Added the same `pageVisible` gate the other two already
+  use — keep rescheduling the rAF so it resumes instantly on return, skip
+  the render work while hidden.
+- Same file never called `reportHeroSceneFrame` — only `HeroScene.tsx` fed
+  the sitewide low-FPS watchdog (`performance-monitor.ts`), so a
+  globe-specific slowdown never contributed to the automatic tier downgrade.
+  Now wired in.
+- `ServiceCard.tsx`: the 7 `DEDICATED_CARD_SCENES` cards (their own
+  `WebGLRenderer` + `EffectComposer` each, needed for bloom) were mounting
+  the instant `ServicesSection` rendered — on initial page load, regardless
+  of scroll position, since nothing deferred them. Measured: **12 canvases
+  on initial homepage load, down to 5** after gating each dedicated card
+  scene behind `useDynamicInView({ rootMargin: "800px 0px" })` — mounts once
+  the card is within ~1 viewport of coming on screen, stays mounted after
+  (no thrashing create/dispose on scroll in/out; `HeroScene`'s own
+  `IntersectionObserver` already pauses the render *loop* for an off-screen
+  card, which is the cheap part to toggle repeatedly). 12 simultaneous
+  WebGL contexts is close to or past what real browsers budget — mobile
+  Safari especially — and a dropped context reads as jank or "the scene
+  never showed up," not a GPU-power problem. This is the most likely
+  explanation for lag on genuinely high-end hardware (a flagship phone has
+  plenty of GPU power; it doesn't have an unlimited WebGL context budget).
+
+**Investigated, not changed (no bug found):**
+- DPR cap: already `min(devicePixelRatio, dprClamp)` with a real tier-aware
+  clamp (max 2) — not "full 4K," and a hardcoded 1080p cap would fight the
+  existing, more nuanced per-tier system for no measured benefit.
+- Particle count: already tier- and capability-scaled
+  (`TIER_COUNTS`/`particleScale`, see ADR-0080/81). Halving it further
+  sitewide (including desktop) wasn't grounded in any measurement — "cut
+  fill, not detail, and don't tune by feel on a desktop" per the skill.
+- Scene disposal on navigation: `HeroScene.tsx` already disposes fully on
+  unmount (geometries, materials, composers, listeners, canvas removal);
+  the globe/ambient/shared-viewport are *deliberately* persistent
+  app-lifetime singletons that never tear down on route change (by design,
+  not a leak — see their own file-header comments).
+- FPS-triggered auto-downgrade: already exists
+  (`performance-monitor.ts`/`PerformanceWarningToast`, ADR-0058/0067) —
+  20fps/3s threshold, not 30fps/3s as asked, but the existing number was
+  itself a deliberate, already-reasoned choice from that ADR; not
+  re-tuned without a measured reason to.
+- "Below the fold not loading on Tier 1": browser-verified directly —
+  `ServicesSection` and all 28 `ProjectsSection` cards render with real
+  content on a forced-`"low"`-tier build (screenshots taken scrolling
+  through both). Did not find a code path that leaves a section blank on
+  Tier 1. **Did** reproduce the renderer becoming genuinely unresponsive to
+  `Runtime.evaluate` (not just slow — CDP commands timed out at 45s,
+  repeatedly, near the end of a long simulated-scroll session) while
+  investigating this, but couldn't isolate a specific cause via static
+  code review in the time available, and hit this project's own "stop
+  after 2-3 failed browser-tool attempts" guidance before fully
+  bisecting it live. Flagged rather than silently dropped: worth
+  re-testing directly with Chrome DevTools' CPU throttle (as originally
+  suggested) rather than through browser-automation tooling, which may
+  have its own overhead on a long, image-heavy page.
 
 Client request: make Tier 1 ("low" capability) the most stripped-down
 version possible. Flagged one piece before implementing: the request's own

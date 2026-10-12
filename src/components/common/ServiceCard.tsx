@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Hover } from "@/components/animation/springs/hover";
 import { SceneViewport } from "@/components/scene/SceneViewport";
 import { HeroScene } from "@/components/scene/HeroScene";
+import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
 import { MINI_SCENES } from "@/components/scene/mini-scenes";
 import { createSolarisCardScene } from "@/components/scene/build-solaris-scene";
 import { createAetherFluxCardScene } from "@/components/scene/build-aether-flux-scene";
@@ -57,6 +58,29 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   const dedicatedVideo = DEDICATED_CARD_VIDEOS[service.slug];
   const builder = MINI_SCENES[service.slug];
 
+  // Defers each dedicated card scene's own `WebGLRenderer`/`EffectComposer`
+  // trio until the card is within ~one viewport of coming on screen, instead
+  // of every one of the up to 7 `DEDICATED_CARD_SCENES` cards creating its
+  // own fresh WebGL context the instant `ServicesSection` mounts (which
+  // happens on initial page load, regardless of scroll position — nothing
+  // about SSR/hydration defers it). Up to 7 contexts plus the always-on
+  // globe/ambient/shared-mini-viewport singletons is close to or past the
+  // context budget real browsers enforce (notably mobile Safari), and a
+  // dropped context reads as "the scene never showed up" or general jank —
+  // not a GPU-power problem, a context-count one. `HeroScene`'s own
+  // `isLowPowerDevice()` gate still applies underneath this — on a tier
+  // that skips WebGL outright, "warming" early just swaps in the (free)
+  // CSS fallback sooner, not a wasted context. Once warmed, stays mounted
+  // (no re-gating on scroll back out) — `HeroScene`'s own
+  // `IntersectionObserver` already pauses the render *loop* for an
+  // off-screen card; tearing the whole context down and recreating it on
+  // every scroll in/out would cost more than it saves.
+  const [, nearView] = useDynamicInView({ trigger: cardRef, rootMargin: "800px 0px" });
+  const [sceneWarmed, setSceneWarmed] = useState(false);
+  useEffect(() => {
+    if (nearView) setSceneWarmed(true);
+  }, [nearView]);
+
   return (
     <Hover
       ref={cardRef}
@@ -66,7 +90,7 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
       config={{ tension: 300, friction: 24 }}
       className="border-line bg-surface hover:border-accent/60 relative overflow-hidden rounded-2xl border p-7 transition-colors duration-[var(--duration-normal)] ease-entrance"
     >
-      {dedicatedScene && (
+      {dedicatedScene && sceneWarmed && (
         <>
           <HeroScene
             createScene={dedicatedScene}

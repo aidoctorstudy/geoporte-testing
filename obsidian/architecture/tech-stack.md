@@ -754,7 +754,13 @@ for live `resize` events, which skips on a call whose width matches the
 value it captured at its own creation, so the very first sizing was silently
 never applied and the globe rendered at the bare-`<canvas>` default
 (300×150 × DPR) for its entire lifetime, upscaled by CSS to fill the
-viewport.
+viewport. As of ADR-0084, the render loop also pauses (keeps rescheduling
+the rAF, skips the render work) on `document.hidden` — it was the one
+scene file in the codebase without that gate, confirmed by grepping every
+`new THREE.WebGLRenderer` site against `visibilitychange` usage — and
+reports its own frame timestamps to `reportHeroSceneFrame`
+(`performance-monitor.ts`), so a globe-specific slowdown now contributes to
+the sitewide auto-downgrade same as `HeroScene.tsx`'s already did.
 
 **Route-scoped background exclusivity.** `PlanetBackground.tsx` and
 `AmbientBackground.tsx` both read `isGlassBackgroundRoute()`

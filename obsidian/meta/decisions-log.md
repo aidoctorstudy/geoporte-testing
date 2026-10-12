@@ -17,6 +17,106 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0084 — Globe render loop gated on tab visibility and wired into the FPS watchdog; dedicated card WebGL contexts deferred to near-viewport (12→5 canvases on initial load)
+
+**Status:** Accepted · 2026-10-12 · **Follows the `optimize-3d-scene` skill's §0/§4; extends ADR-0082.**
+
+**Context.** Two bundled reports: Tier 1 content below the fold reportedly
+not loading, and "iPhone 15 Pro Max lagging, should be Tier 4" with a
+checklist (WebGL context count, 4K rendering, background-tab rAF, memory
+leaks, particle count, an FPS monitor). The second is a 3D-performance
+request on a project that carries WebGL — hard rule 13 requires the
+`optimize-3d-scene` skill before any of it, so it was loaded first and its
+§0 ("audit before you touch anything") driven against this codebase rather
+than applying its checklist item-by-item on faith.
+
+**§0 audit, by grep.** `new THREE.WebGLRenderer` appears in 17 scene files.
+Cross-checked against `document.hidden`/`visibilitychange` usage: only 4
+files have it (`ambient-background-renderer.ts`, `shared-viewport-
+renderer.ts`, `HeroScene.tsx`). `build-planet-scene.ts` — the Earth globe,
+the single heaviest scene on the page (three `EffectComposer`s, a GLTF,
+custom shaders) — had no page-visibility gate at all, and never called
+`reportHeroSceneFrame` (`performance-monitor.ts`), so a globe-specific
+slowdown never fed the existing sitewide low-FPS auto-downgrade (which
+already exists, ADR-0058/0067 — ruled out re-implementing it).
+
+**Decision — close the globe's visibility gap.** Added the same
+`pageVisible` shape the other two singleton renderers already use: keep
+rescheduling the rAF (so it resumes instantly on tab return) but skip the
+render work — three composer passes — while `document.hidden`. Also calls
+`reportHeroSceneFrame(nowMs)` each frame now, matching `HeroScene.tsx`'s own
+call shape, so a real globe-driven slowdown can trigger the existing
+downgrade like any other scene's can.
+
+**Context-count audit, not in the skill's own checklist but found by reading
+the actual mount path.** `ServiceCard.tsx` has up to 7 `DEDICATED_CARD_SCENES`
+cards, each needing its own `WebGLRenderer`+`EffectComposer` (documented
+reason: bloom, which the shared scissored renderer can't provide). Nothing
+deferred their mount — `<HeroScene>` renders unconditionally the instant
+`ServicesSection` is in the tree, which is on initial homepage load
+regardless of scroll position (no virtualization). Measured directly:
+**12 canvases on initial load** (globe + ambient + shared-mini-viewport +
+`HeroScene` + up to 7 dedicated card scenes), **down to 5** after the fix
+below. 12 simultaneous WebGL contexts is close to or past what real
+browsers budget per page — mobile Safari's limit is notoriously low — and a
+context the browser force-evicts reads as "the scene never rendered" or
+general jank, not a GPU-power ceiling. This is judged the most likely real
+explanation for "flagship phone still lags": a current iPhone has GPU power
+to spare but not an unlimited context budget, and nothing about context
+count scales with how fast the chip is.
+
+**Decision — defer dedicated card scenes to near-viewport.** `ServiceCard.tsx`
+now gates each `<HeroScene>` (the `DEDICATED_CARD_SCENES` branch only, not
+the shared mini-scene icon or the one video card) behind
+`useDynamicInView({ trigger: cardRef, rootMargin: "800px 0px" })` — mounts
+once within ~1 viewport of coming on screen, same "already warm on arrival"
+margin the skill's §4 recommends, reusing `cardRef` (already forwarded
+through `Hover`, same ref already passed to `SceneViewport` as `hoverRef` in
+this exact file). Stays mounted once warmed — no re-gating on scroll out —
+since `HeroScene`'s own `IntersectionObserver` already pauses the render
+*loop* cheaply for an off-screen card; tearing down and recreating a whole
+WebGL context on every scroll in/out would cost more than it saves. Under
+`isLowPowerDevice()`, `HeroScene` already renders its CSS fallback instead
+of mounting WebGL regardless of this gate, so "warming" early on that tier
+just swaps in the free fallback sooner — never a wasted context.
+
+**Investigated, declined (no bug found, or already correct):**
+- **DPR/4K claim.** Already `renderer.setPixelRatio(min(devicePixelRatio,
+  dprClamp))` with a real per-tier clamp (max 2, ADR-0082). A hardcoded
+  1080p ceiling would fight this more nuanced system for a problem that
+  doesn't exist — not applied.
+- **Particle count −50%.** Already tier- and capability-scaled
+  (`TIER_COUNTS` × `particleScale`, ADR-0080/81). A further uniform cut
+  (including desktop/ultra) has no measurement behind it — the skill
+  explicitly warns against tuning fill by feel on a desktop. Not applied.
+- **Scene disposal / memory leaks.** `HeroScene.tsx` already disposes fully
+  on unmount. The globe/ambient/shared-viewport are *deliberately*
+  persistent app-lifetime singletons (their own file headers say so) — not
+  a leak.
+- **"Below the fold not loading on Tier 1."** Browser-verified directly on
+  a forced-`"low"`-tier production build: `ServicesSection` (all 8 cards)
+  and every one of `ProjectsSection`'s 28 cards render with real photo
+  content — screenshotted scrolling through both. No code path found that
+  leaves a section blank on Tier 1. A genuinely severe finding turned up
+  while checking this, though: the renderer became unresponsive to CDP
+  `Runtime.evaluate` (not just slow — 45s timeouts, repeatedly) late in a
+  long simulated-scroll session. Not root-caused in the time available
+  (`StatCounter.tsx`, `AdaptiveGrid`'s resize loop, and `TiltCard.tsx` were
+  all read and look clean), and automation hit this project's own
+  "stop after 2-3 failed browser-tool attempts, ask rather than keep
+  retrying" guidance. Left as an open flag, not silently dropped — see
+  the changelog entry for what to try next (DevTools CPU throttle directly,
+  not through browser-automation tooling, which may carry its own overhead
+  on a long image-heavy page and confound the result).
+
+**When building.** Grep `new THREE.WebGLRenderer` against
+`visibilitychange` the same way whenever a new persistent/singleton scene
+is added — this is now the second time (ADR-0082 was the first) a scene
+file turned out to be the one exception to a pattern every other file
+already followed correctly.
+
+---
+
 ## ADR-0083 — "Baqala mode": Tier 1 reduced to pure static HTML/CSS/text/images; Tier 1 *eligibility* kept capability-based against an explicit width-rule request
 
 **Status:** Accepted · 2026-10-12 · **Extends ADR-0081 (Tier 1 motion/video/blur removal); declines part of the literal request, with the user's agreement.**

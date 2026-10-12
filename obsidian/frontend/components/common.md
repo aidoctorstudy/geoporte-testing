@@ -440,7 +440,14 @@ used on that service's detail-page hero (`createSolarisCardScene`/
 `build-aureole-scene.ts`/`build-spiral-galaxy-scene.ts` and
 ADR-0036/ADR-0043/ADR-0044/ADR-0045/ADR-0047/ADR-0048/ADR-0051/ADR-0054 in
 [[decisions-log]] for why these seven cards need their own dedicated
-`HeroScene` context rather than the shared mini-scene renderer.
+`HeroScene` context rather than the shared mini-scene renderer. As of
+ADR-0084, each of these 7 `<HeroScene>` mounts is deferred behind
+`useDynamicInView({ trigger: cardRef, rootMargin: "800px 0px" })` — without
+it, all 7 (plus the globe/ambient/shared-viewport singletons and the
+homepage's own `HeroScene`) created their WebGL context the instant
+`ServicesSection` was in the tree, regardless of scroll position: measured
+12 simultaneous canvases on initial homepage load, down to 5 after the
+gate. Stays mounted once warmed (no re-gating on scroll back out).
 
 **Project Control Services is the eighth exception, and the only one not
 WebGL** (`DEDICATED_CARD_VIDEOS` lookup, a sibling to
