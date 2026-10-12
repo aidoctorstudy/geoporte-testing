@@ -37,6 +37,58 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 ("Baqala mode" — Tier 1 reduced to pure static HTML/CSS/text/images; Tier 1 trigger kept capability-based, not reintroduced as a width rule)
+
+Client request: make Tier 1 ("low" capability) the most stripped-down
+version possible. Flagged one piece before implementing: the request's own
+Tier 1 trigger (`hardwareConcurrency <= 4 OR screen.width <= 414 OR old
+iPad`) would catch nearly every modern flagship phone in portrait (iPhone
+14/15/16 are all 390–430px), not just old/weak devices — exactly the rule
+this project removed across ADR-0078/79/80/81/82. The existing
+capability-based detection already correctly lands a real iPhone 6 or a
+2013 iPad at "low" (2 cores on both triggers the `cores <= 4` branch
+already) without catching current flagships. **User chose to keep the
+capability-based trigger** — only the Tier 1 *behaviour* changed, not its
+*eligibility* rule. See ADR-0083.
+
+What's new on Tier 1 (most of the list was already true from the
+2026-10-11 pass — see below — this closes the remaining gaps):
+- **Zero CSS transitions/animations, sitewide**, including the ADR-0014
+  `transition-*` exception (hover/focus colour, small nudges) — that
+  exception is suspended on this tier specifically. `globals.css`:
+  `[data-perf-tier="low"] * { transition: none !important; animation: none
+  !important; }`. Static `transform` values used for layout (centering,
+  positioning) are untouched — only timing is killed, so a hover state
+  still snaps instantly instead of breaking non-animated positioning.
+- **Images compressed to Tier 1's own quality budget.** New
+  `TierImage.tsx` (`src/components/common/`) — a `"use client"` leaf
+  wrapping `next/image`, halving `quality` to 40 (from Next's 75 default)
+  on the low tier. Swapped in via a straight `import { TierImage as Image }
+  from "@/components/common/TierImage"` across every content-photo call
+  site (`publications.tsx`, `ServiceOverview.tsx`, `ProjectsShowreel.tsx`,
+  `ProjectsCascade.tsx`, `ProjectCard.tsx`, `ProjectModal.tsx`,
+  `ProjectExperienceSection.tsx`, `TeamMemberCard.tsx`, `TeamCascade.tsx`)
+  — several of those are Server Components, so this is the "split a leaf
+  client wrapper" shape (`component-conventions.md`), not a reason to
+  convert those views to `"use client"`. `GeoporteLogo.tsx` deliberately
+  excluded — a small brand mark, not worth the visible quality loss for
+  negligible bandwidth savings. `next.config.ts`'s `images.qualities` had
+  to gain `40` explicitly — Next 16 only serves quality values it's been
+  told to allow (default: `[75]` only; an unlisted value throws).
+
+Already true before this turn, confirmed rather than re-implemented: zero
+WebGL (`isLowPowerDevice()` gates every scene mount, including `HeroScene`'s
+`skipWebgl`), zero backdrop-filter (yesterday's `[data-perf-tier="low"]`
+rule, exactly the requested flat `rgba(4, 6, 15, 0.85)`), zero video
+autoplay (`VideoBackground` poster-only `<img>`), zero ambient background
+shapes (`AmbientBackground` doesn't mount), zero custom cursor effects
+(`CustomCursor`'s `active` reads the same `isReducedMotion()`), and the
+project ticker/marquee and scroll-progress bar both already freeze to a
+static, non-animating state on this tier (react-spring's global
+`skipAnimation`, forced by `reduced-motion.tsx`) rather than being removed
+from the DOM outright — left that way since a frozen marquee is itself
+"static text," which item 10 of the brief explicitly allows.
+
 ## 2026-10-12 (Earth globe blur — the *actual* root cause: a skipped initial `renderer.setSize()`, not capability tier)
 
 Yesterday's dprClamp fix (below) was real but didn't explain a report of the

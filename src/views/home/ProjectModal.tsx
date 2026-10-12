@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import { animated, useTransition } from "@react-spring/web";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
 import { useProjectModalStore } from "./project-modal-store";

@@ -17,6 +17,82 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0083 — "Baqala mode": Tier 1 reduced to pure static HTML/CSS/text/images; Tier 1 *eligibility* kept capability-based against an explicit width-rule request
+
+**Status:** Accepted · 2026-10-12 · **Extends ADR-0081 (Tier 1 motion/video/blur removal); declines part of the literal request, with the user's agreement.**
+
+**Context.** Client request: make Tier 1 the most stripped-down version
+possible — zero WebGL, zero CSS animation, zero backdrop-filter, zero
+parallax/scroll animation, zero marquee, zero video autoplay, zero ambient
+shapes, zero cursor effects, pure static HTML/CSS/text/images, lazy +
+50%-quality images — **and** a new Tier 1 trigger: `hardwareConcurrency <= 4
+OR screen.width <= 414 OR iPad 5th-gen-or-older`, justified by "should load
+smooth on a 2013 iPad or iPhone 6."
+
+**The eligibility rule doesn't survive contact with real device widths.**
+`screen.width <= 414` is not a "weak device" signal — it's a "portrait
+phone" signal. Every current-generation iPhone (14/15/16 standard, Pro, and
+Plus/Pro Max alike) reports 390–430px wide; `<= 414` catches the large
+majority of them, not just older/smaller models. Applied literally, a real
+iPhone 15 Pro Max — the exact device ADR-0078/79/80 fought to keep on full
+WebGL, and ADR-0081/82 debugged real rendering bugs for — would be pushed
+into baqala mode: zero WebGL, zero animation, 40-quality images, same as a
+2013 iPad. This is precisely the rule class the "When building" notes on
+ADR-0078 and ADR-0082 both warn against reintroducing.
+
+**Decision, confirmed with the user via direct question rather than silently
+picked:** keep the existing capability-based trigger
+(`performance-tier.ts#detectPerformanceTier`, unchanged by this ADR) as the
+sole Tier 1 eligibility signal. It already satisfies the *stated goal*
+without the regression: an iPhone 6 (2 real CPU cores, pre-A13 so Safari
+reports its true low core count, not the flat `6` every A13+ iPhone reports)
+and a 2013 iPad (2-core A7, below `isUltraTierIPad`'s `cores >= 8` cutoff)
+both already resolve to `"low"` today via the plain `cores <= 4` branch —
+zero changes needed to hit the brief's own named examples. Only Tier 1's
+*behaviour* changed in this turn, not who qualifies for it.
+
+**Decision — Tier 1 behaviour, closing the remaining gaps from ADR-0081:**
+- `globals.css`: `[data-perf-tier="low"] * { transition: none !important;
+  animation: none !important; }` — suspends the ADR-0014 CSS-transition
+  exception specifically on this tier (every other tier keeps it). Scoped to
+  `transition`/`animation` only, not `transform` itself — a static transform
+  used for layout (e.g. `ServicesDropdown`'s `-translate-x-1/2` centering)
+  would otherwise silently break; a `hover:` state change still applies
+  instantly, just without the tween.
+- New `TierImage.tsx` (`src/components/common/`) wraps `next/image`,
+  forcing `quality={40}` (half of Next's 75 default) on the low tier only.
+  A `"use client"` leaf rather than converting every photo-rendering view to
+  a client component — several (`publications.tsx`, `ServiceOverview.tsx`,
+  `ProjectExperienceSection.tsx`, `TeamMemberCard.tsx`) are Server
+  Components by design, and `usePerformanceTier()` needs the client context;
+  this is the `component-conventions.md`-sanctioned "split a leaf client
+  wrapper instead of marking the whole view `use client`" shape (hard rule
+  7). Required a `next.config.ts` change too — Next 16's image optimizer
+  only serves `quality` values present in `images.qualities` (default:
+  `[75]` only); added `40` to that array rather than replacing it, so every
+  non-low-tier caller's omitted-`quality` default (75) is unaffected.
+  `GeoporteLogo.tsx` deliberately excluded from the swap — a small brand
+  mark where the bandwidth saving is negligible and the visible quality
+  loss isn't worth it, same judgement-call shape as leaving `priority`
+  hero images eager in ADR-0081.
+- Everything else on the brief's list was already true as of ADR-0081 and
+  is unchanged here: zero WebGL (`isLowPowerDevice()`), zero backdrop-filter
+  (already the exact requested `rgba(4, 6, 15, 0.85)` flat fill), zero video
+  autoplay (poster-only `<img>`), zero ambient shapes, zero cursor effects.
+  The marquee/ticker and scroll-progress bar freeze to a static,
+  non-animating state (via the same forced `skipAnimation`) rather than
+  being removed from the DOM — a frozen marquee reads as the brief's own
+  "static text," so this wasn't treated as a gap.
+
+**When building.** Don't add a second place that decides Tier 1 eligibility
+— `performance-tier.ts#detectPerformanceTier` is the only one, per ADR-0078/
+79/80/81/82/83 all converging on the same "one module decides" principle. A
+future request to use viewport width as a mount/skip or tier-eligibility
+signal should be flagged the same way this one was, not silently applied —
+screen width correlates with "phone," not with "weak."
+
+---
+
 ## ADR-0082 — Earth globe's actual blur cause: `build-planet-scene.ts` skipped its own initial `renderer.setSize()`
 
 **Status:** Accepted · 2026-10-12 · **Supersedes ADR-0081's dprClamp fix as the explanation for the "blurry globe" report — that fix was real but not the cause.**

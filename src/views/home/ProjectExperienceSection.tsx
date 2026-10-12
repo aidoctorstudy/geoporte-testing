@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import Link from "next/link";
 import { Inview } from "@/components/animation/springs/in-view";
 import { Magnetic } from "@/components/common/Magnetic";

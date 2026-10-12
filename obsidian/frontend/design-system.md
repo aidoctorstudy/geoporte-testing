@@ -214,6 +214,13 @@ Conditions — all three, or it is a spring:
 If you are reaching past this list, you want `<Hover>` — see
 [[components/animation-springs]].
 
+> [!note] Suspended on Tier 1 ("baqala mode")
+> This exception is suspended — not revoked — on the Tier 1 performance tier
+> specifically: `globals.css`'s `[data-perf-tier="low"] * { transition: none
+> !important; }` overrides every `transition-*` utility sitewide on that
+> tier alone. A `hover:` colour/opacity change still applies, just instantly
+> instead of tweened. See ADR-0083.
+
 ## Typography
 
 Font: **Onest** (`next/font/google`), bound to `--font-onest` → `--font-sans`.

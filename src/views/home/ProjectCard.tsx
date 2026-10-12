@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import { TiltCard } from "@/components/common/TiltCard";
 import type { Project } from "@/data/mocks/projects";
 import { useProjectModalStore } from "./project-modal-store";

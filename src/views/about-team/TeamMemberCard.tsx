@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import type { TeamMember } from "@/data/mocks/team";
 
 export interface TeamMemberCardProps {

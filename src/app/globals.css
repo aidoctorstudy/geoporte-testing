@@ -390,6 +390,22 @@ body {
     backdrop-filter: none;
     background: var(--glass-fill-tier1);
   }
+
+  /* "baqala mode" (ADR-0083) — kills every CSS transition/animation on Tier
+     1, including the ADR-0014 `transition-*` exception (hover/focus colour,
+     a few-px nudge): that exception is deliberately suspended on this tier
+     specifically, not revoked sitewide. `!important` because this has to
+     beat many differently-named `transition-*`/`duration-*` utility classes
+     uniformly — unlike the single `backdrop-blur` rule above, relying on
+     relative source order per class here would be fragile. Only
+     `transition`/`animation` are touched — a *static* `transform` value used
+     for layout (e.g. `-translate-x-1/2` centering) is untouched, so a
+     `hover:` state still snaps instantly to its end value instead of
+     tweening, rather than breaking non-animated positioning transforms. */
+  [data-perf-tier="low"] * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 @layer components {

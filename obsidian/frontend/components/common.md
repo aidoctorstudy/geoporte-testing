@@ -239,7 +239,28 @@ which `globals.css` reads to flatten every `backdrop-blur`/`.glass-panel`
 surface to a solid fill on that tier. Non-spring motion (WebGL scene mounts,
 the cursor trail, the page-load intro, Lenis) reads the same tier through
 `isReducedMotion()`/`isLowPowerDevice()` instead, since it isn't driven by
-react-spring's `Globals`. See [[animation-system]] and [[seo-metadata]].
+react-spring's `Globals`. As of ADR-0083, `globals.css` also kills every
+CSS `transition`/`animation` outright under `data-perf-tier="low"`
+(suspending the ADR-0014 exception on this tier specifically). See
+[[animation-system]] and [[seo-metadata]].
+
+## TierImage — `TierImage.tsx`
+
+`<TierImage>` — a `"use client"` drop-in `next/image` replacement; every
+prop passes through unchanged except `quality`, forced to `40` (Next's own
+default is `75`) on the Tier 1 ("low" capability) performance tier via
+`usePerformanceTier()`. "Baqala mode" (ADR-0083) — a genuinely weak/old
+device gets lighter image payloads too, not just less motion. Exists as a
+leaf client component specifically so Server Component views
+(`publications.tsx`, `ServiceOverview.tsx`, `ProjectExperienceSection.tsx`,
+`TeamMemberCard.tsx`, …) can still react to a client-detected tier without
+being converted to `"use client"` themselves — swap the import
+(`import { TierImage as Image } from "@/components/common/TierImage"`),
+nothing else changes at the call site. `next.config.ts`'s
+`images.qualities` must list every quality value actually used (default
+`[75]` only) — `40` was added there to match. `GeoporteLogo.tsx`
+deliberately still uses plain `next/image` — a small brand mark not worth
+the visible quality loss.
 
 ## Nav — `Nav/`
 

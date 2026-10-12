@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { ServiceStats } from "./ServiceStats";
 import type { Service } from "@/data/mocks/services";

@@ -3,7 +3,7 @@
 // 📖 Docs: obsidian/frontend/components/about-team.md
 
 import { useEffect, useMemo, useRef } from "react";
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";

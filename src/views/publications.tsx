@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { TierImage as Image } from "@/components/common/TierImage";
 import Link from "next/link";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Inview } from "@/components/animation/springs/in-view";
