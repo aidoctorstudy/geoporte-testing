@@ -17,6 +17,57 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0097 — Fixed a real bug: the assembled particle emblem read as "breaking apart into random scatter" because the hover-repulsion radius covered more than half the emblem's own diameter
+
+**Status:** Accepted · 2026-10-12
+
+**Context.** Report: the particle emblem assembles correctly, then
+"breaks apart into random scatter" — wanted to stay in logo form
+permanently, breathing/drifting only, and scatter only under a genuine
+cursor hover.
+
+**Root-caused by working through the maths, not by re-guessing a third
+theory.** `update()`'s assembly ease is monotonic and clamped — once
+`assembleT` reaches 1 it never decreases, so no time-based mechanism
+resets the shape. The breathe/drift terms are bounded sine/cosine
+offsets (±0.04/±0.025 world units) regardless of how long the page has
+been open — not a source of growing drift either. The only thing that
+can move a particle away from its target position at all is the
+hover-repulsion in `writeParticles`, and that pointed straight at the
+real bug: `HOVER_REPULSE_RADIUS` was `1.5` world units against a
+`PARTICLE_LOGO_TARGET_SIZE` of `5.6` (≈2.8-unit radius) — a repulsion
+radius covering **more than half the emblem's own diameter**. The
+instant the cursor passed anywhere near the emblem's centre, a large
+fraction of all particles sat within that radius simultaneously and got
+pushed outward together, radiating from one point — which reads exactly
+as "the logo explodes/scatters," not a precise, localized hover effect.
+Compounding it: `pointerActive` (in `createHeroScene`) goes permanently
+`true` after a single real pointer move *anywhere on the page*, not
+specifically over the hero (by design, matching `HeroScene.tsx`'s own
+`pointer.hasMoved` gate — see ADR-0093's own note on why that gate
+exists) — so this fired far more often than "deliberately hovering over
+the particles."
+
+**Decision.** `HOVER_REPULSE_RADIUS` `1.5 → 0.5` and
+`HOVER_REPULSE_STRENGTH` `1 → 0.6` — a radius now small relative to the
+emblem (≈18% of its own radius), so only a cursor genuinely close to a
+given particle's resting position displaces it, and the push itself is
+gentler. The resting state (no deliberate close hover) now always
+converges to the clean assembled shape plus only the breathe/drift
+terms — exactly the "stay in logo shape permanently, breathe only"
+behaviour asked for — since `hoverX`/`hoverY` spring toward whatever
+`pushX`/`pushY` the current cursor position computes to, and with the
+tightened radius that's `0` unless the cursor is actually close.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh` unchanged (same pre-existing FAIL/WARNs).
+`next build` (Turbopack) clean. **Not verified in a live browser this
+turn** — the fix is derived from working through the repulsion math
+against the emblem's own known dimensions, the same way the bug itself
+was found, not from watching the effect run.
+
+---
+
 ## ADR-0096 — Fixed a real bug: the particle emblem's "flash of the solid logo" before the scatter-to-assemble intro played
 
 **Status:** Accepted · 2026-10-12 · **Fixes a real bug introduced by ADR-0094, same day.**

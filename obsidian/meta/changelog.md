@@ -37,6 +37,34 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Fixed: the assembled particle emblem looked like it "broke apart into random scatter" — the hover-repulsion radius covered more than half the emblem's own diameter)
+
+Report: particles assemble correctly, then break apart into scatter;
+should stay in logo form permanently (breathe/drift only), scattering
+only on a genuine cursor hover. Full root-cause in [[decisions-log]]
+ADR-0097; short version here.
+
+- Worked through the maths rather than guessing a third theory: the
+  assembly ease is monotonic/clamped (never un-assembles on its own),
+  and breathe/drift are small bounded sine/cosine offsets — neither
+  explains a full "scatter apart." The actual cause was
+  `HOVER_REPULSE_RADIUS` (1.5 world units) against a 5.6-unit-diameter
+  emblem — a radius covering more than half the shape, so the cursor
+  merely passing near its centre pushed a large fraction of all
+  particles outward at once, radiating from one point. Combined with
+  `pointerActive` going permanently true after a single mouse move
+  *anywhere on the page* (by design, matching `HeroScene.tsx`'s own
+  gate), this fired far more than "deliberately hovering the particles."
+- Fixed: radius `1.5 → 0.5` (now small relative to the emblem — only a
+  cursor genuinely close to a particle displaces it), strength
+  `1 → 0.6` (gentler push). The resting state now reliably converges to
+  the clean assembled shape plus breathe/drift only, with zero
+  displacement unless the cursor is actually close.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; `next build` (Turbopack) clean. Not verified in a live
+  browser this turn — derived from the repulsion math, same way the bug
+  itself was found.
+
 ## 2026-10-12 (Fixed: the particle emblem flashed the solid logo shape for about a second before its scatter-to-assemble intro played)
 
 Report: the hero's particle logo effect shows the original logo image

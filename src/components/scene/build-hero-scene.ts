@@ -54,8 +54,17 @@ const PARTICLE_LOGO_TARGET_SIZE = 5.6;
  * — no Chrome extension connected any session this was built across —
  * worth a real look before calling this placement settled. */
 const PARTICLE_LOGO_POSITION: [number, number, number] = [2.6, 0.2, 0];
-const HOVER_REPULSE_RADIUS = 1.5;
-const HOVER_REPULSE_STRENGTH = 1;
+// A radius sized relative to `PARTICLE_LOGO_TARGET_SIZE` (5.6 units
+// diameter, ~2.8 unit radius from centre) — tight enough that only a
+// deliberate, close hover displaces particles. The previous 1.5-unit
+// radius covered more than half the emblem's own diameter, so the cursor
+// merely passing near its centre pushed a large fraction of all particles
+// outward in a radial burst at once — reading as "the logo breaks apart,"
+// not a precise hover effect, and triggered far too easily given
+// `pointerActive` (below) goes permanently true after a single mouse move
+// anywhere on the page, not specifically over the hero.
+const HOVER_REPULSE_RADIUS = 0.5;
+const HOVER_REPULSE_STRENGTH = 0.6;
 const HOVER_SPRING_RATE = 0.12;
 
 /** Draws `image` to an offscreen canvas at its own native resolution and
