@@ -746,7 +746,15 @@ self-hosted at `public/draco/`, GLB/texture assets at
 here (`isLowPowerDevice()`) — tier-based DPR clamp and star/atmo/marker
 counts. As of ADR-0078 a capable phone mounts this too, at a new
 `TIER_COUNTS.mobile` budget (350/80/15 stars/atmo/markers, roughly half of
-tablet's) rather than being excluded outright.
+tablet's) rather than being excluded outright. As of ADR-0082, the renderer
+is given an explicit, unconditional initial `setSize()` right after
+`setPixelRatio` (before the three `EffectComposer`s are constructed) —
+previously the only sizing call ran through the same guarded closure used
+for live `resize` events, which skips on a call whose width matches the
+value it captured at its own creation, so the very first sizing was silently
+never applied and the globe rendered at the bare-`<canvas>` default
+(300×150 × DPR) for its entire lifetime, upscaled by CSS to fill the
+viewport.
 
 **Route-scoped background exclusivity.** `PlanetBackground.tsx` and
 `AmbientBackground.tsx` both read `isGlassBackgroundRoute()`

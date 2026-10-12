@@ -17,6 +17,79 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0082 — Earth globe's actual blur cause: `build-planet-scene.ts` skipped its own initial `renderer.setSize()`
+
+**Status:** Accepted · 2026-10-12 · **Supersedes ADR-0081's dprClamp fix as the explanation for the "blurry globe" report — that fix was real but not the cause.**
+
+**Context.** ADR-0081 (yesterday) fixed a genuine desktop capability-detection
+bug and assumed it explained a report of a blurry homepage globe. A follow-up
+report of the *same* symptom on an RTX 5080 desktop — a machine that already
+read `"ultra"` tier before ADR-0081 even shipped — proved that assumption
+wrong. Re-investigated from first principles on the live deployment via
+browser automation rather than re-guessing: a full sweep for `filter`,
+`backdrop-filter`, `opacity < 1`, `mix-blend-mode`, and `THREE.Fog` across
+every canvas and its ancestry found nothing (`getComputedStyle` reported
+`filter: none`/`opacity: 1` on all 12 canvases on the homepage; the three
+fixed full-page canvases are a deliberate z-layered stack, not a bug). What
+the sweep *did* find: comparing each canvas's drawing-buffer size (`.width`/
+`.height`) against its CSS size. Eleven of twelve canvases matched
+(buffer = CSS size × devicePixelRatio, as expected); the globe canvas alone
+was **375×187** internal resolution, CSS-stretched to the full ~1536×770
+viewport — a 4x+ upscale baked into the pixels themselves, unrelated to any
+compositing, tier, or GPU.
+
+**Root cause.** `build-planet-scene.ts#handleResizeFactory` returns a
+closure guarding against redundant `resize` events (the iOS URL-bar-collapse
+trap, §13 of the `optimize-3d-scene` skill) — `if (w === lastResizeWidth)
+return;`, where `lastResizeWidth` is captured from `window.innerWidth` at
+the moment the factory itself is called. The scene's own setup code then
+calls this same guarded function once, immediately, as its *initial* sizing
+step (`resizeAll()` right after `window.addEventListener("resize", …)`). On
+that very first call, `w` and `lastResizeWidth` are identical by
+construction — the guard was written to catch a resize event that fired with
+an unchanged width, not the state right after its own creation — so it
+returns without ever calling `renderer.setSize()`, without setting
+`camera.aspect`, and without sizing any of the three `EffectComposer`s. The
+renderer and composers were left at `WebGLRenderer`'s bare-canvas default
+(300×150 CSS px × whatever `setPixelRatio` had just been set to — 1.25 on
+the reporting machine, giving exactly 375×187) for the scene's entire
+lifetime, until a real browser-width resize event happened to fire (which a
+fixed desktop session testing the homepage never triggers). Grepped every
+other scene builder in `src/components/scene/` and `src/lib/scene/`
+(`shared-viewport-renderer.ts`, `ambient-background-renderer.ts`, every
+`build-*-scene.ts`) — all of them call `renderer.setSize(...)`
+unconditionally at setup, independent of their own resize-event guard. This
+file was the single exception.
+
+**Decision.** Added an explicit, unconditional
+`renderer.setSize(window.innerWidth, window.innerHeight, false)` immediately
+after `renderer.setPixelRatio(...)`, *before* the three `EffectComposer`s
+are constructed — each reads the renderer's current size at construction
+time to allocate its own render targets, so sizing it after construction
+would still leave stale small render targets. The resize-event guard itself
+is untouched and still correctly needed for its original purpose (skipping
+a same-width `resize` firing from an iOS URL-bar collapse); the fix is only
+that the *first* sizing no longer routes through it.
+
+**Verification.** Browser-measured on a local production build, same page,
+before/after: globe canvas drawing buffer 375×187 (CSS 1536×770) →
+1920×960 (CSS 1536×768, now matching the other two full-page canvases
+exactly). Visually: the sphere's terrain/city-light texture went from
+soft/smeared to sharp fine detail. `yarn lint`, `yarn build`, and
+`.claude/scripts/verify.sh` all clean (the pre-existing unrelated FAIL noted
+in ADR-0081 is still the only FAIL, still untouched by this file).
+
+**When building.** A guarded `handleResize`-style closure captures its
+"last known" value at *creation* time — never call that same guarded
+function as the *initial* sizing step; give initial sizing its own
+unconditional call, the same pattern `shared-viewport-renderer.ts`'s
+`ensureRenderer()` and `ambient-background-renderer.ts` already use. If a
+future scene builder's own resize guard is added, grep for
+`renderer.setSize` in the new file and confirm there's an unconditional call
+before any guarded one.
+
+---
+
 ## ADR-0081 — Desktop capability tier no longer silently caps at MEDIUM when `deviceMemory` is unreadable; Tier 1 (low) now disables all motion/video/backdrop-blur sitewide, not just WebGL
 
 **Status:** Accepted · 2026-10-11 · **Extends ADR-0058/0078/0079/0080; does not change their iOS/Android thresholds.**

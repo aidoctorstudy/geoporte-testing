@@ -246,6 +246,28 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
      WebGL1Renderer, and outputColorSpace instead of outputEncoding. */
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.dprClamp));
+  // Explicit, unconditional initial size — a bare <canvas> defaults to
+  // 300x150 (scaled by the pixel ratio just set above, i.e. 375x187 at a
+  // 1.25 DPR) until something sizes it for real. `handleResizeFactory`
+  // below exists only to guard *subsequent* `resize` events (the iOS
+  // URL-bar trap — see its own comment), not to perform this first sizing:
+  // its closure captures `lastResizeWidth` from the current
+  // `window.innerWidth` at creation time, so the deliberate one-off
+  // `resizeAll()` call after setup compared the (unchanged) width against
+  // itself and skipped — the renderer, camera aspect and all three
+  // `EffectComposer`s were silently left at their tiny default size for the
+  // scene's entire lifetime (until a user resize), stretched by CSS to fill
+  // the full viewport. That's the actual "blurry globe" bug: nothing to do
+  // with dprClamp, device capability, or any CSS/backdrop-filter — a
+  // ~4x+ upscale of a correctly-rendered but wrong-resolution buffer. Same
+  // explicit-initial-setSize pattern `ambient-background-renderer.ts` and
+  // `shared-viewport-renderer.ts` already use; this file was the one scene
+  // that relied on the guarded function alone. Must run before the
+  // `EffectComposer`s are constructed below — each reads the renderer's
+  // *current* size to allocate its own render targets, so sizing it after
+  // construction would still leave stale small render targets. See
+  // obsidian/meta/decisions-log.md.
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;

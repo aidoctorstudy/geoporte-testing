@@ -37,6 +37,47 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Earth globe blur — the *actual* root cause: a skipped initial `renderer.setSize()`, not capability tier)
+
+Yesterday's dprClamp fix (below) was real but didn't explain a report of the
+same blur on an RTX 5080 desktop — a machine that already resolved to the
+`"ultra"` tier before that fix even landed. Re-investigated from scratch on
+the live Vercel deployment via the browser: `getComputedStyle` on every
+canvas showed `filter: none`, `opacity: 1` everywhere (no CSS blur, confirmed
+answering the "search for filter/blur/opacity" ask directly); the three
+full-page fixed canvases (globe `z:-1`, ambient shapes `z:0`, shared mini-
+viewport `z:1`) are a deliberate, documented layering, not a stacking bug.
+But reading each canvas's actual drawing-buffer size against its CSS size
+found it: the globe canvas was rendering at **375×187** internal resolution
+while CSS-stretched to fill the full ~1536×770 viewport — a 4x+ upscale,
+regardless of device, tier, or GPU. `build-planet-scene.ts`'s
+`handleResizeFactory` closure captures `lastResizeWidth` from
+`window.innerWidth` at creation time; the deliberate one-off `resizeAll()`
+call right after setup compared the (unchanged) width against itself and
+skipped, so `renderer.setSize()` was never called with real dimensions —
+the renderer and all three `EffectComposer`s stayed at the bare-`<canvas>`
+default (300×150 × devicePixelRatio) for the scene's entire lifetime. Every
+other scene builder in `src/components/scene/` and `src/lib/scene/` already
+calls `renderer.setSize()` unconditionally at setup (confirmed by grep) —
+this file was the one exception. Fixed with an explicit initial
+`renderer.setSize(window.innerWidth, window.innerHeight, false)` right after
+`setPixelRatio`, before the composers are constructed (they read the
+renderer's size at construction time for their own render targets).
+Browser-verified before/after on the same page: globe canvas buffer went
+from 375×187 (CSS 1536×770) to 1920×960 (CSS 1536×768, matching the other
+two canvases) — visibly sharp texture detail on the sphere afterward versus
+soft/blurred before. `renderer.antialias`/`setPixelRatio(min(dpr, clamp))`
+were already correct (confirmed, not the bug). No `scene.fog` exists on the
+homepage ambient wireframe shapes (`AmbientBackground`/
+`ambient-background-renderer.ts`) — the only homepage-visible `fog` is the
+Hero section's own `FogExp2` in `build-hero-scene.ts`, a deliberate
+depth-cue on a sparse wireframe scene, left alone (not the reported globe,
+and removing it wasn't shown to fix anything measurable). The
+`mix-blend-screen`/`mix-blend-multiply` + `filter: grayscale/contrast`
+usages found in `HeroHeading.tsx`/`ServiceOverview.tsx` are 2D DOM decoration
+(a text shimmer sweep, a tinted photo band) — color/blend operations, not
+blur, and not on any canvas — left alone.
+
 ## 2026-10-11 (Tier 1 fully static; desktop capability-tier dprClamp bug fixed — root cause of the "blurry globe" report)
 
 **Desktop blur/haze report, root-caused.** The Earth globe and ambient
