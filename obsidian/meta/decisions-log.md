@@ -17,6 +17,48 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0095 — Nav bar fill changed from dark navy to pure black
+
+**Status:** Accepted · 2026-10-12
+
+**Context.** Explicit request: nav background `rgba(0, 0, 0, 0.85)` +
+`backdrop-filter: blur(10px)`, replacing the current dark navy.
+
+**Decision.** New Tier 1 primitives `--raw-color-nav-background` (`rgba(0,
+0, 0, 0.85)`) and `--raw-color-nav-background-glass` (`rgba(0, 0, 0,
+0.7)`) plus `--raw-blur-nav` (`10px`), bound to Tier 2
+`--nav-background`/`--nav-background-glass`/`--nav-blur`. `Nav.tsx`
+consumes them via Tailwind's arbitrary-value `var()` syntax
+(`bg-[var(--nav-background)] backdrop-blur-[var(--nav-blur)]`) rather
+than a literal in the className — design-tokens.md's own carve-out for
+arbitrary values ("for var() references and genuine one-offs"), and
+consistent with hard rule #4.
+
+**Decision — kept two opacities, both now black.** `Nav.tsx` already had
+two variants: the sitewide default and a more-transparent one for
+`isGlassBackgroundRoute()` pages (so their own fixed full-page background
+reads through the bar). The request gave one literal value (0.85); rather
+than collapsing both routes to that exact number — which would make the
+glass variant *less* transparent than it was before (0.60 → 0.85),
+undermining the reason it exists — the glass variant kept its
+"more transparent than default" relationship, just recoloured to black:
+`0.7` vs the default's `0.85`, both using the same pure-black hue and the
+requested `10px` blur. The literal 0.85/blur(10px) spec is honoured
+exactly for the default (every non-glass route); the glass variant is a
+reasoned, documented adjustment, not the literal number, to avoid a
+regression on the pages that specific transparency exists for.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh` unchanged (same pre-existing FAIL/WARNs — the
+new `bg-[var(--nav-background)]`/`backdrop-blur-[var(--nav-blur)]`
+classes are `var()` references, not literals, so the arbitrary-value WARN
+doesn't fire on them). `next build` (Turbopack) clean; confirmed
+`--nav-background`/`--nav-background-glass`/`--nav-blur` all compiled to
+the expected `var(--raw-...)` references in the built CSS. **Not verified
+in a live browser this turn.**
+
+---
+
 ## ADR-0094 — Hero particle effect switched from a text "GEOPORTE" wordmark to the real Geoporte emblem image, sampled asynchronously
 
 **Status:** Accepted · 2026-10-12 · **Amends ADR-0093 (same day, same feature).**

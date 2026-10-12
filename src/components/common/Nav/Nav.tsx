@@ -33,8 +33,8 @@ export const Nav = () => {
         <div
           className={
             glass
-              ? "border-line flex w-full max-w-[75rem] items-center justify-between gap-4 rounded-2xl border bg-background/60 px-5 py-3 backdrop-blur-xl"
-              : "flex w-full max-w-[75rem] items-center justify-between gap-4 rounded-2xl border border-line bg-background-alt/70 px-5 py-3 backdrop-blur-xl"
+              ? "border-line flex w-full max-w-[75rem] items-center justify-between gap-4 rounded-2xl border bg-[var(--nav-background-glass)] px-5 py-3 backdrop-blur-[var(--nav-blur)]"
+              : "flex w-full max-w-[75rem] items-center justify-between gap-4 rounded-2xl border border-line bg-[var(--nav-background)] px-5 py-3 backdrop-blur-[var(--nav-blur)]"
           }
         >
           <Link

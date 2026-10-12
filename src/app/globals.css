@@ -38,6 +38,15 @@
      so every other "muted" text sitewide (nav links, captions, card
      descriptions) reads the same calm slate instead of a blue tint. */
   --raw-color-label-slate: #94a3b8;
+  /* Nav bar fill — explicit "pure black, not dark navy" request. Two
+     opacities, same colour: the default fill (every route) and a more
+     transparent one for `isGlassBackgroundRoute()` pages (their own fixed
+     full-page WebGL/video background should still read through the bar,
+     same intent `bg-background/60` vs `bg-background-alt/70` had before
+     this swap — see Nav.tsx). See obsidian/meta/decisions-log.md. */
+  --raw-color-nav-background: rgba(0, 0, 0, 0.85);
+  --raw-color-nav-background-glass: rgba(0, 0, 0, 0.7);
+  --raw-blur-nav: 10px;
   --raw-color-line: rgba(31, 106, 224, 0.28); /* gl-line */
   --raw-color-red-400: #f87171; /* form validation / error state — ContactForm */
 
@@ -260,6 +269,9 @@
   --foreground-muted: var(--raw-color-white);
   --label: var(--raw-color-label-slate);
   --heading: var(--raw-color-heading-blue);
+  --nav-background: var(--raw-color-nav-background);
+  --nav-background-glass: var(--raw-color-nav-background-glass);
+  --nav-blur: var(--raw-blur-nav);
   --accent: var(--raw-color-azure-600);
   --accent-foreground: var(--raw-color-white);
   --glow: var(--raw-color-azure-300);

@@ -37,6 +37,26 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Nav bar fill changed from dark navy to pure black)
+
+Explicit request: nav background `rgba(0, 0, 0, 0.85)` +
+`backdrop-filter: blur(10px)`. Full reasoning in [[decisions-log]]
+ADR-0095; short version here.
+
+- New tokens: `--raw-color-nav-background`/`-glass` + `--raw-blur-nav`,
+  bound through Tier 2 and consumed in `Nav.tsx` via `var()`-reference
+  arbitrary values, not literals.
+- `Nav.tsx` already had two variants (default + a more-transparent one
+  for pages with their own fixed full-page background,
+  `isGlassBackgroundRoute()`). Both are black now; the glass variant
+  kept its "more transparent than default" relationship (`0.7` vs the
+  default's exact `0.85`) rather than collapsing to one literal number,
+  which would have made glass routes' nav *less* see-through than
+  before — a regression on the pages that transparency exists for.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; `next build` (Turbopack) clean — confirmed the new tokens
+  compiled correctly. Not verified in a live browser this turn.
+
 ## 2026-10-12 (Hero particle effect switched from a text "GEOPORTE" wordmark to the real Geoporte emblem image — sampled asynchronously, with a reduced-motion race caught and fixed before shipping)
 
 Same-day follow-up to the hero redesign below: use the actual circular
