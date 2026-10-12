@@ -17,6 +17,62 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0099 — Open Graph image replaced: a leftover stock statue photo swapped for a real, branded 1200×630 card; canonical/og:url already correct
+
+**Status:** Accepted · 2026-10-12
+
+**Context.** Report: `og:image` shows "a random statue image" instead of
+the Geoporte logo; canonical URL and every `og:` URL allegedly still
+pointing at `localhost:3000` instead of the deployed Vercel URL.
+
+**Investigated each claim separately before changing anything.**
+- **The statue claim was real and confirmed by actually looking at the
+  file**, not by trusting its filename: `public/open-graph.png` (900×600)
+  is a photo of a headless marble statue on a black background — a
+  leftover GetLayers-template stock asset, never swapped for real
+  branding, with no connection to Geoporte at all.
+- **The localhost claim did not reproduce.** `siteConfig.url`
+  (`src/lib/site.ts`) already falls back to
+  `https://geoporte-testing.vercel.app`, not localhost (fixed earlier —
+  see the 2026-10-10 entry in [[changelog]]), and grepping all of `src/`
+  for `localhost` returns zero matches. Curled the live deployed site
+  directly rather than trusting the report: `<link rel="canonical">`,
+  `og:url`, and `og:image` (the URL, not its content) all already
+  correctly resolve to `https://geoporte-testing.vercel.app/...`. No
+  code change made for this part — flagged as already fixed rather than
+  silently "fixed" a second time for no reason. (If the user saw
+  localhost via a social-platform debugger — Facebook's, LinkedIn's,
+  Twitter's — those cache scraped OG data aggressively and may simply be
+  showing a stale pre-fix result; worth a cache-busting re-scrape there,
+  not a code change here.)
+
+**Decision.** New `scripts/generate-og-image.mjs` (mirrors
+`process-logo.mjs`'s existing `sharp` usage) composites a real branded
+card: the site's own dark-navy background (`#01040e`, matching
+`siteConfig.themeColor`), the actual Geoporte logo
+(`public/assets/logo/geoporte-logo.png`) centred, with the brand
+wordmark/tagline (`brand.wordmark`/`brand.tagline`,
+`src/lib/company.ts` — the same source of truth `PageLoadIntro.tsx`
+already reads) beneath it, at 1200×630 — the standard OG size, not the
+previous 900×600. `generate-page-metadata.ts`'s declared
+`images[].width`/`height` updated to match exactly (a mismatch between
+the declared and real dimensions is itself a common cause of a
+social-platform scraper cropping or rejecting the image). Resolves a
+`#todo` already flagged in `obsidian/frontend/seo-metadata.md` calling
+out the 900×600 size as non-ideal.
+
+**Verification.** Generated the image and *looked at it* (not just
+checked the file size/dimensions) before considering this done — dark
+navy background, the real logo mark, "GEOPORTE" + "Design Engineering
+Advisory" beneath it, confirmed via `file` that the output is exactly
+1200×630 RGBA. `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh` unchanged (same pre-existing FAIL/WARNs).
+`next build` (Turbopack) clean. Canonical/og:url correctness was
+confirmed directly against the *live* deployed site via `curl`, not
+assumed from reading the code alone.
+
+---
+
 ## ADR-0098 — Particle emblem: noise amplitude shrunk further, hover-reassembly sped up, and the "no scatter/explode mechanism exists" guarantee made explicit in code
 
 **Status:** Accepted · 2026-10-12 · **Follow-up to ADR-0097 (same session, same complaint repeated).**

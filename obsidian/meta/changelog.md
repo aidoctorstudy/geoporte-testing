@@ -37,6 +37,33 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Open Graph image replaced — a leftover stock statue photo swapped for a real, branded 1200×630 card; canonical/og:url confirmed already correct on the live site)
+
+Report: `og:image` shows a random statue instead of the Geoporte logo;
+canonical/og URLs allegedly still pointing at localhost. Full reasoning
+in [[decisions-log]] ADR-0099; short version here.
+
+- **Statue claim confirmed by actually opening the file**: `public/
+  open-graph.png` (900×600) was a photo of a headless marble statue — a
+  leftover GetLayers-template stock asset, never swapped for real
+  branding.
+- **Localhost claim didn't reproduce**: grepped `src/` for `localhost`
+  (zero matches) and curled the live deployed site directly — canonical,
+  `og:url`, and `og:image` all already correctly resolve to the Vercel
+  URL (fixed in an earlier pass, 2026-10-10 entry below). No code change
+  made for this part; if a social-platform debugger shows localhost,
+  that's its own stale cache, not this site.
+- New `scripts/generate-og-image.mjs` (`sharp`, same tool
+  `process-logo.mjs` already uses) composites a real card: dark-navy
+  background, the actual Geoporte logo centred, wordmark + tagline
+  beneath it, at 1200×630 (the standard OG size, up from 900×600).
+  `generate-page-metadata.ts`'s declared image dimensions updated to
+  match exactly. Resolves a `#todo` already flagged in
+  `obsidian/frontend/seo-metadata.md`.
+- Verified by generating the image and looking at it, not just checking
+  its dimensions. `npx eslint`/`npx tsc --noEmit` clean;
+  `.claude/scripts/verify.sh` unchanged; `next build` (Turbopack) clean.
+
 ## 2026-10-12 (Particle emblem: noise shrunk further, hover-reassembly sped up, "no scatter mechanism" invariant made explicit — same complaint repeated with a specific technical prescription)
 
 Same report again, this time with an explicit spec: lerp toward target
