@@ -17,6 +17,98 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0093 — Homepage hero redesigned "AiMatic-style": the digital-twin diorama removed outright, replaced by a two-column layout (left text / right particle wordmark) with the hero background now transparent over the persistent globe
+
+**Status:** Accepted · 2026-10-12 · **Reverses ADR-0068's "hero occludes the globe" decision; supersedes ADR-0023's digital-twin diorama and the particle logo placement from this session's earlier, smaller particle-logo addition.**
+
+**Context.** Explicit redesign brief, naming a reference ("AiMatic layout
+style"): two-column hero — left side the existing label/heading/subtext/
+CTA copy, right side "GEOPORTE" spelled out in glowing particles that
+assemble on load, breathe/drift idle, and scatter on cursor hover, with
+`UnrealBloomPass` glow; remove the existing wireframe crane/scaffolding
+scene; keep the Earth globe visible as a fixed background behind
+everything; keep the scroll ticker. Earlier the same day, a particle
+"GEOPORTE" effect had already been added *inside* the old digital-twin
+scene as a secondary accent (see the prior entry in [[changelog]]) — this
+request asks for something structurally different: the particle wordmark
+as the hero's *entire* remaining 3D content, not an accent inside a busy
+diorama, with that diorama gone.
+
+**Decision — remove the diorama outright, not gate it behind a flag.**
+`build-hero-scene.ts`'s `buildTerrain`/`buildStrata`/`buildBridge`/
+`buildTunnel`/`buildBoreholes`/`buildCrane`/`buildGirders`/
+`buildScaffolding`/`buildConstructionRig`/`buildDust`/`buildPointCloud`/
+`buildLidarPulseRing` and all the render-loop logic driving them (camera
+orbit around the terrain's look-at point, marker pulses, rig
+rotation/assembly, lidar sweep, dust drift) are deleted, not commented out
+or hidden behind a prop. Matches this project's own established practice
+for retiring a feature outright rather than leaving dead code (ADR-0066,
+cited by multiple prior ADRs).
+
+**Decision — single composer + `UnrealBloomPass`, not the 3-composer
+selective-layers trick.** `build-planet-scene.ts`'s `THREE.Layers`-based
+selective bloom (ADR-0034) exists to bloom *some* objects while
+compositing a non-bloomed base scene underneath. The new hero scene has
+no such split — the entire visible scene is the particle wordmark, and
+everything in frame is meant to glow — so a single `EffectComposer` +
+`RenderPass` + `UnrealBloomPass` (mirroring `build-solaris-scene.ts`'s own
+simpler shape) is both correct and the least code. Bloom strength scales
+by the capability tier's `bloomScale` and the pass disables itself when
+that's ≤0 (medium/low capability), per optimize-3d-scene skill §7.
+
+**Decision — hover-scatter via a per-frame plane-raycast, gated on the
+same `pointer.hasMoved` check already used sitewide.** The repulsion
+needed the cursor's position in the wordmark's own local space; computed
+each frame via `THREE.Raycaster` + a `THREE.Plane` at the wordmark's
+depth (scratch `Vector2`/`Vector3`/`Plane` objects, never reallocated —
+optimize-3d-scene skill's "reuse module-scope scratch objects"). Gated for
+free: `HeroScene.tsx`'s ticker subscription only calls `setPointer` after
+`getPointerSnapshot().hasMoved` is true, so this scene's own
+`pointerActive` flag can never be true before a *real* pointer move — the
+skill's own §11 warning (an ungated repulsion field resolves a touch
+device's or untouched page's default `(0,0)` pointer as dead-centre,
+punching a permanent hole through the effect) is satisfied by construction,
+not by adding new gating here.
+
+**Decision — the hero's background is now transparent, reversing
+ADR-0068.** That ADR made the hero `bg-background` opaque specifically so
+its *own* digital-twin diorama could read as the only 3D content on
+screen — an explicit, deliberate choice at the time to occlude the
+persistent globe rather than let two heavy scenes visually compete. With
+the diorama gone, that justification no longer applies, and the current
+brief explicitly asks to keep the globe visible behind everything,
+including the hero. `HeroSection.tsx` dropped `bg-background`;
+`<HeroScene>` there now passes `fallback={null}` so the low-power-tier CSS
+fallback path (which would otherwise paint `HeroFallback`'s own opaque
+`bg-background`) stays transparent too — every *other* `HeroScene` caller
+still wants and keeps the default opaque fallback; this is a
+per-call-site override, not a change to the shared component.
+
+**Decision — layout: left column `max-w-xl`, not the previous full-width
+centred text block.** `HeroSection.tsx`'s text wrapper lost its `mx-auto
+w-full max-w-6xl` centring in favour of a left-anchored `w-full max-w-xl`
+column, matching the brief's explicit "left side: label, heading, subtext,
+CTA" framing. The particle wordmark's world-space position
+(`PARTICLE_LOGO_POSITION`) is biased right (`x: 2.6`) to sit in the
+remaining frame area. Typography itself needed no further change — the
+heading-blue/white/label-slate colour system and the Playfair
+Display/Inter font pair were both already in place from this session's
+earlier ADR-0091/0092 passes.
+
+**Not visually tuned against a live browser** — no Chrome extension
+connected any session this feature was built across. The wordmark's exact
+placement relative to the 2D text column, the hover-repulsion feel, and
+the bloom's visual strength are all best-effort, documented choices
+rather than confirmed by looking at the result. Flagged rather than
+assumed working.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh`: unchanged (same pre-existing FAIL/WARNs).
+`next build` (Turbopack, the path Vercel actually uses) **and**
+`next build --webpack` both clean.
+
+---
+
 ## ADR-0092 — "Normal text" wasn't actually white: `--foreground-muted` was doing double duty as both "section label" and "general muted body text" — split into two roles
 
 **Status:** Accepted · 2026-10-12 · **Amends ADR-0091.**

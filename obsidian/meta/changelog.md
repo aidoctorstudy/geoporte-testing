@@ -37,6 +37,50 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Homepage hero redesigned "AiMatic-style": the digital-twin diorama removed outright, replaced by a two-column layout with a glowing particle "GEOPORTE" wordmark and a now-transparent background over the persistent globe)
+
+Explicit redesign brief naming a reference style. Full reasoning in
+[[decisions-log]] ADR-0093; short version here.
+
+- **Removed outright** (not hidden behind a flag): the hero's old
+  hand-built digital-twin diorama — valley terrain, bridge, tunnel,
+  geological strata, borehole markers, a lidar-style point cloud, a
+  construction rig (crane/girders/scaffolding), drifting dust. All of
+  `build-hero-scene.ts`'s builder functions and the render-loop logic
+  driving them are gone.
+- **The particle "GEOPORTE" wordmark is now the hero's entire remaining
+  3D content** (earlier the same day it was a secondary accent inside
+  the diorama — see the entry below). Assembles from a scatter over ~2s,
+  then breathes/drifts idle, and now scatters away from the cursor on
+  hover (a per-frame plane-raycast finds the cursor's position on the
+  wordmark's own plane; particles within range push away and spring
+  back) — gated for free on the same `pointer.hasMoved` check this
+  codebase already uses sitewide, so it can't punch a permanent hole
+  through the centre on touch devices or untouched page loads.
+- **Real `UnrealBloomPass` glow** via a single `EffectComposer` (mirrors
+  `build-solaris-scene.ts`'s simpler single-composer shape, not
+  `build-planet-scene.ts`'s 3-composer selective-layers trick — nothing
+  here needs selective bloom since the whole scene is meant to glow).
+  Scales by the capability tier's `bloomScale`; disables itself outright
+  on medium/low capability.
+- **Hero background is now transparent**, reversing ADR-0068 — that
+  decision made it opaque specifically so the old diorama could read as
+  the only 3D content; with the diorama gone, the persistent Earth globe
+  (and ambient shapes) now show through the hero too, including on the
+  low-power-tier fallback path (`fallback={null}` passed to `<HeroScene>`
+  for this one call site only).
+- **Layout**: the hero's text content is now a left-anchored `max-w-xl`
+  column (was a centred full-width block), matching the brief's explicit
+  left-text/right-particle split. Typography needed no further change —
+  already using the heading-blue/white/label-slate system and Playfair
+  Display/Inter pairing from earlier the same day.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; both `next build` (Turbopack) and `next build --webpack`
+  clean. **Not visually tuned against a live browser** — no Chrome
+  extension connected any session this was built across. The wordmark's
+  placement, the hover feel, and the bloom strength are all best-effort,
+  documented choices — flagged rather than assumed working.
+
 ## 2026-10-12 (`--foreground-muted` split into two roles — "normal" body text is now actually white; small-uppercase labels get their own `--label`/`text-label`)
 
 Follow-up: "make the normal text fully white." `--foreground` (body

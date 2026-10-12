@@ -9,39 +9,45 @@ import { ScrollCue } from "./ScrollCue";
 
 /**
  * The page's single `<h1>` lives here — the hero headline.
+ *
+ * As of 2026-10-12 (ADR-0093), redesigned to an "AiMatic-style" split: text
+ * content anchored left (`max-w-xl`, not the previous full-width centered
+ * block), a particle "GEOPORTE" wordmark on the right (part of `HeroScene`'s
+ * own scene — see `build-hero-scene.ts`). The hero's background is now
+ * deliberately transparent — it reverses ADR-0068's "occlude the globe"
+ * decision: the hero's old bespoke digital-twin diorama (which that opacity
+ * existed to let read as the *only* 3D content) was removed outright in the
+ * same redesign, so there's nothing left to protect from showing the
+ * persistent Earth globe (`PlanetBackground`, mounted at the app root)
+ * through. `fallback={null}` on `<HeroScene>` carries the same transparency
+ * through to the low-power-tier CSS fallback path too (the default
+ * `HeroFallback` paints its own opaque `bg-background`, which every other
+ * `HeroScene` caller still wants, just not this one).
  */
 export const HeroSection = () => {
   return (
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="bg-background relative z-0 flex min-h-screen items-center overflow-hidden"
+      className="relative z-0 flex min-h-screen items-center overflow-hidden"
     >
-      {/* Opaque dark-navy fill, by explicit design choice: the hero keeps its
-          own bespoke digital-twin wireframe scene (below) as its ONLY 3D
-          content, so this section's background must occlude the persistent
-          Earth globe (mounted at the app root, `position:fixed`/`z-index:-1`,
-          see PlanetBackground.tsx) rather than let it show through. Every
-          section below this one stays transparent/translucent so the globe
-          is visible there as the user scrolls — see ADR-0068 in
-          decisions-log.md. */}
       <div data-cursor="canvas" className="absolute inset-0 z-0 h-full w-full">
-        <HeroScene className="h-full w-full" />
+        <HeroScene className="h-full w-full" fallback={null} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-8">
+      <div className="relative z-10 w-full max-w-xl px-6 md:px-12 lg:px-20">
         <p className="text-label [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
           Civil · Geotechnical · Structural · Telecom
         </p>
         <HeroHeading
           id="hero-heading"
           text="Design. Engineering. Advisory."
-          className="leading-display font-heading text-heading [text-shadow:0_2px_24px_rgba(0,0,0,.85)] max-w-4xl text-5xl font-medium md:text-7xl"
+          className="leading-display font-heading text-heading [text-shadow:0_2px_24px_rgba(0,0,0,.85)] text-5xl font-medium md:text-7xl"
         />
 
         <HeroSubtext
           text={brand.mission}
-          className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mt-6 max-w-xl text-lg"
+          className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mt-6 text-lg"
         />
 
         <div className="mt-10">

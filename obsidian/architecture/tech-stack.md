@@ -58,53 +58,80 @@ Scenes are self-contained modules with their own `requestAnimationFrame` loop
 (mounted from a client-leaf React component), separate from the spring `ticker`,
 which drives only `@react-spring/web`/`spring-text-engine` motion.
 
-**Hero scene** (`src/components/scene/`) — the homepage's digital-twin cutaway:
-a valley terrain, bridge, tunnel, geological strata, borehole/monitoring
-markers, a lidar-style point cloud, a background construction rig (crane,
-girders, scaffolding, all wireframe) and upward-drifting dust particles, all
-built from `three` primitives (no external models). `build-hero-scene.ts` is the
-framework-free THREE setup; `HeroScene.tsx` is the client leaf that owns the
-render loop, pausing off-screen (`IntersectionObserver`), on tab-hide
-(`visibilitychange`), and rendering one static frame instead of looping — and
-skipping all pointer/scroll reactivity — when `prefers-reduced-motion` is set.
-`hero-scene-colors.ts` mirrors the Neural Monitor Tier-1 tokens in `globals.css`
-— three.js materials take numeric colours directly and can't consume CSS custom
-properties, so these are kept in sync by hand. See ADR-0023 in [[decisions-log]].
+**Hero scene** (`src/components/scene/`) — as of 2026-10-12 (ADR-0093), a
+single particle "GEOPORTE" wordmark, glowing via a dedicated
+`UnrealBloomPass` composer, over a **transparent** background so the
+persistent Earth globe (`PlanetBackground`, mounted at the app root) shows
+through. `build-hero-scene.ts` is the framework-free THREE setup;
+`HeroScene.tsx` is the client leaf that owns the render loop, pausing
+off-screen (`IntersectionObserver`), on tab-hide (`visibilitychange`), and
+rendering one static frame instead of looping — and skipping all
+pointer/scroll reactivity — when `prefers-reduced-motion` is set. None of
+that lifecycle machinery changed; only what the scene *contains* did.
 
-Pointer movement drives a true ±15° camera orbit (spherical coordinates around
-the look-at point, smoothed, never snapped straight to the raw event) — `HeroScene`
-reads the shared `usePointer` store (see [[hooks]]) each ticker tick rather than
-wiring its own `pointermove` listener. Scrolling through the hero (via
-`useProgressTrigger`, called directly against the hero's own container rect —
-the container fills the section exactly, so its rect doubles as the trigger
-range) zooms the camera in and descends it toward the strata layers, fading the
-construction rig and point cloud — `HeroSceneHandle.setScrollProgress`. The
-construction rig also animates on its own: the crane's jib swings on an
-independent pivot sub-group, girders fly in and scaffolding scales up from
-nothing over the first ~2.5s, and a ring pulses outward from the scene centre
-every 3s (a lidar sweep). Homepage-motion-overhaul Phase 1 — see [[changelog]].
+**Replaced outright, not hidden behind a flag:** the original digital-twin
+cutaway (a valley terrain, bridge, tunnel, geological strata,
+borehole/monitoring markers, a lidar-style point cloud, a background
+construction rig with crane/girders/scaffolding, upward-drifting dust) —
+see ADR-0023/[[changelog]] "Homepage-motion-overhaul Phase 1" for what that
+used to be. An explicit "AiMatic-style" redesign brief asked for a two-column
+hero (left: text content; right: a particle wordmark) with the diorama gone
+entirely, not coexisting with it.
 
-**Particle GEOPORTE logo** (also `build-hero-scene.ts`, as of 2026-10-12) —
-a "particles form a logotype" effect living inside this same scene/renderer
-rather than a second dedicated `HeroScene`: a classic motion-graphics
-technique (render the wordmark to an offscreen 2D canvas, sample which
-pixels are "on", scatter one `THREE.Points` particle per sampled pixel
-around that target, ease them in on load). Assembles over ~2.8s
-(`easeOutCubic`, same shape the construction rig's own assembly already
-uses), then idles with a per-particle sine-wave breathe/drift —
-`buildParticleLogo()`/`sampleTextParticlePositions()`. Uses the new
-heading accent (`--raw-color-heading-blue`, `logoGlow` in
-`hero-scene-colors.ts`) rather than the scene's own `--glow`, tying it to
-the sitewide heading colour family. `renderStatic()` forces the particles
-to their assembled resting state (not the scattered initial one) so a
-reduced-motion visitor sees the logo, not a permanent scatter. Particle
-density scales down with `particleScale` like every other particle system
-in this file. Deliberately kept inside the existing render context —
-spinning up a second full-bleed `WebGLRenderer` for one hero feature would
-reopen the concurrent-context budget ADR-0084/85/87 spent several passes
-closing. **Placement (`points.position`) was not visually tuned against a
-live browser** — no Chrome extension connected the session this was
-built — worth a real look before calling it fully settled.
+**Particle GEOPORTE wordmark** (`build-hero-scene.ts`'s only remaining
+content) — a "particles form a logotype" effect: render the wordmark to an
+offscreen 2D canvas, sample which pixels are "on", scatter one
+`THREE.Points` particle per sampled pixel around that target, ease them in
+on load (`easeOutCubic`, ~2s) — `buildParticleLogo()`/
+`sampleTextParticlePositions()`. Once settled: a per-particle sine-wave
+breathe/drift, plus a cursor-repulsion scatter (particles within
+`HOVER_REPULSE_RADIUS` of the cursor's position on the wordmark's own plane
+— found via a per-frame `THREE.Raycaster` + `THREE.Plane` intersection,
+scratch objects, never reallocated — push away, spring back via a smoothed
+per-particle offset once the cursor leaves). The repulsion is gated on the
+same `pointer.hasMoved` check `HeroScene.tsx`'s ticker subscription already
+applies before ever calling `setPointer` — never synthesized from the
+shared pointer store's default `(0,0)`, which would otherwise punch a
+permanent hole through the wordmark's centre on touch devices and untouched
+page loads (optimize-3d-scene skill §11). Colour is `COLOR.logoGlow`
+(`--raw-color-heading-blue`, `#4FC3F7`) — the same accent `--heading` uses
+sitewide, not the scene's old `--glow`. `renderStatic()` forces the
+assembled resting state (not the scattered initial one) so a
+reduced-motion visitor sees the wordmark, not a permanent scatter — no
+pointer interaction there either. Particle density scales down with
+`particleScale` on lower-capability tiers, same as every other particle
+system in this codebase.
+
+**Bloom** — a single `EffectComposer` + `RenderPass` + `UnrealBloomPass`
+(mirrors `build-solaris-scene.ts`'s own single-composer shape) rather than
+the 3-composer/`THREE.Layers` selective-bloom trick `build-planet-scene.ts`
+uses (ADR-0034) — not needed here since the *entire* visible scene is the
+wordmark and everything in frame is meant to glow. `bloomPass.strength`
+scales by the capability tier's `bloomScale` and the pass disables itself
+outright when that would be ≤0 (medium/low capability) — optimize-3d-scene
+skill §7.
+
+**Deliberately kept inside this one render context** — no second
+`WebGLRenderer`/`HeroScene` for the wordmark; a second full-bleed WebGL
+context on the single most universally-viewed section would reopen the
+concurrent-context budget ADR-0084/85/87 spent several passes closing.
+
+**Background transparency reverses ADR-0068.** That ADR made the hero's
+background opaque specifically so its old diorama could read as the *only*
+3D content on screen, occluding the persistent globe. With the diorama
+removed, there's nothing left to protect — `HeroSection.tsx` now passes
+`fallback={null}` to `<HeroScene>` too, so the low-power-tier CSS fallback
+path (which would otherwise paint its own opaque `bg-background` via the
+default `HeroFallback`) stays transparent as well, and the globe (or its
+own Tier-1 `SceneFallbackGradient` fallback) shows through regardless of
+capability tier.
+
+**Not visually tuned against a live browser** — no Chrome extension
+connected any session this was built across — the wordmark's exact
+placement (`PARTICLE_LOGO_POSITION`), the "right side" framing relative to
+the hero's own left-anchored 2D text column, and the hover-repulsion feel
+are all best-effort, documented choices. Worth a real look before calling
+any of it fully settled.
 
 **Service hero scenes** (`src/components/scene/service-heroes/`) — each of the
 8 `/services/<slug>` pages passes its own scene factory into the shared
