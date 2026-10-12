@@ -17,6 +17,93 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0086 — Performance-tier storage key versioned (one-time reset for pre-fix stale values); tier diagnostics logged to console; a real `<Inview>` fragility found and flagged, not silently fixed
+
+**Status:** Accepted · 2026-10-12 · **Resolves the recurring theme of ADR-0081/83/85; does not touch `detectPerformanceTier`'s algorithm, which was independently reconfirmed correct a fourth time.**
+
+**Context.** Fourth report of a real iPhone 15 Pro Max landing on Tier 1,
+this time marked CRITICAL with a request to deploy and test live. Every
+prior occurrence (ADR-0081, ADR-0083, ADR-0085) independently re-verified
+the same fact: `detectPerformanceTier`'s iOS screen-signature table
+already resolves this exact device to `"ultra"`, and each time correctly
+named the likely cause (a `localStorage` value persisted before the
+relevant fix existed, which the project's own "never silently self-heal"
+policy — ADR-0058/0067 — guarantees can only get worse, not correct
+itself) **without ever actually fixing it.** Three turns of correct
+diagnosis with no remediation is itself the bug at this point, independent
+of whether stale storage is in fact this report's root cause.
+
+**Decision — version the storage key, once.** `STORAGE_KEY` changed from
+`geoporte:performance-tier` to `geoporte:performance-tier:v2`
+(`performance-tier.ts`). This is deliberately framed as a one-time
+cache-invalidation, not a reversal of ADR-0058/0067's no-self-heal
+principle: that principle exists to stop a device that *genuinely proved
+itself slow* from quietly un-downgrading on a whim, which still holds for
+every downgrade persisted under the new key from this point forward. It
+was never meant to permanently punish a device for a value written by a
+*now-fixed bug* in an *earlier version of this file* — that's a logic
+change invalidating its own cache, the same category as any other
+versioned-cache-key pattern, not a philosophical reversal. Every
+pre-existing stored value sitewide (including whatever sits on the
+reporting device from earlier testing) is orphaned by the rename; every
+visitor re-detects exactly once, fresh, against the current algorithm.
+
+**Decision — log tier resolution to the console, explicitly requested.**
+`console.warn`, not the plain logging method:
+`next.config.ts`'s `removeConsole` compiler option strips every console
+method except `error`/`warn` from the production bundle — using the plain
+one would have silently vanished from exactly the build a real phone
+tests, defeating the entire point. Fires once per page load (module-level
+guard), regardless of how many of the many `getOrDetectTier()` call sites
+trigger it first. Logs the resolved tier, whether it came from storage or
+a fresh read, cores, memory (or an explicit "unavailable" — Safari/Firefox
+never expose it), screen signature, `isMobile`, and the exact
+`localStorage.removeItem(...)` incantation to force a fresh read by hand.
+Browser-verified: a stale `"low"` seeded under the *old* key was correctly
+ignored; a fresh read under the new key logged
+`resolved="ultra" (fresh) — cores=24 memory=32 screen=1536x960@1.25dpr`.
+
+**Declined — the request's literal iOS threshold numbers**
+(`width >= 390` → Tier 2, `width >= 430` → Tier 3). The existing table
+already resolves a real 15 Pro Max to Tier 4/ultra — strictly better than
+what was asked for — so rewriting the thresholds down to match the
+request's own (looser) numbers would be a regression, not a fix. Not
+applied, for the fourth time running on this exact point.
+
+**Investigated — "page not loading fully," "remove all lazy loading."** No
+confirmed bug in this codebase's actual lazy-loading surfaces for the
+*general* case. One genuine, separate structural fragility found while
+reading `<Inview>` (`src/components/animation/springs/in-view.tsx`,
+`#do-not-modify` per `engine-protected.md`): its `active` state — and
+therefore whether content ever reaches its `to` (visible) state rather
+than staying at `from` (often `opacity: 0`) — depends entirely on its
+internal `useDynamicInView`'s `IntersectionObserver` firing at least once,
+with zero fallback. Critically, this is **not** gated by `skipAnimation`
+(ADR-0081's Tier-1 force): skipAnimation changes how fast the `useSpring`
+transition *completes* once `active` turns true, not whether it ever does
+— so a device whose observer never fires, for any reason, on any tier,
+would see that section stuck invisible forever. Not fixed here: it's a
+protected engine file (explicit sign-off required before any edit) and no
+confirmed failure case exists to justify the change — this ADR flags it
+as a real, open, *separate* question rather than bundling a speculative
+fix into an already-large turn. If the user wants it hardened, the shape
+would be a bounded fallback timer (e.g. force `active = true` if the
+observer hasn't reported within some grace period after mount) added to
+`<Inview>` itself, which needs the explicit sign-off the engine-protection
+rule asks for before being written.
+
+**Explicitly out of scope for this agent:** opening the live Vercel URL
+from a real iPhone. No access to one exists in this environment; said so
+directly in the changelog rather than fabricating a device-test result.
+
+**When building.** When the same root cause gets correctly diagnosed more
+than once without being fixed, that repetition is itself a signal to stop
+re-diagnosing and ship the fix — even a "one-time migration" shaped one,
+which is a different and much safer category of change than reversing an
+established policy outright.
+
+---
+
 ## ADR-0085 — Dedicated card WebGL contexts unmount again once scrolled well past (hysteresis, not a one-way latch); third width-based "mobile" degradation request declined, same reasoning as ADR-0081/83
 
 **Status:** Accepted · 2026-10-12 · **Extends ADR-0084; declines a request on the same grounds as ADR-0081/83.**

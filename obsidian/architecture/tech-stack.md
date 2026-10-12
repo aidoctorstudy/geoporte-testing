@@ -607,8 +607,15 @@ the literal desktop budget for a flagship phone with no other file touched.
 performance-tier.ts` + `src/hooks/performance/use-performance-tier.tsx`,
 ADR-0058) — Ultra/High/Medium/Low, resolved once per session from
 `navigator.hardwareConcurrency`/`deviceMemory`/mobile-UA/`screen.width`
-and persisted to `localStorage` (`geoporte:performance-tier`) so a
-downgrade survives a reload. `device-tier.ts`'s `isLowPowerDevice()` now
+and persisted to `localStorage` (`geoporte:performance-tier:v2` — versioned
+as of ADR-0086, a one-time invalidation of every value written before that
+fix existed; see its own entry for why bumping the key is not a reversal
+of "a downgrade should never silently self-heal") so a
+downgrade survives a reload. Also logs the resolved tier, its source
+(stored vs. fresh), and the raw signals behind it to `console.warn` once
+per page load (ADR-0086 — `warn`, not the plain method, since
+`next.config.ts`'s `removeConsole` strips everything except `error`/`warn`
+from production). `device-tier.ts`'s `isLowPowerDevice()` now
 delegates to `getOrDetectTier() === "low"` instead of its own narrower
 hardwareConcurrency-only check (that *was* the whole ADR-0056 mechanism —
 now just this module's "low" case), and `getTierBudget`'s `dprClamp` takes

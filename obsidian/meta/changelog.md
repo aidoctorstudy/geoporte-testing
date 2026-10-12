@@ -37,6 +37,78 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Performance-tier storage key versioned — a one-time reset for every stale pre-fix value sitewide; tier diagnostics logged to console)
+
+Fourth report of the same shape: a real iPhone 15 Pro Max assigned Tier 1,
+plus "the page isn't loading fully" — this time flagged CRITICAL, with a
+request to deploy to Vercel and test on a real device. Re-verified
+`detectPerformanceTier` once more (unchanged since ADR-0080): a real 15 Pro
+Max still resolves to `"ultra"` via the iOS screen-signature table — more
+than the request's own "Tier 3 minimum." The algorithm was never the
+problem, three separate times running now (ADR-0081, ADR-0083, ADR-0085
+all independently confirmed this same thing). What's never actually been
+fixed, despite being named as the likely cause every single time: a tier
+persisted to `localStorage` before today's fixes existed, which — by this
+project's own explicit "never silently self-heal" design (ADR-0058/0067) —
+can only ever get *worse*, never correct itself, no matter how right the
+current detection logic is.
+
+**Fixed, finally, rather than diagnosed a fourth time.** Versioned the
+storage key (`geoporte:performance-tier` → `geoporte:performance-tier:v2`)
+— a one-time cache invalidation, not a reversal of the no-self-heal policy.
+Every pre-existing stored value sitewide is orphaned by the key change;
+every visitor (including whatever earlier-session value is sitting on the
+reporter's own physical iPhone) re-detects exactly once, fresh, against
+today's correct algorithm. Future downgrades persisted under the new key
+still never self-heal — identical policy, just not permanently punishing
+devices for a bug that's since been fixed.
+
+**Added:** a one-line `console.warn` (survives `next.config.ts`'s
+`removeConsole`, which strips everything except `error`/`warn` from the
+production bundle — a plain `console.log` here would have silently
+vanished from the exact build a real phone tests) logging the resolved
+tier, its source (stored vs. fresh), and the raw signals it came from
+(cores, memory availability, screen signature, isMobile) — plus the exact
+`localStorage.removeItem(...)` call to force a fresh read by hand. Fires
+once per page load regardless of how many scene mount sites call
+`getOrDetectTier`. Browser-verified: a stale `"low"` set under the old key
+was correctly ignored; the new key freshly detected and logged
+`resolved="ultra" (fresh) — cores=24 memory=32 screen=1536x960@1.25dpr`.
+
+**Declined, with reasoning stated plainly rather than silently reused: the
+request's literal iOS threshold numbers** (`width >= 390` → Tier 2,
+`width >= 430` → Tier 3) — the *existing* table already resolves a real
+15 Pro Max (430×932×3) to Tier 4/ultra, strictly exceeding what was asked
+for, so rewriting the thresholds downward would be a regression dressed up
+as the fix the report wanted.
+
+**"Page not loading fully" / "remove all lazy loading" — investigated, not
+blindly implemented.** No confirmed bug found in this codebase's actual
+lazy-loading surfaces (images already route through `next/image`'s
+default; `<Inview>`/`<SceneViewport>` gate motion and WebGL mounting, not
+raw content visibility for most sections — confirmed by direct code
+reading, not assumption). One **real, structural fragility** was found
+while reading `<Inview>` (protected engine file,
+`src/components/animation/springs/in-view.tsx`): its `active` state (and
+therefore whether `to` is ever applied, vs. staying at `from` — e.g.
+`opacity: 0`) depends entirely on its internal `useDynamicInView`'s
+`IntersectionObserver` firing at least once, with no fallback. This isn't
+special to Tier 1 or `skipAnimation` — forcing `Globals.skipAnimation`
+(ADR-0081) changes how fast a transition completes once `active` flips
+true; it does not change whether `active` ever flips at all, so a device
+whose observer never fires (for *any* reason) would see that `Inview`
+section stuck invisible indefinitely, regardless of tier. Not fixed this
+turn: it's a protected-engine file requiring explicit sign-off before any
+edit (`.claude/rules/engine-protected.md`), and no confirmed failure case
+exists yet to justify touching it — flagged to the user as a real,
+separate, unconfirmed risk rather than bundled into this fix on
+speculation. See the matching ADR for the explicit question asked.
+
+**Honesty check on scope:** this agent has no access to a real iPhone and
+cannot personally open the live Vercel URL from one — the one verification
+step in this request only the user can actually perform. Said so directly
+rather than fabricating a device test.
+
 ## 2026-10-12 (Dedicated card WebGL contexts now unmount again once scrolled well past, not just deferred on arrival — bounds the concurrent ceiling for every device; a width-based "mobile" degradation request declined for the third time, same iPhone 15 Pro Max reasoning)
 
 Client request: "Mobile Safari has limited WebGL memory," with a 7-point

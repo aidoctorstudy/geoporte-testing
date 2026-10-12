@@ -43,7 +43,22 @@ export const PERFORMANCE_TIER_BUDGETS: Record<PerformanceTier, TierParticleBudge
   low: { particleScale: 0, bloomScale: 0, dprClamp: 1, webglDisabled: true },
 };
 
-const STORAGE_KEY = "geoporte:performance-tier";
+// Versioned (`:v2`, was bare `geoporte:performance-tier`) as of ADR-0086 —
+// this is a one-time cache-invalidation, not a reversal of "a downgraded
+// tier should never silently self-heal" (ADR-0058/0067, still true for
+// every *future* downgrade persisted under this key). Real-device reports
+// of a flagship iPhone stuck at "low" kept recurring even after the
+// detection algorithm itself was independently confirmed correct
+// (ADR-0078/79/80) — the far more likely explanation, repeated each time
+// but never actually acted on, was a value persisted by an *older* version
+// of this file, from before those fixes existed, that could never correct
+// itself by design. Bumping the key orphans every pre-existing stored
+// value sitewide in one move — every visitor re-detects fresh exactly
+// once, after which this version's own downgrades persist and stop
+// self-healing again, same as always. Bump again (`:v3`, …) only if a
+// future change to `detectPerformanceTier` itself needs the same one-time
+// reset — not for routine tuning.
+const STORAGE_KEY = "geoporte:performance-tier:v2";
 const TIER_ORDER: PerformanceTier[] = ["low", "medium", "high", "ultra"];
 
 interface NavigatorWithMemory extends Navigator {
@@ -218,6 +233,36 @@ const persistTier = (tier: PerformanceTier): void => {
   }
 };
 
+// Logs the resolved tier plus the raw signals it came from, once per page
+// load regardless of how many consumers call `getOrDetectTier` — every
+// scene mount site does. Explicitly requested (debugging a real-device
+// report with no attached inspector is otherwise guesswork). Uses `warn`,
+// not the plain logging method — `next.config.ts`'s `removeConsole` strips
+// every console method except `error`/`warn` from the production bundle, so
+// the plain one here would silently vanish from exactly the build a real
+// device tests against. Says outright whether the value came from
+// `localStorage` or a fresh read, and the exact `localStorage.removeItem(...)` call to force
+// the latter — the only way this project's "never silently self-heal"
+// downgrade policy (ADR-0058/0067) can be overridden on demand without an
+// in-app control.
+let hasLoggedTierDiagnostics = false;
+const logTierDiagnostics = (resolved: PerformanceTier, source: "stored" | "fresh"): void => {
+  if (hasLoggedTierDiagnostics || typeof console === "undefined") return;
+  hasLoggedTierDiagnostics = true;
+  const { cores, memory, width, isMobile } = readSignals();
+  const screenInfo =
+    typeof screen !== "undefined" && typeof window !== "undefined"
+      ? `${screen.width}x${screen.height}@${window.devicePixelRatio}dpr`
+      : "unavailable";
+  console.warn(
+    `[geoporte:performance-tier] resolved="${resolved}" (${source}) — ` +
+      `cores=${cores ?? "unavailable"} ` +
+      `memory=${memory ?? "unavailable (Safari/Firefox never expose this)"} ` +
+      `screen=${screenInfo} isMobile=${isMobile}. ` +
+      `To force a fresh read: localStorage.removeItem("${STORAGE_KEY}")`,
+  );
+};
+
 /** Session-stable read: a previously downgraded tier (this session or a
  * past one, via localStorage) always wins over a fresh detection — a
  * device that got downgraded for being too slow doesn't silently
@@ -225,9 +270,13 @@ const persistTier = (tier: PerformanceTier): void => {
  * profile detects and persists. */
 export const getOrDetectTier = (): PerformanceTier => {
   const stored = getStoredTier();
-  if (stored) return stored;
+  if (stored) {
+    logTierDiagnostics(stored, "stored");
+    return stored;
+  }
   const detected = detectPerformanceTier();
   persistTier(detected);
+  logTierDiagnostics(detected, "fresh");
   return detected;
 };
 
