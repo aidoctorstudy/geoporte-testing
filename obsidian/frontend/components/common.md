@@ -373,7 +373,13 @@ Component; two client leaves keep it that way:
   wrapper, mirrors `ServiceHeroScene.tsx`'s role. A scene factory can't be
   passed as a prop straight from a Server Component either (same RSC
   serialization limit), so this lookup has to happen behind its own
-  client boundary too.
+  client boundary too. As of ADR-0088, also self-gates on
+  `useDynamicInView({ rootMargin: getCardSceneRootMargin() })` — the same
+  near-viewport mount/unmount hysteresis `ServiceCard.tsx`'s 7 dedicated
+  card scenes use — so this dedicated `HeroScene` instance's renderer/
+  geometries/textures are fully disposed again once scrolled well past,
+  not left resident for the rest of the session; renders `PlexusFallback`
+  in the gap either side.
 
 Uses the `-engineering` tokens (`bg-surface-engineering`,
 `text-ink-engineering`, etc — see [[design-system]]) rather than the

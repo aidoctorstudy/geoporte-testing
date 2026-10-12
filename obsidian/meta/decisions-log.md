@@ -17,6 +17,59 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0088 — Homepage "virtualize sections, destroy out-of-view scenes" request narrowed to the one real gap: near-viewport unmount for the Geotechnical Plexus scene
+
+**Status:** Accepted · 2026-10-12 · **Extends ADR-0084/85/87; declines part of the request, same grounds as those.**
+
+**Context.** Request: on mobile, virtualize the whole homepage — render only
+the current section + one ahead, unmount every section's DOM entirely once
+scrolled past, window project cards to 3 in memory at a time, and destroy
+every Three.js scene outside the viewport. Flagged to the user before
+building anything: full DOM-level section/card virtualization conflicts
+with hard rule #10 (semantic, crawlable, SEO-correct HTML — `HomeView` is a
+Server Component that must keep every section's real content in the DOM,
+not just its WebGL) and would be a new architecture (a client-driven
+virtual list) well beyond anything tried across ADR-0078 through ADR-0087,
+all of which solved this exact "mobile WebGL memory" problem class without
+ever removing DOM content. **User chose the narrower scope**: WebGL-only,
+no section or card unmounting from the DOM.
+
+**Audit, not assumption.** Checked what "destroy scenes when out of view"
+already covers on the homepage:
+- `ServiceCard.tsx`'s 7 `DEDICATED_CARD_SCENES` — already near-viewport
+  mount/unmount (ADR-0084/85/87).
+- `GeologicalCrossSection`/`ContactTerrain`/`StatsGlobe` — already share one
+  lightweight GL context via `shared-viewport-renderer.ts`; each
+  registration's render is skipped (not disposed) while off-screen, by that
+  module's own design (cheap to leave resident, see its header comment) —
+  not a gap.
+- The homepage hero's own `HeroScene` — deliberately resident for the
+  session (full-bleed, uncontested context, the page's entry point) per
+  `shared-viewport-renderer.ts`'s header comment. Left alone, consistent
+  with that precedent.
+- `GeotechnicalPlexusScene` (`GeotechnicalPlexusSection`'s "digital twin"
+  visual) — a **dedicated** `HeroScene` instance, same category as the 7
+  card scenes, but with no near-viewport gate at all. Its
+  renderer/geometries/textures stayed allocated for the rest of the session
+  the instant a user scrolled past it. The one real, previously-unclosed
+  gap.
+
+**Decision.** Applied the identical `useDynamicInView` +
+`getCardSceneRootMargin()` near-viewport mount/unmount pattern
+`ServiceCard.tsx` already uses to `GeotechnicalPlexusScene.tsx` — mounts
+within ~800px (400px on iOS) of the viewport, unmounts (full dispose via
+`HeroScene`'s existing unmount cleanup) again once scrolled well past,
+rendering `PlexusFallback` in the gap instead of nothing. No change to
+`GeotechnicalPlexusSection.tsx` (still a Server Component) — the gating
+lives entirely inside the existing client leaf.
+
+`npx eslint`/`npx tsc --noEmit` clean on the changed file; `.claude/scripts/
+verify.sh` shows the same pre-existing FAIL/WARNs as before this turn,
+nothing new; `next build --webpack` clean (Turbopack still blocked in this
+sandbox by the same Application Control policy noted in earlier entries).
+
+---
+
 ## ADR-0087 — iOS WebGL-memory crash mitigations targeted at the platform, not viewport width; `pagehide` disposal on every persistent singleton renderer; a real SSR hydration-mismatch risk found and fixed
 
 **Status:** Accepted · 2026-10-12 · **Extends ADR-0084/85; fixes a latent bug introduced by ADR-0081.**

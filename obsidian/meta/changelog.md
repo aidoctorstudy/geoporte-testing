@@ -37,6 +37,39 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Homepage virtual-scroll request narrowed to WebGL only; `GeotechnicalPlexusScene` gains the same near-viewport mount/unmount gate `ServiceCard`'s dedicated scenes already have)
+
+Request: virtualize the homepage on mobile — only the current section + one
+ahead rendered, every section unmounted from the DOM once scrolled past,
+project cards windowed to 3 in memory, every Three.js scene outside the
+viewport destroyed. Flagged before building: full DOM-level section/card
+unmounting conflicts with hard rule #10 (crawlable content — `HomeView` is
+a Server Component and must keep every section's real content in the DOM)
+and is a materially bigger architecture change than anything tried across
+ADR-0078–0087, all of which solved the same "mobile WebGL memory" class of
+problem without ever removing DOM content. **User chose the narrower
+scope**: WebGL disposal only, no section/card unmounting. See
+[[decisions-log]] ADR-0088.
+
+- Audited every homepage WebGL mount site for "destroyed when out of
+  view": `ServiceCard.tsx`'s 7 dedicated card scenes already have it
+  (ADR-0084/85/87); `GeologicalCrossSection`/`ContactTerrain`/`StatsGlobe`
+  share one lightweight GL context by design (render-skip, not dispose,
+  while off-screen — not a gap); the homepage hero's own scene is
+  deliberately resident all session, by existing design. One real gap
+  found: `GeotechnicalPlexusScene` — a dedicated `HeroScene` instance like
+  the card scenes, but with no near-viewport gate, so its renderer stayed
+  allocated forever once scrolled past.
+- Fixed: `GeotechnicalPlexusScene.tsx` now uses the same
+  `useDynamicInView` + `getCardSceneRootMargin()` pattern `ServiceCard.tsx`
+  uses — mounts within ~800px (400px iOS) of the viewport, fully unmounts
+  (disposes via `HeroScene`'s existing cleanup) again once scrolled well
+  past, showing `PlexusFallback` in between. `GeotechnicalPlexusSection.tsx`
+  itself (a Server Component) is untouched.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged from before this turn (same pre-existing FAIL/WARNs); `next
+  build --webpack` clean.
+
 ## 2026-10-12 (iOS WebGL-memory crash mitigations: `pagehide` disposal on all three persistent singleton renderers, iOS-specific tighter context hysteresis, capability-scaled cloud geometry; a real SSR hydration-risk bug caught along the way)
 
 Client report, marked emergency: real iPhone Safari/Chrome crashing, blamed
