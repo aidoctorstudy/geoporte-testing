@@ -4,6 +4,7 @@
 
 import TextEngine from "spring-text-engine";
 import { easings } from "@react-spring/web";
+import { useTranslated } from "@/hooks/i18n/use-translated";
 
 export interface SectionHeadingProps {
   eyebrow: string;
@@ -27,10 +28,17 @@ export const SectionHeading = ({
   tag = "h2",
   headingClassName = DEFAULT_HEADING_CLASSNAME,
 }: SectionHeadingProps) => {
+  // `TextEngine` reads `children` directly rather than rendering nested
+  // components first, so the translation must resolve to a plain string
+  // before it reaches either `<p>` or `TextEngine` — `useTranslated`, not
+  // `<TranslatedText>`, per ADR-0024/ADR-0088.
+  const translatedEyebrow = useTranslated(eyebrow);
+  const translatedHeading = useTranslated(heading);
+
   return (
     <>
       <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
-        {eyebrow}
+        {translatedEyebrow}
       </p>
       <TextEngine
         tag={tag}
@@ -43,7 +51,7 @@ export const SectionHeading = ({
         lineConfig={{ duration: 800, easing: easings.easeOutCubic }}
         overflow
       >
-        {heading}
+        {translatedHeading}
       </TextEngine>
     </>
   );

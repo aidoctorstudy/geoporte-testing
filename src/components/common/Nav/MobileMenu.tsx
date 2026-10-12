@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Spring } from "@/components/animation/springs/spring";
 import type { Service } from "@/data/mocks/services";
 import { contact } from "@/lib/company";
+import { TranslatedText } from "@/components/common/TranslatedText";
+import { useLanguageStore } from "@/hooks/i18n/use-language-store";
+import { LANGUAGES } from "@/lib/i18n/languages";
 
 export interface MobileMenuProps {
   open: boolean;
@@ -20,6 +23,9 @@ const primaryLinks = [
 ];
 
 export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
+
   return (
     <Spring
       tag="div"
@@ -34,7 +40,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
       <nav className="flex flex-1 flex-col gap-8 px-6">
         <div>
           <p className="mb-3 text-xs tracking-[0.15em] text-foreground-muted uppercase">
-            Services
+            <TranslatedText text="Services" />
           </p>
           <ul className="grid grid-cols-1 gap-2">
             {services.map((service) => (
@@ -58,8 +64,26 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
                 onClick={onNavigate}
                 className="flex min-h-[44px] items-center text-xl text-foreground"
               >
-                {link.label}
+                <TranslatedText text={link.label} />
               </Link>
+            </li>
+          ))}
+        </ul>
+        <ul className="flex flex-wrap gap-2 border-t border-line pt-6">
+          {LANGUAGES.map((lang) => (
+            <li key={lang.code}>
+              <button
+                type="button"
+                onClick={() => setLanguage(lang.code)}
+                aria-current={lang.code === language}
+                className={`flex min-h-11 items-center rounded-lg border border-line px-3 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance ${
+                  lang.code === language
+                    ? "bg-surface text-foreground"
+                    : "text-foreground-muted hover:text-foreground"
+                }`}
+              >
+                {lang.nativeLabel}
+              </button>
             </li>
           ))}
         </ul>

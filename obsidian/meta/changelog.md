@@ -37,6 +37,63 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Language switcher and the i18n stack rebuilt from scratch — restores ADR-0024's nav/headings/buttons scope; LibreTranslate's hosted API now needs a key, so MyMemory is the practical default provider)
+
+Bug report: "the language switcher doesn't work on Vercel." Checked the
+live codebase first — there was no switcher, no `i18n` folder, no
+`/api/translate` route, nothing: ADR-0077 (2026-09-01) deleted the entire
+stack outright on prior explicit direction, and the site has been
+English-only since. Flagged the contradiction; user confirmed they want
+it rebuilt. Full reasoning in [[decisions-log]] ADR-0089; short version
+here.
+
+- Restored ADR-0024's original scope (nav links, section headings, button
+  labels) — not ADR-0065's later widening to every page's body copy, which
+  wasn't asked for and is a materially larger surface.
+- `src/app/api/translate/route.ts` (new): tries LibreTranslate only when
+  `LIBRETRANSLATE_ENDPOINT`/`LIBRETRANSLATE_API_KEY` (both new in
+  `src/env.ts`) are configured, falls back to MyMemory
+  (`api.mymemory.translated.net`, free, keyless) otherwise or on failure.
+  Confirmed live via `curl` before writing code: libretranslate.com's
+  hosted API now demands a key for every request (`{"error":"Visit
+  https://portal.libretranslate.com..."}`), `translate.argosopentech.com`
+  no longer resolves, `lingva.ml` is behind a Cloudflare bot wall — MyMemory
+  was the only reachable free, keyless option.
+- New: `src/lib/i18n/languages.ts` (English/Arabic/Urdu/French/Chinese,
+  RTL flag), `src/hooks/i18n/use-language-store.ts` (zustand, manual
+  `localStorage` load/save — mirrors `cookieStore.ts`'s shape, not
+  `zustand/persist`, to avoid an SSR/CSR hydration-mismatch class ADR-0087
+  already fixed elsewhere), `src/lib/i18n/translation-queue.ts`
+  (batches same-tick requests into one call per language),
+  `src/hooks/i18n/use-translated.ts`, `src/components/common/
+  TranslatedText.tsx`, `src/components/common/LanguageDirection.tsx`
+  (keeps `<html lang>`/`dir` in sync — `rtl` for ar/ur), `src/components/
+  common/Nav/LanguageSwitcher.tsx` (desktop dropdown) + a language-button
+  row in `MobileMenu.tsx`.
+- Wired into: `Nav.tsx`, `MobileMenu.tsx`, `ServicesDropdown.tsx`'s
+  "Services" trigger, `Footer.tsx`'s nav links + CTA, `SectionHeading.tsx`,
+  `HeroHeading.tsx`/`HeroSubtext`, `GeotechnicalPlexusHeading.tsx`,
+  `AboutHeading.tsx`, and every `<Magnetic>`-wrapped primary CTA
+  (`HeroSection.tsx`, `GeotechnicalPlexusSection.tsx`, `ServiceCta.tsx`,
+  `GeotechnicalAnalysisHero.tsx`). Dynamic/data-driven strings (service
+  titles, project descriptions, bios) deliberately left untranslated —
+  out of scope.
+- RTL is `document.documentElement.dir` only (bidi text, native UI
+  mirroring) — does not auto-flip this codebase's physical-direction
+  Tailwind utilities (`pl-`, `right-`, etc.) sitewide; that would be a
+  separate, much larger pass. See [[i18n]] (new catalog note, restored).
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  net-zero new WARNs (fixed new `min-h-[44px]` instances to the
+  token-based `min-h-11`/`min-h-10` instead), same pre-existing
+  `@keyframes` FAIL as before this turn; `next build --webpack` clean,
+  `/api/translate` listed as a dynamic route. Live-verified server-side
+  via `curl` against the production build: real translations through the
+  MyMemory fallback, 400 on an invalid `target`, English passthrough.
+  **Not verified in a live browser this turn** (Chrome extension wasn't
+  connected) — the switcher's click interaction, the `localStorage`
+  round-trip across a real page navigation, and the visual `dir="rtl"`
+  flip are confirmed by code review only.
+
 ## 2026-10-12 (Homepage virtual-scroll request narrowed to WebGL only; `GeotechnicalPlexusScene` gains the same near-viewport mount/unmount gate `ServiceCard`'s dedicated scenes already have)
 
 Request: virtualize the homepage on mobile — only the current section + one

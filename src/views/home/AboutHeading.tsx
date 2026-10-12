@@ -3,6 +3,7 @@
 // 📖 Docs: obsidian/frontend/animation-system.md
 
 import { Inview } from "@/components/animation/springs/in-view";
+import { TranslatedText } from "@/components/common/TranslatedText";
 
 interface LineSpec {
   text: string;
@@ -26,7 +27,7 @@ const AboutHeadingLine = ({
 }: LineSpec & { delayIn: number }) => {
   return (
     <Inview tag="span" mode="once" from={from} to={to} delayIn={delayIn} className="block">
-      {text}
+      <TranslatedText tag="span" text={text} />
     </Inview>
   );
 };

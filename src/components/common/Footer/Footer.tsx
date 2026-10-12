@@ -7,6 +7,7 @@ import { services } from "@/data/mocks/services";
 import { brand, contact, offices } from "@/lib/company";
 import { primaryNavLinks } from "@/components/common/Nav/nav-links";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
+import { TranslatedText } from "@/components/common/TranslatedText";
 
 // Every route with its own fixed full-page WebGL background
 // (`glass-background-routes.ts`) gets the footer's glass-panel treatment
@@ -44,7 +45,7 @@ export const Footer = () => {
             href="/contact"
             className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex shrink-0 items-center justify-center rounded-full px-7 py-3 text-sm font-medium"
           >
-            Contact Us
+            <TranslatedText text="Contact Us" />
           </Link>
         </div>
 
@@ -116,7 +117,7 @@ export const Footer = () => {
                     href={link.href}
                     className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                   >
-                    {link.label}
+                    <TranslatedText text={link.label} />
                   </Link>
                 </li>
               ))}
@@ -125,7 +126,7 @@ export const Footer = () => {
                   href="/contact"
                   className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
                 >
-                  Contact
+                  <TranslatedText text="Contact" />
                 </Link>
               </li>
             </ul>

@@ -46,6 +46,13 @@ components — don't call them directly unless extending the engine.
 |------|------|------|
 | `useScrollSignal` | `use-scroll-signal.ts` | Shared whole-page scroll progress/velocity/direction store, bridged from Lenis's own `scroll` event by `<ScrollSignal>` (see [[components/common]]) rather than each consumer re-deriving progress from `getBoundingClientRect()`. Also exports `getScrollSignalSnapshot()` for per-frame consumers. |
 
+## `hooks/i18n/`
+
+| Hook | File | Role |
+|------|------|------|
+| `useLanguageStore` | `use-language-store.ts` | Zustand store for the persisted language choice + per-language translation cache — manual `localStorage` load/save (mirrors `cookieStore.ts`'s shape), not `zustand/persist`. See [[i18n]]. |
+| `useTranslated` | `use-translated.ts` | `useTranslated(text)` — translated string for the current language, batched via `src/lib/i18n/translation-queue.ts`. See [[i18n]]. |
+
 ## `hooks/` (root)
 
 | Hook | File | Role |

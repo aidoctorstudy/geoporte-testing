@@ -17,6 +17,97 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0089 — Language switcher and i18n stack rebuilt from scratch — restores ADR-0024's scope, not ADR-0065's; LibreTranslate's hosted API now requires a key, so MyMemory is the practical default provider
+
+**Status:** Accepted · 2026-10-12 · **Reverses ADR-0077; restores and amends ADR-0024 (not ADR-0065's wider scope).**
+
+**Context.** Bug report: "the language switcher doesn't work on Vercel,"
+with a fix list (make LibreTranslate work from Vercel, substitute a
+different free API if blocked, persist the language via `localStorage`,
+RTL for Arabic/Urdu, deploy). Checked the live codebase before touching
+anything: there was no language switcher, no `LibreTranslate` integration,
+no `i18n` folder, no `/api/translate` route — zero matches anywhere in
+`src/`. This wasn't a bug; ADR-0077 (2026-09-01) deleted the entire stack
+outright on explicit prior direction, and the site has been English-only
+since. Flagged this contradiction to the user before building anything —
+confirmed they want the feature rebuilt, not that the bug report was
+stale.
+
+**Decision — rebuild, restoring ADR-0024's original scope (nav links,
+section headings, button labels), not ADR-0065's later widening to every
+page's body copy.** Not asked for this turn, and re-adding full-body
+translation is a materially larger, slower-to-verify surface; narrower
+also mirrors how this exact scope funnels through a handful of shared
+heading components (`SectionHeading`, `HeroHeading`/`HeroSubtext`,
+`GeotechnicalPlexusHeading`, `AboutHeading`), so wiring those few files
+covers every section heading sitewide without touching every section.
+
+**Decision — LibreTranslate is no longer a safe default; MyMemory is the
+practical primary.** Probed candidates live before writing any code
+(`curl`, not assumption):
+- `libretranslate.com/translate` (unauthenticated) → `{"error":"Visit
+  https://portal.libretranslate.com to get an API key"}` — the official
+  hosted API now requires a paid key for every request, not just higher
+  volume. ADR-0024's original design assumed a free anonymous endpoint
+  that no longer exists.
+- `translate.argosopentech.com` (a community LibreTranslate mirror) → DNS
+  no longer resolves.
+- `lingva.ml` (a Google Translate frontend, considered as an alternative)
+  → sits behind a Cloudflare bot challenge; blocks server-to-server calls
+  outright.
+- `api.mymemory.translated.net` (free, keyless) → confirmed working for
+  en→ar/ur/fr/zh, real translations, no auth.
+
+`/api/translate` (`src/app/api/translate/route.ts`) tries LibreTranslate
+first, **only** when `LIBRETRANSLATE_ENDPOINT` is configured (a
+self-hosted instance, or the official API with the new
+`LIBRETRANSLATE_API_KEY` env var) — satisfies the literal "make
+LibreTranslate work" ask for anyone who configures one — and falls back to
+MyMemory otherwise or on any failure. Both tried server-side only (hard
+rule #9); a string that fails both resolves to its own English source,
+never an error surfaced to the browser, matching ADR-0024's original "on
+upstream failure, the string simply stays uncached" behaviour.
+
+**Decision — manual `localStorage` store, not `zustand/persist`.** Copied
+`cookieStore.ts`'s existing shape (`hydrate()` called from a mounted leaf's
+`useEffect`, gated by a `hydrated` flag) rather than the `persist`
+middleware ADR-0024 originally described — `persist`'s default rehydration
+timing risks the exact SSR/CSR hydration-mismatch class ADR-0087 already
+found and fixed elsewhere in this project (a client-only read resolving
+before hydration completes, disagreeing with the server-rendered `<html
+lang="en">`).
+
+**Decision — RTL via `document.documentElement.dir` only; not a full
+logical-properties layout audit.** `LanguageDirection.tsx` sets `dir="rtl"`
+for Arabic/Urdu — the standard, correct signal for bidi text and native UI
+mirroring, and exactly what the deleted pre-ADR-0077 `LanguageDirection.tsx`
+did. It does **not** auto-flip this codebase's physical-direction Tailwind
+utilities (`pl-`, `right-`, `-translate-x-1/2`, used throughout — e.g.
+`ServicesDropdown.tsx`, `CookieBanner.tsx`); only CSS logical properties
+respond to `dir`, and converting every such utility sitewide would be a
+separate, much larger pass with no evidence the original system did it
+either. Stated plainly rather than overclaiming "full RTL" — see
+[[i18n]].
+
+**Verification.** `npx eslint src` / `npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh`: new lines matched the pre-existing
+`min-h-[44px]` WARN pattern used elsewhere in this exact file set
+(`Nav.tsx`, `ServicesDropdown.tsx`) — fixed to the token-based `min-h-11`/
+`min-h-10` instead of copying the WARN; net-zero new WARNs, same
+pre-existing `@keyframes` FAIL as before this turn. `next build --webpack`
+clean, `/api/translate` listed as a dynamic route. Live-verified against
+the production build (`next start`) with `curl`: `/api/translate` returns
+real Arabic/Urdu/French translations via the MyMemory fallback
+(`LIBRETRANSLATE_ENDPOINT` unset in this environment), rejects an invalid
+`target` with 400, and passes English through unchanged. **Not verified
+live in a browser this turn** — the Chrome extension wasn't connected this
+session — so the switcher's click/select interaction, the persisted
+`localStorage` round-trip across a real navigation, and the `dir="rtl"`
+visual flip are confirmed by code review and type-checking only, not by
+clicking through it. Flagged rather than silently assumed working.
+
+---
+
 ## ADR-0088 — Homepage "virtualize sections, destroy out-of-view scenes" request narrowed to the one real gap: near-viewport unmount for the Geotechnical Plexus scene
 
 **Status:** Accepted · 2026-10-12 · **Extends ADR-0084/85/87; declines part of the request, same grounds as those.**

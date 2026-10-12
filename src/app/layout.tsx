@@ -14,6 +14,7 @@ import { ReducedMotion } from "@/components/common/reduced-motion";
 import { ScrollSignal } from "@/components/common/ScrollSignal";
 import { ScrollProgressBar } from "@/components/common/ScrollProgressBar";
 import { CustomCursor } from "@/components/common/Cursor";
+import { LanguageDirection } from "@/components/common/LanguageDirection";
 import { PageLoadIntro } from "@/components/common/PageLoadIntro";
 import { PerformanceWarningToast } from "@/components/common/PerformanceWarningToast";
 import { RouteTransitionSweep } from "@/components/common/RouteTransitionSweep";
@@ -66,6 +67,7 @@ export default function RootLayout({
         <PerformanceTierProvider>
           <ScrollLayout>
             <AdaptiveGrid />
+            <LanguageDirection />
             <ReducedMotion />
             <ScrollSignal />
             {/* Planet mounts first — its canvas is pinned to z-index: -1 in
