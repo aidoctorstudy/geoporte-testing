@@ -54,7 +54,7 @@ export const ProjectExperienceSection = () => {
               id="project-experience-heading"
               eyebrow={experienceCopy.eyebrow}
               heading={experienceCopy.heading}
-              headingClassName="leading-display text-foreground max-w-xl text-3xl font-medium uppercase md:text-5xl"
+              headingClassName="leading-display font-heading text-heading max-w-xl text-3xl font-medium uppercase md:text-5xl"
             />
             <p className="text-foreground-muted mt-6 max-w-xl text-base leading-relaxed md:text-lg">
               {experienceCopy.body}

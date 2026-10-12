@@ -31,7 +31,7 @@ export const ServiceCta = ({ serviceTitle, glass }: ServiceCtaProps) => {
           id="service-cta-heading"
           eyebrow="Get in touch"
           heading={`Ready to start your ${serviceTitle} project?`}
-          headingClassName="leading-display text-foreground max-w-xl text-2xl font-medium md:text-4xl"
+          headingClassName="leading-display font-heading text-heading max-w-xl text-2xl font-medium md:text-4xl"
         />
 
         <Magnetic>

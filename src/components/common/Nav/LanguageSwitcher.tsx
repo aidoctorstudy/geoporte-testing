@@ -39,7 +39,7 @@ export const LanguageSwitcher = () => {
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="Change language"
-        className="text-foreground-muted flex min-h-11 items-center gap-1.5 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
+        className="text-foreground-muted flex min-h-[44px] items-center gap-1.5 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance hover:text-foreground"
       >
         <svg
           aria-hidden="true"
@@ -70,7 +70,7 @@ export const LanguageSwitcher = () => {
                   setOpen(false);
                 }}
                 aria-current={lang.code === language}
-                className={`flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-surface hover:text-foreground ${
+                className={`flex min-h-[40px] w-full items-center justify-between rounded-lg px-3 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance hover:bg-surface hover:text-foreground ${
                   lang.code === language ? "text-foreground" : "text-foreground-muted"
                 }`}
               >

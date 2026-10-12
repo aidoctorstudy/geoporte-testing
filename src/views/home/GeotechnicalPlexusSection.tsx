@@ -50,7 +50,7 @@ export const GeotechnicalPlexusSection = () => {
           <GeotechnicalPlexusHeading
             id="geotechnical-plexus-heading"
             text="See beneath every site before you build on it"
-            className="text-ink-engineering leading-display max-w-xl text-3xl font-medium md:text-5xl"
+            className="font-heading text-heading leading-display max-w-xl text-3xl font-medium md:text-5xl"
           />
 
           <Inview

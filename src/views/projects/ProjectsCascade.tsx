@@ -145,7 +145,7 @@ export const ProjectsCascade = () => {
         <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
           GEOPORTE · Selected Work
         </p>
-        <h1 id="projects-cascade-heading" className="text-foreground leading-display mt-4 text-3xl font-medium md:text-5xl">
+        <h1 id="projects-cascade-heading" className="font-heading text-heading leading-display mt-4 text-3xl font-medium md:text-5xl">
           Our Projects
         </h1>
         <ul className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -216,7 +216,7 @@ export const ProjectsCascade = () => {
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
             GEOPORTE · Selected Work
           </p>
-          <h1 id="projects-cascade-heading" className="text-foreground leading-display text-3xl font-medium md:text-5xl">
+          <h1 id="projects-cascade-heading" className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
             Our Projects
           </h1>
           <button

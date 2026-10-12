@@ -223,8 +223,33 @@ If you are reaching past this list, you want `<Hover>` — see
 
 ## Typography
 
-Font: **Onest** (`next/font/google`), bound to `--font-onest` → `--font-sans`.
-Loaded in `src/app/layout.tsx` and exposed on `<body>` as `--font-onest`.
+Stale note (pre-dates this project's customization): this section
+originally documented the starter's own single-font Onest default. As of
+2026-10-12 this project uses a two-font pairing instead — see below.
+
+**Heading font:** Playfair Display (`font-heading` → `text-heading`
+colour) for every h1/h2 that carries real page/section copy — a premium,
+architectural display serif, deliberately distinct from body copy.
+**Body font:** Inter (`font-sans`, the Tailwind default namespace) —
+everything else. Both loaded via `next/font/google` in `src/app/layout.tsx`
+(applied to `<html>` via each font's own `variable` className), bound into
+Tier 1 (`--raw-font-heading`/`--raw-font-body`) and from there into
+`@theme inline`'s `--font-heading`/`--font-sans`. Replaces the previous
+single "General Sans for everything" stack (loaded via a Fontshare
+`<link>`, since removed) — see [[decisions-log]].
+
+Heading **colour** is its own Tier 2 role, `--heading` (bright sky blue,
+`--raw-color-heading-blue` `#4FC3F7`), bound to the `text-heading` utility
+— deliberately separate from `--accent`/`--glow` (which still drive
+buttons/links) so a heading reads as its own typographic role. Every
+shared heading component (`SectionHeading`, `HeroHeading`/`HeroSubtext`,
+`AboutHeading`, `GeotechnicalPlexusHeading`) and every literal large h1/h2
+outside them use `font-heading text-heading` instead of
+`font-sans`/`text-foreground`. `--foreground-muted` (the eyebrow/
+section-label colour, and every other "muted" text sitewide) was
+retargeted from an azure-tinted blue to a calm slate
+(`--raw-color-label-slate` `#94A3B8`) at the same time. `--foreground`
+(body text) was already `--raw-color-white` (`#ffffff`) — unchanged.
 
 ## Styling rules
 

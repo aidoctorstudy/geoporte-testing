@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
 
 import {
   generateMetadata,
@@ -41,22 +42,31 @@ import "@/app/globals.css";
 export const metadata: Metadata = generateMetadata();
 export const viewport: Viewport = generateViewport();
 
+// Heading/body typeface pair — bound into Tier 1 (`--raw-font-heading`/
+// `--raw-font-body` in globals.css) rather than consumed directly, same
+// "primitive, never referenced in markup" convention as every other Tier 1
+// token. Replaces the previous single General-Sans-for-everything stack
+// (loaded via a Fontshare <link>, now removed) with next/font/google's
+// self-hosted, zero-extra-request loading — see obsidian/meta/decisions-log.md.
+const headingFont = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-heading-face",
+  display: "swap",
+});
+const bodyFont = Inter({
+  subsets: ["latin"],
+  variable: "--font-body-face",
+  display: "swap",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-        {/* General Sans (Neural Monitor Style's gl-font-display/body) is hosted
-            on Fontshare, not Google Fonts — next/font/google can't load it, so
-            it comes in via a stylesheet link. See obsidian/frontend/design-system.md. */}
-        <link
-          rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=general-sans@200,300,400,500,600,700&display=swap"
-        />
-      </head>
+    <html lang="en" className={`${headingFont.variable} ${bodyFont.variable}`}>
       <body>
         <script
           type="application/ld+json"

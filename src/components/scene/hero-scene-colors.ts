@@ -12,4 +12,9 @@ export const HERO_SCENE_COLORS = {
   glow: 0x70bcff, // --raw-color-azure-300 (gl-glow)
   ink: 0x8ecbff, // --raw-color-sky-300 (gl-ink-muted)
   white: 0xffffff,
+  // The particle GEOPORTE logo (below) deliberately reuses the heading
+  // accent (--raw-color-heading-blue) rather than the scene's own --glow,
+  // so the particle wordmark reads as the same visual family as the
+  // sitewide heading colour, not a third unrelated blue.
+  logoGlow: 0x4fc3f7, // --raw-color-heading-blue
 } as const;

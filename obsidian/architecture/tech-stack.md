@@ -84,6 +84,28 @@ independent pivot sub-group, girders fly in and scaffolding scales up from
 nothing over the first ~2.5s, and a ring pulses outward from the scene centre
 every 3s (a lidar sweep). Homepage-motion-overhaul Phase 1 — see [[changelog]].
 
+**Particle GEOPORTE logo** (also `build-hero-scene.ts`, as of 2026-10-12) —
+a "particles form a logotype" effect living inside this same scene/renderer
+rather than a second dedicated `HeroScene`: a classic motion-graphics
+technique (render the wordmark to an offscreen 2D canvas, sample which
+pixels are "on", scatter one `THREE.Points` particle per sampled pixel
+around that target, ease them in on load). Assembles over ~2.8s
+(`easeOutCubic`, same shape the construction rig's own assembly already
+uses), then idles with a per-particle sine-wave breathe/drift —
+`buildParticleLogo()`/`sampleTextParticlePositions()`. Uses the new
+heading accent (`--raw-color-heading-blue`, `logoGlow` in
+`hero-scene-colors.ts`) rather than the scene's own `--glow`, tying it to
+the sitewide heading colour family. `renderStatic()` forces the particles
+to their assembled resting state (not the scattered initial one) so a
+reduced-motion visitor sees the logo, not a permanent scatter. Particle
+density scales down with `particleScale` like every other particle system
+in this file. Deliberately kept inside the existing render context —
+spinning up a second full-bleed `WebGLRenderer` for one hero feature would
+reopen the concurrent-context budget ADR-0084/85/87 spent several passes
+closing. **Placement (`points.position`) was not visually tuned against a
+live browser** — no Chrome extension connected the session this was
+built — worth a real look before calling it fully settled.
+
 **Service hero scenes** (`src/components/scene/service-heroes/`) — each of the
 8 `/services/<slug>` pages passes its own scene factory into the shared
 `HeroScene.tsx` (via `SERVICE_HERO_SCENES`, keyed by slug), so they get the

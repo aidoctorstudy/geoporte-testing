@@ -24,7 +24,7 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
           <AboutHeading
             id="about-heading"
             tag={headingTag}
-            className="leading-display text-foreground max-w-xl text-3xl font-medium md:text-5xl"
+            className="leading-display font-heading text-heading max-w-xl text-3xl font-medium md:text-5xl"
           />
 
           <Inview

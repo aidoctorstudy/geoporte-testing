@@ -346,6 +346,146 @@ const buildLidarPulseRing = (): { ring: THREE.Mesh; material: THREE.MeshBasicMat
   return { ring, material };
 };
 
+/**
+ * Classic "particles form a logotype" technique (the genre this mirrors —
+ * motion-graphics demos that spell out a wordmark from glowing points on
+ * load, then let it drift/breathe): render the brand wordmark to an
+ * offscreen 2D canvas, sample which pixels are "on", and use those as the
+ * particles' resting positions. Lives inside this same scene/renderer
+ * rather than a second dedicated `HeroScene` — a second full-bleed WebGL
+ * context for one hero feature would reopen exactly the concurrent-context
+ * budget this project has spent several passes closing (ADR-0084/85/87 in
+ * decisions-log.md).
+ */
+const PARTICLE_LOGO_TEXT = "GEOPORTE";
+const PARTICLE_LOGO_ASSEMBLE_DURATION_S = 2.8;
+const PARTICLE_LOGO_CANVAS_WIDTH = 960;
+const PARTICLE_LOGO_CANVAS_HEIGHT = 220;
+
+/** Renders `text` to an offscreen canvas and returns one 3D point per
+ * sampled "on" pixel (alpha ≥ 128), centred on the origin and scaled so the
+ * text is `targetWidth` world units wide. `step` controls sampling density
+ * (and therefore particle count) — larger on lower-capability tiers. */
+const sampleTextParticlePositions = (
+  text: string,
+  targetWidth: number,
+  step: number,
+): Float32Array => {
+  const canvas = document.createElement("canvas");
+  canvas.width = PARTICLE_LOGO_CANVAS_WIDTH;
+  canvas.height = PARTICLE_LOGO_CANVAS_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new Float32Array(0);
+
+  // A bold, geometric system sans — not one of this project's two actual
+  // webfonts (Playfair Display's thin serifs would scatter into
+  // disconnected dots at particle resolution; Inter would work but isn't
+  // guaranteed loaded by the time this runs). Only used for sampling pixel
+  // positions, never rendered on screen, so it doesn't need to match either.
+  ctx.fillStyle = "#fff";
+  ctx.font = `700 ${PARTICLE_LOGO_CANVAS_HEIGHT * 0.56}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  // `letterSpacing` is a standard (if newer) 2D-context property — widens
+  // the sampled glyphs slightly so tightly-kerned letters still resolve
+  // into visually separate particle clusters rather than one dense blob.
+  ctx.letterSpacing = "6px";
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const samples: number[] = [];
+  for (let y = 0; y < canvas.height; y += step) {
+    for (let x = 0; x < canvas.width; x += step) {
+      if (data[(y * canvas.width + x) * 4 + 3] < 128) continue;
+      samples.push(x, y);
+    }
+  }
+
+  const scale = targetWidth / canvas.width;
+  const positions = new Float32Array((samples.length / 2) * 3);
+  for (let i = 0; i < samples.length / 2; i++) {
+    positions[i * 3] = (samples[i * 2] - canvas.width / 2) * scale;
+    positions[i * 3 + 1] = -(samples[i * 2 + 1] - canvas.height / 2) * scale; // canvas Y grows down
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 0.15; // slight z-jitter, not a flat decal
+  }
+  return positions;
+};
+
+interface ParticleLogo {
+  points: THREE.Points;
+  /** Advances the assembly ease and, once settled, the idle breathe/drift —
+   * call once per `renderFrame`, or once with a saturating `elapsedSeconds`
+   * from `renderStatic` so a reduced-motion/one-frame render shows the
+   * fully-formed logo rather than mid-scatter. */
+  update: (elapsedSeconds: number) => void;
+}
+
+/** Builds the particle GEOPORTE wordmark — each particle eases from a
+ * scattered sphere into its sampled text position over
+ * `PARTICLE_LOGO_ASSEMBLE_DURATION_S`, then (once settled) gently breathes
+ * and drifts in place via a per-particle sine phase, same idiom this file's
+ * `buildDust` already uses for its own per-particle animation. */
+const buildParticleLogo = (particleScale: number): ParticleLogo => {
+  // Sparser sampling (fewer particles) on lower-capability tiers — mirrors
+  // every other particleScale consumer in this file.
+  const step = Math.max(2, Math.round(4 / Math.sqrt(particleScale)));
+  const target = sampleTextParticlePositions(PARTICLE_LOGO_TEXT, 9, step);
+  const count = target.length / 3;
+
+  const start = new Float32Array(count * 3);
+  const phase = new Float32Array(count);
+  const breatheSpeed = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    // Scattered start: a loose sphere around the text's resting position.
+    const radius = 4.5 + Math.random() * 3.5;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(Math.random() * 2 - 1);
+    start[i * 3] = Math.sin(phi) * Math.cos(theta) * radius;
+    start[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
+    start[i * 3 + 2] = Math.cos(phi) * radius;
+    phase[i] = Math.random() * Math.PI * 2;
+    breatheSpeed[i] = 0.5 + Math.random() * 0.5;
+  }
+
+  const positions = new Float32Array(start);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const material = new THREE.PointsMaterial({
+    color: COLOR.logoGlow,
+    size: 0.045,
+    transparent: true,
+    opacity: 0,
+    sizeAttenuation: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+
+  const points = new THREE.Points(geometry, material);
+  points.frustumCulled = false;
+
+  const update = (elapsedSeconds: number) => {
+    const assembleT = Math.min(elapsedSeconds / PARTICLE_LOGO_ASSEMBLE_DURATION_S, 1);
+    const ease = 1 - Math.pow(1 - assembleT, 3); // easeOutCubic, same as the construction rig's own assembly
+    const settled = assembleT >= 1;
+    const posAttr = geometry.attributes.position;
+
+    for (let i = 0; i < count; i++) {
+      const breathe = settled ? Math.sin(elapsedSeconds * breatheSpeed[i] + phase[i]) * 0.04 : 0;
+      const drift = settled ? Math.cos(elapsedSeconds * breatheSpeed[i] * 0.6 + phase[i]) * 0.025 : 0;
+      posAttr.setXYZ(
+        i,
+        start[i * 3] + (target[i * 3] - start[i * 3]) * ease + drift,
+        start[i * 3 + 1] + (target[i * 3 + 1] - start[i * 3 + 1]) * ease + breathe,
+        start[i * 3 + 2] + (target[i * 3 + 2] - start[i * 3 + 2]) * ease,
+      );
+    }
+    posAttr.needsUpdate = true;
+    material.opacity = 0.25 + ease * 0.65 + (settled ? Math.sin(elapsedSeconds * 0.8) * 0.08 : 0);
+  };
+
+  return { points, update };
+};
+
 export const createHeroScene = (
   container: HTMLElement,
   framing: HeroSceneFraming = {},
@@ -392,6 +532,15 @@ export const createHeroScene = (
   const { ring: lidarRing, material: lidarMaterial } = buildLidarPulseRing();
   scene.add(lidarRing);
 
+  // Elevated, up-and-right of the scene's own look-at point — clears the
+  // bridge/terrain below and sits inside the fog's still-legible range.
+  // Placement wasn't visually tuned live against the hero's 2D text overlay
+  // (no browser session available) — worth a real look before calling this
+  // fully settled.
+  const particleLogo = buildParticleLogo(particleScale);
+  particleLogo.points.position.set(2.6, 3.8, -1.5);
+  scene.add(particleLogo.points);
+
   // Pointer parallax — target values set by the caller on `pointermove`,
   // smoothed here so a jittery mouse never produces a jittery camera.
   let pointerTargetX = 0;
@@ -424,10 +573,17 @@ export const createHeroScene = (
   const RIG_ASSEMBLE_DURATION_S = 2.5;
 
   const renderStatic = () => {
+    // Forces the particle logo to its fully-assembled resting state rather
+    // than the scattered construction state it starts in — `renderStatic`
+    // never calls `renderFrame`'s own time-driven update, so without this a
+    // reduced-motion visitor would see a permanent scattered particle cloud
+    // instead of the logo.
+    particleLogo.update(PARTICLE_LOGO_ASSEMBLE_DURATION_S);
     renderer.render(scene, camera);
   };
 
   const renderFrame = (elapsedSeconds: number) => {
+    particleLogo.update(elapsedSeconds);
     pointerX += (pointerTargetX - pointerX) * 0.04;
     pointerY += (pointerTargetY - pointerY) * 0.04;
     scrollProgress += (scrollTarget - scrollProgress) * 0.06;

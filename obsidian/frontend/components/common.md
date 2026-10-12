@@ -412,19 +412,23 @@ original light palette — the shared Tier-2 defaults were never edited.
 
 ## ContactForm — `ContactForm.tsx`
 
-`<ContactForm />` — name/email/phone/message, posts to the pre-existing
-`/api/contact` route handler via `apiFetch` (that endpoint had no UI calling
-it anywhere in the app before the `/contact` page). Phone is optional
-(`type="tel"`, omitted from the POST payload entirely when blank rather
-than sent as an empty string — see ADR-0057) — added alongside the page
-rebuild, the route's own `zod` schema already updated to match
-(`phone: z.string().max(30).optional()`). Plain controlled-free
+`<ContactForm />` — name/email/phone/company/message, posts to the
+pre-existing `/api/contact` route handler via `apiFetch` (that endpoint
+had no UI calling it anywhere in the app before the `/contact` page).
+Phone and company are both optional (`type="tel"`/`type="text"`, each
+omitted from the POST payload entirely when blank rather than sent as an
+empty string — see ADR-0057) — the route's own `zod` schema mirrors both
+(`phone`/`company`: `z.string().max(…).optional()`). Plain controlled-free
 `FormData` read on submit rather than per-keystroke state; `status`
 (`idle`/`submitting`/`success`/`error`) swaps the whole form for a
 confirmation card on success. Field `maxLength`s mirror the route's own
 `zod` schema. Error text uses the `--danger` token — the first error/danger
 colour added to this project's token set (`--raw-color-red-400` → Tier 2
-`--danger` → `--color-danger`).
+`--danger` → `--color-danger`). The form itself renders inside a
+`.glass-panel` section on `/contact` (`views/contact.tsx`) — inputs stay a
+near-solid `bg-surface` for legibility; the glass treatment is the
+section container, not each control, same convention every other
+glass-panel page already uses.
 
 ## TiltCard — `TiltCard.tsx`
 

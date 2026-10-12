@@ -27,6 +27,17 @@
   --raw-color-sky-300: #8ecbff; /* gl-ink-muted */
   --raw-color-azure-600: #1f6ae0; /* gl-accent — Geoporte's real brand blue */
   --raw-color-azure-300: #70bcff; /* gl-glow */
+  /* h1/h2 heading colour — bright sky blue, deliberately distinct from
+     --accent/--glow (the azure-600/azure-300 pair above, which also drive
+     buttons/links) so a heading reads as its own typographic role, not an
+     accidentally-tinted link. See obsidian/meta/decisions-log.md. */
+  --raw-color-heading-blue: #4fc3f7;
+  /* Small-uppercase section-label text (the `eyebrow` above every
+     `SectionHeading`) — replaces the previous --foreground-muted value
+     (azure-tinted --raw-color-sky-300), which this token also now backs,
+     so every other "muted" text sitewide (nav links, captions, card
+     descriptions) reads the same calm slate instead of a blue tint. */
+  --raw-color-label-slate: #94a3b8;
   --raw-color-line: rgba(31, 106, 224, 0.28); /* gl-line */
   --raw-color-red-400: #f87171; /* form validation / error state — ContactForm */
 
@@ -176,9 +187,17 @@
   --raw-gradient-fallback-planet: radial-gradient(ellipse at 50% 30%, #1f6ae0 0%, #040d1a 55%, #01040e 100%);
   --raw-gradient-fallback-ambient: radial-gradient(ellipse at 50% 60%, #0a1830 0%, #040d1a 60%, #01040e 100%);
 
-  /* Loaded via Fontshare <link> in layout.tsx — not a next/font/google face,
-     so there is no generated CSS variable to bind to; the stack lives here. */
-  --raw-font-general-sans: "General Sans", ui-sans-serif, system-ui,
+  /* Both loaded via `next/font/google` in layout.tsx, applied to `<html>`
+     via each font's own `variable` className — `--font-heading-face`/
+     `--font-body-face` are the generated CSS variables those classNames
+     set, consumed here rather than directly in markup, matching Tier 1's
+     "only tier allowed to hold a literal" rule even though the literal in
+     this case is a generated variable reference rather than a bare font
+     name. A premium, "architectural" display serif for headings against a
+     clean, highly-legible grotesque for body copy — replaces the previous
+     single General-Sans-for-everything stack. */
+  --raw-font-heading: var(--font-heading-face), Georgia, serif;
+  --raw-font-body: var(--font-body-face), ui-sans-serif, system-ui,
     -apple-system, sans-serif;
 
   --raw-duration-fast: 150ms;
@@ -230,7 +249,8 @@
   --surface: var(--raw-color-surface);
   --surface-raised: var(--raw-color-surface-raised);
   --foreground: var(--raw-color-white);
-  --foreground-muted: var(--raw-color-sky-300);
+  --foreground-muted: var(--raw-color-label-slate);
+  --heading: var(--raw-color-heading-blue);
   --accent: var(--raw-color-azure-600);
   --accent-foreground: var(--raw-color-white);
   --glow: var(--raw-color-azure-300);
@@ -284,6 +304,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
+  --color-heading: var(--heading);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-glow: var(--glow);
@@ -302,7 +323,8 @@
   --color-glow-engineering: var(--glow-engineering);
   --color-stat-purple: var(--stat-purple);
   --color-stat-amber: var(--stat-amber);
-  --font-sans: var(--raw-font-general-sans);
+  --font-sans: var(--raw-font-body);
+  --font-heading: var(--raw-font-heading);
 
   /* Leading floor for clipped TextEngine reveals — see
      obsidian/frontend/text-engine.md → "Alignment & line-height". */

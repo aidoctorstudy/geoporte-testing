@@ -37,6 +37,56 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Heading/body font pair + heading colour retint + a particle GEOPORTE logo in the hero + services-heading copy + a Company field on the contact form)
+
+Five-part brief. Full reasoning (including what was already true vs what
+needed building, and the touch-target `min-h` correction found along the
+way) in [[decisions-log]] ADR-0091; short version here.
+
+- **Copy:** "Eight disciplines, one team" → "Our Services" in both
+  places it appears (`services.tsx`, `home/ServicesSection.tsx`).
+- **Particle logo:** a "particles form a logotype" effect added *inside*
+  the existing homepage hero scene (`build-hero-scene.ts`) — renders
+  "GEOPORTE" to an offscreen canvas, samples lit pixels into one
+  `THREE.Points` particle each, eases them in from a scatter over ~2.8s,
+  then idles with a per-particle breathe/drift. Deliberately not a second
+  WebGL context (would reopen the concurrent-context budget ADR-0084/
+  85/87 closed). Colour reuses the new heading accent (next item).
+  Placement not visually tuned live (no browser this session) — flagged.
+- **Fonts:** Playfair Display (headings) + Inter (body), both via
+  `next/font/google`, replacing the previous single General-Sans-for-
+  everything stack (a Fontshare `<link>`, now removed).
+- **Colours:** new `--heading` role (`#4FC3F7`) for every h1/h2;
+  `--foreground-muted` (eyebrows/section labels, and every other "muted"
+  text sitewide) retargeted from an azure-tinted blue to a calm slate
+  (`#94A3B8`); `--foreground` (body text) was already pure white —
+  confirmed, not changed. Audited all 14 `SectionHeading` call sites
+  before applying — none needed special-casing, and the one genuinely
+  different-palette page (`GeotechnicalAnalysisHero`'s light section) is
+  untouched since it lives on a separate, unrelated token family.
+  Literal h1/h2 tags outside the shared heading components updated too
+  (`TeamCascade.tsx`, `ProjectsShowreel.tsx`, `ProjectsCascade.tsx`,
+  `Footer.tsx`); modal titles and legal-page subsection headers
+  deliberately left alone (small UI chrome, not "main headings" in
+  spirit).
+- **Also fixed:** two `min-h-11`/`min-h-10` touch targets added earlier
+  this session (`LanguageSwitcher.tsx`, `MobileMenu.tsx`) were wrong per
+  this project's own documented rule (ADR-0063) — a real pixel
+  touch-target needs an arbitrary absolute value, not a rem utility,
+  because the adaptive scaling grid rescales the root font-size. Reverted
+  to `min-h-[44px]`/`min-h-[40px]`.
+- **Contact form:** added a `company` field (optional) to both
+  `ContactForm.tsx` and `/api/contact/route.ts`'s `zod` schema — without
+  the schema change a submitted value would've been silently dropped
+  server-side. The "liquid glass panels" ask was already true (`/contact`
+  already wraps the form in `.glass-panel`); the field was the only gap.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged (same pre-existing FAIL/WARNs); `next build --webpack` clean
+  — confirmed both fonts self-hosted correctly and every new token/
+  utility compiled to the expected value. **Not verified in a live
+  browser this turn** (Chrome extension wasn't connected) — flagged
+  rather than assumed, especially for the particle logo's look.
+
 ## 2026-10-12 (Tier 1's "flat black background" root-caused and fixed: `PlanetBackground`/`AmbientBackground` get the same static-gradient fallback their 9 sibling scenes already had; the Tier 1 glass-panel fill lightened for contrast)
 
 Report: "Tier 1 is too aggressive — plain black background with just

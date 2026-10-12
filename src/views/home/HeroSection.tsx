@@ -36,7 +36,7 @@ export const HeroSection = () => {
         <HeroHeading
           id="hero-heading"
           text="Design. Engineering. Advisory."
-          className="leading-display text-foreground [text-shadow:0_2px_24px_rgba(0,0,0,.85)] max-w-4xl text-5xl font-medium md:text-7xl"
+          className="leading-display font-heading text-heading [text-shadow:0_2px_24px_rgba(0,0,0,.85)] max-w-4xl text-5xl font-medium md:text-7xl"
         />
 
         <HeroSubtext

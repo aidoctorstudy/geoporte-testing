@@ -37,7 +37,7 @@ export const Footer = () => {
             <p className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
               Let&apos;s talk
             </p>
-            <h2 className="text-foreground mt-3 max-w-xl text-3xl leading-[1.15] font-medium md:text-4xl">
+            <h2 className="font-heading text-heading mt-3 max-w-xl text-3xl leading-[1.15] font-medium md:text-4xl">
               Ready to engineer with confidence in complex ground?
             </h2>
           </div>

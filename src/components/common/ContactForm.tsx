@@ -26,10 +26,12 @@ export const ContactForm = () => {
     const form = event.currentTarget;
     const data = new FormData(form);
     const phone = String(data.get("phone") ?? "").trim();
+    const company = String(data.get("company") ?? "").trim();
     const payload = {
       name: String(data.get("name") ?? ""),
       email: String(data.get("email") ?? ""),
       ...(phone && { phone }),
+      ...(company && { company }),
       message: String(data.get("message") ?? ""),
     };
 
@@ -109,6 +111,21 @@ export const ContactForm = () => {
           autoComplete="tel"
           className={fieldClassName}
           placeholder="+61 4XX XXX XXX"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="contact-company" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+          Company <span className="normal-case text-foreground-muted/60">(optional)</span>
+        </label>
+        <input
+          id="contact-company"
+          name="company"
+          type="text"
+          maxLength={200}
+          autoComplete="organization"
+          className={fieldClassName}
+          placeholder="Your company"
         />
       </div>
 

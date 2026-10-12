@@ -23,7 +23,7 @@ export function ServicesView() {
         id="services-heading"
         tag="h1"
         eyebrow="What we do"
-        heading="Eight disciplines, one team"
+        heading="Our Services"
       />
 
       <ul className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

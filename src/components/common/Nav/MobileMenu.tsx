@@ -76,7 +76,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
                 type="button"
                 onClick={() => setLanguage(lang.code)}
                 aria-current={lang.code === language}
-                className={`flex min-h-11 items-center rounded-lg border border-line px-3 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance ${
+                className={`flex min-h-[44px] items-center rounded-lg border border-line px-3 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance ${
                   lang.code === language
                     ? "bg-surface text-foreground"
                     : "text-foreground-muted hover:text-foreground"

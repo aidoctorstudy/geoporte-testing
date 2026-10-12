@@ -36,7 +36,7 @@ export function AboutView() {
         <AboutHeading
           id="about-heading"
           tag="h1"
-          className="leading-display text-foreground max-w-2xl text-3xl font-medium md:text-5xl"
+          className="leading-display font-heading text-heading max-w-2xl text-3xl font-medium md:text-5xl"
         />
 
         <div className="mt-8 flex max-w-2xl flex-col gap-5">

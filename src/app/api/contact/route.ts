@@ -17,6 +17,7 @@ const contactSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.email(),
   phone: z.string().max(30).optional(),
+  company: z.string().max(200).optional(),
   message: z.string().min(1).max(2000),
 });
 

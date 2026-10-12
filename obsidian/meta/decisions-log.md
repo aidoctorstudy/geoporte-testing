@@ -17,6 +17,138 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0091 — Heading/body font pair (Playfair Display + Inter), a dedicated `--heading` colour role, a particle GEOPORTE wordmark in the hero scene, services-heading copy, and a Company field on the contact form
+
+**Status:** Accepted · 2026-10-12
+
+**Context.** Five-part brief: change the services-section heading copy;
+add an "AiMatic-style" particle-text logo effect to the homepage hero;
+switch the heading font to Playfair Display or Cormorant Garamond
+(keeping body text Inter/Mulish); retint body text to white, h1/h2 to
+`#4FC3F7`, and small-uppercase section labels to `#94A3B8`; add a Company
+field to the `/contact` form. Investigated each before changing anything
+— see the per-item notes below for what was already true vs what needed
+building.
+
+**1. Services heading.** "Eight disciplines, one team" → "Our Services"
+— the exact string appears in two places (`src/views/services.tsx`'s
+standalone page and `src/views/home/ServicesSection.tsx`'s homepage
+section); both updated, the SEO `description` string (a different,
+longer sentence) left alone.
+
+**2. Particle GEOPORTE logo.** Built into the *existing* hero scene/
+renderer (`build-hero-scene.ts`) rather than a second dedicated
+`HeroScene` instance — two full-bleed WebGL contexts on the single most
+universally-viewed section would reopen exactly the concurrent-context
+budget ADR-0084/85/87 spent several passes closing. Classic technique:
+render "GEOPORTE" to an offscreen 2D canvas, sample lit pixels into one
+`THREE.Points` particle each, ease every particle in from a scattered
+sphere over ~2.8s, then idle with a per-particle sine breathe/drift.
+Colour reuses the new `--heading` accent (`#4FC3F7`, see item 4) rather
+than the scene's own `--glow`, tying the new feature into the rebrand.
+`renderStatic()` forces the assembled resting state so reduced-motion
+visitors see the logo, not a permanent scatter — the scene's pre-existing
+construction rig doesn't have this correction (its own unassembled start
+state leaks into `renderStatic` too) but that's a separate, pre-existing
+characteristic, not something this change should silently also fix on
+spec. Particle density scales with the existing `particleScale` tier
+budget. **Not visually tuned against a live browser this turn** — no
+Chrome extension connected this session — the exact placement/scale
+(`points.position.set(2.6, 3.8, -1.5)`) is a best-effort choice relative
+to the hero's 2D text overlay, worth a real look before calling it
+settled.
+
+**3. Fonts.** Playfair Display (headings) + Inter (body) replace the
+single "General Sans for everything" stack (which was itself a Fontshare
+`<link>`, not `next/font/google` — removed along with the link tag).
+Both loaded via `next/font/google` in `layout.tsx`, applied to `<html>`
+via each font's own `variable` className, consumed in `globals.css` as
+`--raw-font-heading`/`--raw-font-body` → `@theme inline`'s
+`--font-heading`/`--font-sans`. Chose Playfair Display over Cormorant
+Garamond (both offered) — reads more "monumental/architectural" at
+heading sizes, matching the brief's own "architectural feel" wording;
+Cormorant is more delicate/editorial. Chose Inter over Mulish for body —
+more neutral, broader character support, and the project's existing
+`font-sans` namespace needed zero renaming.
+
+**4. Colours.** New Tier 1 primitives `--raw-color-heading-blue`
+(`#4FC3F7`) and `--raw-color-label-slate` (`#94A3B8`); new Tier 2 role
+`--heading` (→ `--color-heading` → `text-heading` utility), and
+`--foreground-muted` retargeted from the previous azure-tinted
+`--raw-color-sky-300` to the new slate — a single rebind that correctly
+cascades to every "muted" text sitewide (eyebrows/section labels, nav
+links, captions, card descriptions), since the brief's three named
+buckets (body/headings/labels) map cleanly onto this project's existing
+`--foreground`/new-`--heading`/`--foreground-muted` roles. `--foreground`
+itself (body text) was already `--raw-color-white` (`#ffffff`) — the
+brief's first bullet was already true, confirmed by reading the token
+before assuming it needed a change.
+Audited every `<SectionHeading>` call site (14 of them) before applying
+the colour change: none override heading colour except two
+(`ProjectExperienceSection.tsx`, `ServiceCta.tsx`), and both of those
+explicit overrides already matched the same default (`text-foreground`)
+— so changing `SectionHeading.tsx`'s own default plus those two literal
+strings covers every one safely, with **zero risk to the one genuinely
+different-palette page** (`GeotechnicalAnalysisHero.tsx`'s light
+"engineering diagram" look lives on a *different* section further down
+that page, using its own separate `--ink-engineering` token family that
+this change never touches). `GeotechnicalPlexusHeading` (the homepage's
+own dark-navy-overridden Digital Twin section) was switched from its
+page-scoped `text-ink-engineering` straight to the new `text-heading` —
+deliberate, since the blanket "all h1/h2" instruction is unconditional
+and `--heading` doesn't interact with that section's own token-scoping
+mechanism at all. Literal (non-`SectionHeading`) h1/h2 tags outside the
+shared components were updated individually: `TeamCascade.tsx` (×3,
+including each cascade card's member-name `<h2>`), `ProjectsShowreel.tsx`,
+`ProjectsCascade.tsx` (×2), `Footer.tsx`'s closing-CTA `<h2>`. Deliberately
+**not** touched: modal/dialog `<h2>`s (`ProjectModal`,
+`CookiePreferencesModal`, `CookieBanner` — small, transient UI chrome, not
+"large main headings" in spirit even though they're technically `<h2>`),
+`privacy-policy.tsx`'s mid-document subsection `<h2>`s ("Cookies",
+"Contact form" — small, utilitarian legal-text headers), and
+`error.tsx`/`not-found.tsx` (minor fallback pages, low value for the
+effort). `/about/team`'s own teal `ACCENT` constant (`#5cc8d7`, a
+pre-existing, explicitly-flagged one-off exception for that page's
+emphasized heading word and member-title colour) was left alone —
+unrelated to the sitewide heading-colour system.
+**Also fixed, found while re-reading this project's own design-system
+note:** two touch-target `className`s added earlier this session
+(`LanguageSwitcher.tsx`, `MobileMenu.tsx`'s language-button row) used
+`min-h-11`/`min-h-10` instead of `min-h-[44px]`/`min-h-[40px]` — wrong per
+`design-system.md`'s own explicit rule (ADR-0063): a real pixel
+touch-target requirement must use an arbitrary absolute value, not a
+rem-based utility, because this project's adaptive scaling grid rescales
+the root font-size, so a rem unit is not a fixed pixel size at most
+viewport widths. Reverted to the arbitrary-pixel form, matching the many
+pre-existing `min-h-[44px]` instances already in this exact file set.
+
+**5. Contact form.** Added a `company` field (optional, same
+omit-when-blank pattern as the existing `phone` field) to both
+`ContactForm.tsx` and `/api/contact/route.ts`'s `zod` schema — without the
+schema change, a submitted company value would have been silently
+stripped server-side (zod's default behaviour for an unlisted key).
+"Style it with liquid glass panels" was already true: `/contact`
+(`views/contact.tsx`) already wraps the form in a `.glass-panel` section
+with this page's own "50% more liquid glass" intensity override — the
+only real gap was the missing field.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh`: unchanged from before this turn (same
+pre-existing FAIL/WARNs; the new hex literals live in `globals.css`,
+which the hex-literal WARN already excludes). `next build --webpack`
+clean; confirmed in the built output that both fonts self-hosted
+correctly (`font-family:Playfair Display`/`Inter` + 9 `.woff2` files in
+`.next/static/media/`), `.font-heading`/`.text-heading`/`.font-sans`
+utilities compiled to the expected `var()` references, and both new
+colour tokens compiled with the expected hex values. **Not verified
+visually in a browser this turn** (Chrome extension wasn't connected) —
+the font pairing, the three-bucket colour retint, and especially the
+particle logo's placement/legibility are exactly the kind of change a
+screenshot would confirm far better than code review. Flagged rather than
+assumed; worth a real look at the deployed build.
+
+---
+
 ## ADR-0090 — Tier 1's "flat black background" root-caused: the two app-root WebGL layers had no static fallback, unlike every sibling scene
 
 **Status:** Accepted · 2026-10-12 · **Fixes a real gap in ADR-0078/ADR-0079's design, closed by e86e26a's "baqala mode"; does not change what e86e26a already removed.**

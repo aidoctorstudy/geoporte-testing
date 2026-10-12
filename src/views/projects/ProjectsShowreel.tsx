@@ -214,7 +214,7 @@ export const ProjectsShowreel = () => {
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
             27 projects · 7 countries
           </p>
-          <h2 className="text-foreground leading-display text-3xl font-medium md:text-5xl">
+          <h2 className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
             Every landmark, in one field
           </h2>
         </animated.div>

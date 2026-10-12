@@ -15,7 +15,7 @@ export interface SectionHeadingProps {
 }
 
 const DEFAULT_HEADING_CLASSNAME =
-  "leading-display text-foreground max-w-2xl text-3xl font-medium md:text-5xl";
+  "leading-display font-heading text-heading max-w-2xl text-3xl font-medium md:text-5xl";
 
 /**
  * The eyebrow + `TextEngine` heading pattern repeated across every homepage

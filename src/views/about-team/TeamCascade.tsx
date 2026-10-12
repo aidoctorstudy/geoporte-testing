@@ -164,7 +164,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
         <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
           GEOPORTE · Our People
         </p>
-        <h1 id="team-cascade-heading" className="text-foreground leading-display mt-4 text-3xl font-medium md:text-5xl">
+        <h1 id="team-cascade-heading" className="font-heading text-heading leading-display mt-4 text-3xl font-medium md:text-5xl">
           Our
           <br />
           <em style={{ color: ACCENT }}>
@@ -232,7 +232,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
           <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
             GEOPORTE · Our People
           </p>
-          <h1 id="team-cascade-heading" className="text-foreground leading-display text-3xl font-medium md:text-5xl">
+          <h1 id="team-cascade-heading" className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
             Our
             <br />
             <em style={{ color: ACCENT }}>
@@ -277,7 +277,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
 
               {/* RIGHT — full details */}
               <div className="min-w-0 flex-1 text-center md:text-left">
-                <h2 className="text-foreground text-2xl font-medium md:text-4xl">
+                <h2 className="font-heading text-heading text-2xl font-medium md:text-4xl">
                   {member.name}
                 </h2>
                 <p className="mt-2 text-base font-medium md:text-lg" style={{ color: ACCENT }}>
