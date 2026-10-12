@@ -37,6 +37,67 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (iOS WebGL-memory crash mitigations: `pagehide` disposal on all three persistent singleton renderers, iOS-specific tighter context hysteresis, capability-scaled cloud geometry; a real SSR hydration-risk bug caught along the way)
+
+Client report, marked emergency: real iPhone Safari/Chrome crashing, blamed
+on too many simultaneous WebGL contexts. Declined (briefly — same reasoning
+confirmed four times now: ADR-0081/83/85/86) the request's `screen.width <
+1024` / "all mobile" framing for a blanket "max 1 context" rule and a
+"globe-only" homepage mode — would again demote this project's own
+reference capable device, a real iPhone 15 Pro Max. Took the crash report
+itself seriously and shipped real, platform-targeted mitigations instead:
+
+- **`pagehide` disposal**, all three persistent singleton WebGL renderers
+  (`ambient-background-renderer.ts`, `shared-viewport-renderer.ts`,
+  `build-planet-scene.ts`'s globe) — previously only `visibilitychange`
+  (pauses rendering) was handled; `pagehide` (navigation away, tab close,
+  bfcache eviction) now forces a full teardown (geometries, materials,
+  textures, the renderer, the canvas element) regardless of the normal
+  ref-count. Idempotent and self-healing on a bfcache round-trip (the
+  renderer rebuilds from scratch on the next registration). Browser-verified:
+  manually dispatching `pagehide` dropped the three singleton canvases from
+  the page; no console errors.
+- **Tighter concurrent-context hysteresis on iOS specifically** — new
+  `getCardSceneRootMargin()` (`device-tier.ts`) returns `400px` on iOS vs
+  `800px` elsewhere, shrinking ADR-0085's near-viewport mount/unmount window
+  for `ServiceCard.tsx`'s 7 dedicated card scenes exactly where the real
+  WebGL memory ceiling this bounds actually lives — a platform
+  characteristic of iOS WebKit (Safari and Chrome-for-iOS both, since Apple
+  mandates WebKit), independent of capability tier. An "ultra" iPhone 15 Pro
+  Max gets the tighter margin too; this is deliberately *not* tier-gated.
+- **Earth globe cloud-sphere segments capability-scaled**, not
+  width-scaled — `sqrt(particleScale)` applied to the previously-hardcoded
+  `64×64` segment count per cloud layer (3 layers), same pattern
+  `build-solaris-scene.ts` already uses for its own sphere segments
+  (ADR-0080). Floored at 16. The main planet mesh itself is a loaded GLTF,
+  not a procedural sphere — its vertex count isn't runtime-adjustable
+  without a LOD system, out of scope here.
+
+**Real bug caught while verifying this, unrelated to the request but
+found because of ADR-0086's new console logging:** `next yarn build`'s
+static-generation step was printing a `[geoporte:performance-tier]
+resolved="ultra"` line — on the *build machine*, which is not a real
+device and has nothing to do with any visitor. Root cause:
+`isReducedMotion()` (`shared-viewport-renderer.ts`) called
+`isLowPowerDevice()` unconditionally, with no `typeof window` guard — added
+in ADR-0081, never guarded, because at the time nothing had deep-dived its
+actual call sites. Several components (`ScrollCue`, `ProjectTicker`,
+`CustomCursor`) read `isReducedMotion()` directly in their render body (no
+effect wrapper), so this executed server-side during SSR/SSG — and because
+Node.js 21+ exposes a built-in `navigator` global,
+`detectPerformanceTier()`'s `hardwareConcurrency` read didn't no-op there
+the way the rest of this module's `localStorage` access already does.
+Harmless on its own (a build machine's CPU count isn't used for anything),
+but a genuine **hydration-mismatch risk**: if a server environment's signals
+ever resolved a different tier than the client's own post-hydration read,
+`isReducedMotion()` would disagree between the server-rendered HTML and the
+client's first render — exactly the class of bug `device-tier.ts`'s own
+`width > 0` guards exist to prevent elsewhere. Fixed: both the OS
+`matchMedia` check and the `isLowPowerDevice()` check are now gated behind
+one `typeof window !== "undefined"`, so the function can never resolve
+anything but `false` outside a real browser. Browser- and build-verified:
+the stray build-log line is gone.
+
 ## 2026-10-12 (Performance-tier storage key versioned — a one-time reset for every stale pre-fix value sitewide; tier diagnostics logged to console)
 
 Fourth report of the same shape: a real iPhone 15 Pro Max assigned Tier 1,

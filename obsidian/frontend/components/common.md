@@ -453,7 +453,11 @@ homepage's own `HeroScene`) created their WebGL context the instant
 gate. As of ADR-0085, this is a *live* gate, not a one-way latch — the
 symmetric `rootMargin` means a card's scene also unmounts again once
 scrolled ~800px past, bounding the concurrent context ceiling for the
-whole scroll session instead of only delaying when it's reached.
+whole scroll session instead of only delaying when it's reached. As of
+ADR-0087, that 800px shrinks to 400px on iOS specifically
+(`getCardSceneRootMargin`, `device-tier.ts`) — a real crash report traced
+to iOS WebKit's lower WebGL memory ceiling, a platform characteristic
+independent of capability tier, so this is not gated by tier either.
 
 **Project Control Services is the eighth exception, and the only one not
 WebGL** (`DEDICATED_CARD_VIDEOS` lookup, a sibling to

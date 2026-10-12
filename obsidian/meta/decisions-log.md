@@ -17,6 +17,98 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0087 — iOS WebGL-memory crash mitigations targeted at the platform, not viewport width; `pagehide` disposal on every persistent singleton renderer; a real SSR hydration-mismatch risk found and fixed
+
+**Status:** Accepted · 2026-10-12 · **Extends ADR-0084/85; fixes a latent bug introduced by ADR-0081.**
+
+**Context.** Emergency-flagged report: real iPhone Safari/Chrome crashing,
+attributed to too many simultaneous WebGL contexts, with a five-point fix
+list gated on `screen.width < 1024` / "all mobile" — max 1 concurrent
+context sitewide, globe-only on the homepage with everything else paused,
+50% geometry cut on mobile. Same pattern as ADR-0081/83/85/86, declined
+again on the same grounds (would catch this project's own reference
+capable device, a real iPhone 15 Pro Max) — not re-argued at length here,
+see those entries for the full reasoning. The crash report itself,
+however, is a different *class* of signal than the prior four "feels
+slow"/"wrong tier" reports — an actual tab crash is unambiguous evidence
+of exceeding a real resource ceiling, not a subjective read — and was
+treated accordingly: taken seriously, mitigated with platform-targeted
+fixes instead of the requested width gate.
+
+**Decision — `pagehide` disposal on all three persistent singleton
+renderers** (`ambient-background-renderer.ts`, `shared-viewport-
+renderer.ts`, `build-planet-scene.ts`). Each already had
+`visibilitychange` handling (pauses the render loop while the tab is
+hidden) but nothing freed the actual GPU resources — geometries,
+materials, textures, the renderer, the canvas — before the page itself
+goes away. `pagehide` (navigation away, tab close, bfcache eviction) isn't
+covered by `visibilitychange`. Each module gained a `disposeAll`/
+`disposeRenderer`/`forceDisposePlanetBackground` function, shared between
+the existing ref-count-reaches-zero path and a `pagehide` listener;
+idempotent (safe to call twice) and self-healing on a bfcache round-trip
+(`ensureRenderer`-style lazy rebuild on the next real registration).
+Browser-verified: dispatching `pagehide` manually dropped the three
+singleton canvases from the page with no console errors.
+
+**Decision — `getCardSceneRootMargin()` (`device-tier.ts`): tighter
+concurrent-context hysteresis on iOS specifically, not on narrow viewports
+generally.** ADR-0085's near-viewport mount/unmount window for
+`ServiceCard.tsx`'s 7 dedicated card scenes (800px symmetric `rootMargin`)
+now shrinks to 400px on iOS — new `isIOSDevice()` export, a UA check used
+only for this budget purpose, never for the WebGL mount/skip decision
+itself (which stays `isLowPowerDevice()` alone, this file's own
+established rule). Deliberately **not** tier-gated: an "ultra"-capability
+iPhone 15 Pro Max gets the tighter margin exactly as much as a weaker one,
+because the WebGL context/memory ceiling this is bounding is a
+characteristic of iOS WebKit itself (Safari and Chrome-for-iOS both — Apple
+mandates WebKit as the only rendering engine on iOS) — orthogonal to chip
+speed, the same "target the actual constraint, not a proxy for it"
+principle ADR-0085 already established for this exact file.
+
+**Decision — Earth globe cloud-sphere segments capability-scaled.** The
+three cloud layers' `SphereGeometry` segment count was a flat `64×64`
+regardless of tier — the one geometry value in `build-planet-scene.ts` that
+`TIER_COUNTS`/`particleScale` scaling had never reached (it only covered
+point-cloud counts: stars, atmo motes, markers). Now
+`Math.max(16, Math.round(64 * Math.sqrt(options.particleScale)))` — `sqrt`
+because segments drive triangle count on two axes, the identical
+justification `build-solaris-scene.ts`'s own sphere segments already use
+(ADR-0080). The main planet mesh is a loaded GLTF, not a procedural sphere
+— not runtime-adjustable without a LOD system, out of scope here.
+
+**Bug found while verifying, not part of the original request: a real
+SSR hydration-mismatch risk.** `next build`'s static-generation step was
+printing ADR-0086's new `[geoporte:performance-tier] resolved="ultra"` log
+line — on the build machine itself, not a real device. Traced to
+`isReducedMotion()` (`shared-viewport-renderer.ts`): it calls
+`isLowPowerDevice()` unconditionally, with no `typeof window` guard — added
+in ADR-0081 without checking every call site first. `ScrollCue.tsx`,
+`ProjectTicker.tsx`, and `CustomCursor.tsx` all read `isReducedMotion()`
+directly in their render body (no effect wrapper), so this executes
+server-side during SSR/SSG; Node.js 21+ exposes a built-in `navigator`
+global, so `detectPerformanceTier()`'s `hardwareConcurrency` read didn't
+safely no-op there the way this module's own `localStorage` access already
+does. Harmless by itself (a build machine's core count feeds nothing), but
+a real risk: if a server environment's signals ever resolved a *different*
+tier than the client's own post-hydration read, `isReducedMotion()` would
+disagree between server-rendered HTML and the client's first render —
+exactly the hydration-mismatch class `device-tier.ts`'s own `width > 0`
+guards exist to prevent at every *other* call site. Fixed: both the OS
+`matchMedia` check and `isLowPowerDevice()` now sit behind one
+`typeof window !== "undefined"`, so the function can only ever resolve
+`false` outside a real browser — same "unmeasured state defaults to not-
+reduced" convention every other tier-dependent branch in this codebase
+already follows. Verified: the stray build-log line is gone.
+
+**When building.** Any new unconditional (non-effect, non-width-guarded)
+caller of `isReducedMotion()`/`isLowPowerDevice()` should be checked
+against whether it can execute during SSR — the `width > 0` convention
+this codebase uses everywhere else exists specifically to keep
+capability-dependent branches out of the server render path, and
+`isReducedMotion()` had quietly become the one exception.
+
+---
+
 ## ADR-0086 — Performance-tier storage key versioned (one-time reset for pre-fix stale values); tier diagnostics logged to console; a real `<Inview>` fragility found and flagged, not silently fixed
 
 **Status:** Accepted · 2026-10-12 · **Resolves the recurring theme of ADR-0081/83/85; does not touch `detectPerformanceTier`'s algorithm, which was independently reconfirmed correct a fourth time.**

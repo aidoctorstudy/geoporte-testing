@@ -224,6 +224,40 @@ const start = (): void => {
   rafId = requestAnimationFrame(loop);
 };
 
+// Shared by the normal ref-count-reaches-zero path (every registrant has
+// unmounted) and `pagehide` (the page itself is being torn down — a real
+// crash report on iOS prompted this; `pagehide` fires on navigation away,
+// tab close, and app backgrounding into bfcache, which `visibilitychange`
+// alone doesn't cover disposing resources for). Forces `refCount` to `0` so
+// a `pagehide` firing mid-session doesn't leave a later natural unmount
+// trying to dispose already-disposed objects. Idempotent — safe to call
+// more than once (`renderer?.dispose()` etc. all no-op past the first call,
+// and the early-return in `startAmbientBackground` only re-creates once
+// `refCount` goes back above zero, which only happens via a fresh mount).
+const disposeAll = (): void => {
+  refCount = 0;
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  rafId = null;
+  startTime = null;
+  pulseStartTime = null;
+  nextPulseAt = randomPulseDelay();
+  window.removeEventListener("resize", handleResize);
+  document.removeEventListener("visibilitychange", handleVisibility);
+  window.removeEventListener("pagehide", disposeAll);
+
+  if (scene) disposeSceneObjects(scene);
+  renderer?.dispose();
+  canvasEl?.remove();
+
+  renderer = null;
+  scene = null;
+  camera = null;
+  canvasEl = null;
+  shapes = [];
+  pulseLine = null;
+  pulseMaterial = null;
+};
+
 export interface AmbientBackgroundOptions {
   shapeCount: number;
   dprClamp: number;
@@ -272,31 +306,13 @@ export const startAmbientBackground = (options: AmbientBackgroundOptions): (() =
 
     window.addEventListener("resize", handleResize, { passive: true });
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("pagehide", disposeAll);
     start();
   }
 
   return () => {
     refCount -= 1;
     if (refCount > 0) return;
-
-    if (rafId !== null) cancelAnimationFrame(rafId);
-    rafId = null;
-    startTime = null;
-    pulseStartTime = null;
-    nextPulseAt = randomPulseDelay();
-    window.removeEventListener("resize", handleResize);
-    document.removeEventListener("visibilitychange", handleVisibility);
-
-    if (scene) disposeSceneObjects(scene);
-    renderer?.dispose();
-    canvasEl?.remove();
-
-    renderer = null;
-    scene = null;
-    camera = null;
-    canvasEl = null;
-    shapes = [];
-    pulseLine = null;
-    pulseMaterial = null;
+    disposeAll();
   };
 };

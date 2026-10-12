@@ -239,6 +239,16 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
     atmoCount: Math.round(widthCounts.atmoCount * options.particleScale),
     markerCount: Math.round(widthCounts.markerCount * options.particleScale),
   };
+  // Cloud sphere segment count — capability-scaled, not width-scaled (every
+  // other per-tier number in this file already reads `particleScale`, the
+  // capability axis, not viewport width; see `device-tier.ts`'s own comment
+  // on why those are different axes). `sqrt`, not a linear scale — segments
+  // drive triangle count on two axes (width and height of the UV sphere),
+  // same reasoning `build-solaris-scene.ts`'s own sphere segment count
+  // already uses (ADR-0080). The ported template's `64` stays the ceiling
+  // (ultra, particleScale 1); floored at 16 so a lower-capability device
+  // still gets a recognizably round cloud layer, not a faceted polyhedron.
+  const cloudSegments = Math.max(16, Math.round(64 * Math.sqrt(options.particleScale)));
 
   /* ---------- RENDERER / SCENE / CAMERA ----------
      Two fixes from the canonical `three@0.143.0` source, both confirmed
@@ -504,7 +514,11 @@ const buildScene = (canvas: HTMLCanvasElement, options: PlanetBackgroundOptions)
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(5, 5);
     for (const layer of CLOUD_LAYERS) {
-      const g = new THREE.SphereGeometry(CONFIG.planetRadius * CONFIG[layer.hKey], 64, 64);
+      const g = new THREE.SphereGeometry(
+        CONFIG.planetRadius * CONFIG[layer.hKey],
+        cloudSegments,
+        cloudSegments,
+      );
       const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false });
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uTime = cloudTime;
@@ -1073,17 +1087,30 @@ export const startPlanetBackground = (options: PlanetBackgroundOptions): (() => 
     canvasEl = canvas;
 
     disposeContent = buildScene(canvas, options);
+    window.addEventListener("pagehide", forceDisposePlanetBackground);
   }
 
   return () => {
     refCount -= 1;
     if (refCount > 0) return;
-
-    disposeContent?.();
-    disposeContent = null;
-    canvasEl?.remove();
-    canvasEl = null;
-    renderer = null;
-    rafId = null;
+    forceDisposePlanetBackground();
   };
+};
+
+// Shared by the normal ref-count-reaches-zero path and `pagehide` (a real
+// iOS crash report prompted this — see the identical addition in
+// `ambient-background-renderer.ts`/`shared-viewport-renderer.ts` for the
+// full reasoning). Forces `refCount` to `0` so a `pagehide` firing
+// mid-session doesn't leave a later natural unmount trying to dispose
+// already-disposed objects. Idempotent: `disposeContent` is nulled out
+// after its first call, so a repeat call is a no-op.
+const forceDisposePlanetBackground = (): void => {
+  refCount = 0;
+  window.removeEventListener("pagehide", forceDisposePlanetBackground);
+  disposeContent?.();
+  disposeContent = null;
+  canvasEl?.remove();
+  canvasEl = null;
+  renderer = null;
+  rafId = null;
 };

@@ -6,6 +6,7 @@ import { Hover } from "@/components/animation/springs/hover";
 import { SceneViewport } from "@/components/scene/SceneViewport";
 import { HeroScene } from "@/components/scene/HeroScene";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
+import { getCardSceneRootMargin } from "@/lib/scene/device-tier";
 import { MINI_SCENES } from "@/components/scene/mini-scenes";
 import { createSolarisCardScene } from "@/components/scene/build-solaris-scene";
 import { createAetherFluxCardScene } from "@/components/scene/build-aether-flux-scene";
@@ -92,8 +93,11 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   // `setInViewNode` again: a loop that churns without ever letting the
   // `IntersectionObserver` hold a stable-enough subscription to report
   // back, which is what silently made `nearView` never turn `true` before
-  // this was memoized.
-  const [setInViewNode, nearView] = useDynamicInView({ rootMargin: "800px 0px" });
+  // this was memoized. `rootMargin` itself is platform-scaled (ADR-0087) —
+  // tighter on iOS (400px vs 800px), where the real WebGL memory ceiling
+  // this hysteresis is bounding actually lives, independent of capability
+  // tier; see `getCardSceneRootMargin`'s own comment.
+  const [setInViewNode, nearView] = useDynamicInView({ rootMargin: getCardSceneRootMargin() });
   const setCardNode = useCallback(
     (node: HTMLElement | null) => {
       cardRef.current = node;

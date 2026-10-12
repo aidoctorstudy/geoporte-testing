@@ -143,8 +143,36 @@ const ensureRenderer = (): THREE.WebGLRenderer => {
 
   window.addEventListener("resize", handleResize, { passive: true });
   document.addEventListener("visibilitychange", handleVisibility);
+  window.addEventListener("pagehide", disposeRenderer);
 
   return renderer;
+};
+
+// Unlike `registerViewport`'s own `unregister()` (which only drops that one
+// registration and stops the shared rAF loop once every registration is
+// gone — the renderer/canvas themselves are deliberately never torn down
+// mid-session, since another mini-scene can register again at any time),
+// this forces a full teardown. Exists for `pagehide` specifically — a real
+// iOS crash report prompted this, and `pagehide` (navigation away, tab
+// close, bfcache eviction) isn't covered by the `visibilitychange` gate
+// already in place, which only pauses rendering, not frees it. Idempotent:
+// `renderer?.dispose()` and the rest all no-op past the first call, and
+// `ensureRenderer()` transparently rebuilds everything from scratch the
+// next time any caller registers, so a `pagehide` that turns out to be a
+// bfcache round-trip rather than a real unload self-heals on return.
+const disposeRenderer = (): void => {
+  if (rafId !== null) cancelAnimationFrame(rafId);
+  rafId = null;
+  window.removeEventListener("resize", handleResize);
+  document.removeEventListener("visibilitychange", handleVisibility);
+  window.removeEventListener("pagehide", disposeRenderer);
+
+  registrations.forEach((reg) => reg.build.dispose());
+  registrations.clear();
+  renderer?.dispose();
+  canvasEl?.remove();
+  renderer = null;
+  canvasEl = null;
 };
 
 const loop = (time: number) => {
@@ -273,10 +301,24 @@ export const registerViewport = ({
  * additional wiring — the same "one module decides" principle `device-tier.ts`
  * already documents for `isLowPowerDevice()` itself.
  */
+// Both checks gated behind one `typeof window !== "undefined"`, not just
+// the matchMedia one — found via a real bug: `isLowPowerDevice()` (and
+// therefore `detectPerformanceTier`'s `navigator.hardwareConcurrency` read)
+// has no such guard of its own, and Node.js 21+ exposes a built-in
+// `navigator` global, so this was executing server-side during SSR/SSG for
+// every unconditional caller (`ScrollCue`, `ProjectTicker`, `CustomCursor`
+// all read `isReducedMotion()` directly in their render body, no effect or
+// width>0 wrapper). A build/serverless-function environment's own CPU count
+// has nothing to do with any real visitor's device, and worse, a server
+// result that disagreed with the client's own post-hydration read would
+// hydration-mismatch exactly the class of bug this codebase's `width > 0`
+// guards elsewhere (`device-tier.ts`'s own comment) exist to prevent.
+// Surfaced by ADR-0086's console logging showing a "resolved=ultra" tier
+// read during `next build`'s static generation, where no real device
+// exists to resolve a tier for at all. See ADR-0087.
 export const isReducedMotion = (): boolean =>
-  (typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches) ||
-  isLowPowerDevice();
+  typeof window !== "undefined" &&
+  (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isLowPowerDevice());
 
 /** Disposes geometries/materials/textures on every mesh-like object in a scene. */
 export const disposeSceneObjects = (scene: THREE.Scene): void => {

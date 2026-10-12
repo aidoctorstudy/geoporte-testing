@@ -767,7 +767,11 @@ scene file in the codebase without that gate, confirmed by grepping every
 `new THREE.WebGLRenderer` site against `visibilitychange` usage — and
 reports its own frame timestamps to `reportHeroSceneFrame`
 (`performance-monitor.ts`), so a globe-specific slowdown now contributes to
-the sitewide auto-downgrade same as `HeroScene.tsx`'s already did.
+the sitewide auto-downgrade same as `HeroScene.tsx`'s already did. As of
+ADR-0087: also disposes fully on `pagehide` (not just the existing
+ref-count-to-zero path — a real iOS crash report prompted this), and the
+three cloud layers' sphere segment count is capability-scaled
+(`sqrt(particleScale)` off a `64×64` ceiling) rather than a flat constant.
 
 **Route-scoped background exclusivity.** `PlanetBackground.tsx` and
 `AmbientBackground.tsx` both read `isGlassBackgroundRoute()`

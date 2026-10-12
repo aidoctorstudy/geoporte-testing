@@ -50,6 +50,27 @@ const TABLET_MAX_WIDTH = 1024;
  * only, independent of viewport width. See this file's top comment. */
 export const isLowPowerDevice = (): boolean => getOrDetectTier() === "low";
 
+/** iOS Safari/WebKit (and Chrome-for-iOS, which Apple mandates runs on
+ * WebKit too — there is no other rendering engine allowed on iOS) has a
+ * markedly lower WebGL context/memory ceiling than desktop Chromium, a
+ * platform characteristic independent of chip speed: an "ultra"-capability
+ * iPhone has exactly the same constraint as a "low" one. Reused only for
+ * *budget* purposes (how conservatively to bound concurrently-alive WebGL
+ * contexts, see `getCardSceneRootMargin` below) — never for the WebGL
+ * mount/skip decision itself, which stays `isLowPowerDevice()` alone, per
+ * this file's top comment, regardless of platform. See ADR-0087. */
+export const isIOSDevice = (): boolean =>
+  typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/** `rootMargin` for the near-viewport mount/unmount hysteresis gate
+ * dedicated card WebGL scenes use (`ServiceCard.tsx`, ADR-0084/85) —
+ * tighter on iOS, so fewer scenes are ever concurrently alive during a
+ * scroll session, directly targeting iOS's real WebGL memory ceiling
+ * rather than a viewport-width proxy for it (see ADR-0087 — a real crash
+ * report prompted this). */
+export const getCardSceneRootMargin = (): string =>
+  isIOSDevice() ? "400px 0px" : "800px 0px";
+
 export interface TierBudget {
   /** Clamp applied to `window.devicePixelRatio` for any renderer on this tier. */
   dprClamp: number;
