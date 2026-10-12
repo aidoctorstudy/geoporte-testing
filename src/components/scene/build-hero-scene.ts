@@ -1,6 +1,7 @@
 /**
- * Pure three.js setup for the homepage hero — as of 2026-10-12 (ADR-0093), a
- * single particle "GEOPORTE" wordmark glowing via a dedicated bloom
+ * Pure three.js setup for the homepage hero — as of 2026-10-12 (ADR-0093/94),
+ * a single particle Geoporte emblem (the real brand mark, not a text
+ * wordmark — see `PARTICLE_LOGO_SRC` below) glowing via a dedicated bloom
  * composer, over a transparent background so the persistent Earth globe
  * (`PlanetBackground`, mounted at the app root) shows through. Replaces the
  * previous bespoke "digital twin" diorama (valley terrain, bridge, tunnel,
@@ -31,56 +32,50 @@ export interface HeroSceneFraming {
 
 /**
  * Classic "particles form a logotype" technique (the genre this mirrors —
- * motion-graphics demos that spell a wordmark from glowing points on load,
- * then let it drift/breathe and scatter under the cursor): render the brand
- * wordmark to an offscreen 2D canvas, sample which pixels are "on", and use
- * those as the particles' resting positions.
+ * motion-graphics demos that spell a mark from glowing points on load, then
+ * let it drift/breathe and scatter under the cursor): sample which pixels
+ * of an image are "on" (alpha ≥ 128) and use those as the particles'
+ * resting positions. As of this revision, the source is the real brand
+ * emblem (`/assets/logo/geoporte-logo.png` — the same navbar/footer logo,
+ * `GeoporteLogo.tsx`'s own asset: 480×480, alpha-cutout, confirmed via its
+ * PNG header) rather than canvas-rendered text, per an explicit "use the
+ * actual logo, not the wordmark" brief.
  */
-const PARTICLE_LOGO_TEXT = "GEOPORTE";
+const PARTICLE_LOGO_SRC = "/assets/logo/geoporte-logo.png";
 const PARTICLE_LOGO_ASSEMBLE_DURATION_S = 2;
-const PARTICLE_LOGO_CANVAS_WIDTH = 960;
-const PARTICLE_LOGO_CANVAS_HEIGHT = 220;
-const PARTICLE_LOGO_TARGET_WIDTH = 6.4;
-/** World-space position biasing the wordmark toward the right half of the
+/** Diameter, in world units, the assembled emblem should occupy — large
+ * and prominent (the brief's own "large on the right side"), comparable to
+ * the old wordmark's ~6.4-unit width. */
+const PARTICLE_LOGO_TARGET_SIZE = 5.6;
+/** World-space position biasing the emblem toward the right half of the
  * frame, so it reads as "right side" against the 2D text content anchored
  * left in `HeroSection.tsx` (that file's own `max-w-xl` left column is the
  * matching half of this layout). Not visually tuned against a live browser
- * — no Chrome extension connected the session this was built — worth a
- * real look before calling this placement settled. */
+ * — no Chrome extension connected any session this was built across —
+ * worth a real look before calling this placement settled. */
 const PARTICLE_LOGO_POSITION: [number, number, number] = [2.6, 0.2, 0];
 const HOVER_REPULSE_RADIUS = 1.5;
 const HOVER_REPULSE_STRENGTH = 1;
 const HOVER_SPRING_RATE = 0.12;
 
-/** Renders `text` to an offscreen canvas and returns one 3D point per
- * sampled "on" pixel (alpha ≥ 128), centred on the origin and scaled so the
- * text is `targetWidth` world units wide. `step` controls sampling density
- * (and therefore particle count) — larger on lower-capability tiers. */
-const sampleTextParticlePositions = (
-  text: string,
-  targetWidth: number,
+/** Draws `image` to an offscreen canvas at its own native resolution and
+ * returns one 3D point per sampled "on" pixel (alpha ≥ 128 — the logo PNG
+ * is already background-removed, so this is a clean cutout, not a guess),
+ * centred on the origin and scaled so the longer image dimension is
+ * `targetSize` world units. `step` controls sampling density (and
+ * therefore particle count) — larger on lower-capability tiers. Same-origin
+ * asset, so no `crossOrigin`/canvas-taint handling is needed. */
+const sampleImageParticlePositions = (
+  image: HTMLImageElement,
+  targetSize: number,
   step: number,
 ): Float32Array => {
   const canvas = document.createElement("canvas");
-  canvas.width = PARTICLE_LOGO_CANVAS_WIDTH;
-  canvas.height = PARTICLE_LOGO_CANVAS_HEIGHT;
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) return new Float32Array(0);
-
-  // A bold, geometric system sans — not one of this project's two actual
-  // webfonts (Playfair Display's thin serifs would scatter into
-  // disconnected dots at particle resolution; Inter would work but isn't
-  // guaranteed loaded by the time this runs). Only used for sampling pixel
-  // positions, never rendered on screen, so it doesn't need to match either.
-  ctx.fillStyle = "#fff";
-  ctx.font = `700 ${PARTICLE_LOGO_CANVAS_HEIGHT * 0.56}px system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  // `letterSpacing` is a standard (if newer) 2D-context property — widens
-  // the sampled glyphs slightly so tightly-kerned letters still resolve
-  // into visually separate particle clusters rather than one dense blob.
-  ctx.letterSpacing = "6px";
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const samples: number[] = [];
@@ -91,7 +86,7 @@ const sampleTextParticlePositions = (
     }
   }
 
-  const scale = targetWidth / canvas.width;
+  const scale = targetSize / Math.max(canvas.width, canvas.height);
   const positions = new Float32Array((samples.length / 2) * 3);
   for (let i = 0; i < samples.length / 2; i++) {
     positions[i * 3] = (samples[i * 2] - canvas.width / 2) * scale;
@@ -106,49 +101,37 @@ interface ParticleLogo {
   /** Advances the assembly ease, idle breathe/drift, and (once settled) the
    * cursor-repulsion scatter — call once per `renderFrame` with the
    * pointer's position in this object's own local space (`null` whenever
-   * the pointer hasn't moved yet or doesn't currently hit the wordmark's
+   * the pointer hasn't moved yet or doesn't currently hit the emblem's
    * plane), or once with a saturating `elapsedSeconds` and a `null` pointer
    * from `renderStatic` so a reduced-motion/one-frame render shows the
-   * fully-formed logo rather than mid-scatter. */
+   * fully-formed emblem rather than mid-scatter. A no-op (particles stay
+   * invisible) until the source image has finished loading — see the
+   * `image.onload` handler below. */
   update: (elapsedSeconds: number, pointerLocal: THREE.Vector2 | null) => void;
+  /** Forces the fully-assembled resting frame regardless of timing — see
+   * its own doc comment below for why this is a separate method from
+   * `update`. */
+  renderAssembledOnce: () => void;
 }
 
-/** Builds the particle GEOPORTE wordmark — each particle eases from a
- * scattered sphere into its sampled text position over
+/** Builds the particle Geoporte emblem — loads `PARTICLE_LOGO_SRC`
+ * asynchronously (image decode, not available synchronously the way
+ * canvas-rendered text was), then once ready, each particle eases from a
+ * scattered sphere into its sampled position over
  * `PARTICLE_LOGO_ASSEMBLE_DURATION_S`, then (once settled) gently breathes
  * and drifts in place, and scatters away from the cursor when it comes
- * close, springing back once it moves away. */
-const buildParticleLogo = (particleScale: number): ParticleLogo => {
-  // Sparser sampling (fewer particles) on lower-capability tiers — mirrors
-  // every other particleScale consumer in this codebase.
-  const step = Math.max(2, Math.round(4 / Math.sqrt(particleScale)));
-  const target = sampleTextParticlePositions(PARTICLE_LOGO_TEXT, PARTICLE_LOGO_TARGET_WIDTH, step);
-  const count = target.length / 3;
-
-  const start = new Float32Array(count * 3);
-  const phase = new Float32Array(count);
-  const breatheSpeed = new Float32Array(count);
-  // Current cursor-repulsion offset per particle (the wordmark is flat-ish,
-  // so only x/y need it), smoothed toward its target each frame so
-  // particles spring back rather than snapping when the cursor leaves.
-  const hoverX = new Float32Array(count);
-  const hoverY = new Float32Array(count);
-
-  for (let i = 0; i < count; i++) {
-    // Scattered start: a loose sphere around the text's resting position.
-    const radius = 4.5 + Math.random() * 3.5;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(Math.random() * 2 - 1);
-    start[i * 3] = Math.sin(phi) * Math.cos(theta) * radius;
-    start[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
-    start[i * 3 + 2] = Math.cos(phi) * radius;
-    phase[i] = Math.random() * Math.PI * 2;
-    breatheSpeed[i] = 0.5 + Math.random() * 0.5;
-  }
-
-  const positions = new Float32Array(start);
+ * close, springing back once it moves away.
+ *
+ * `onReady` is called once, synchronously from the image's `onload`, after
+ * the real geometry is in place — the caller uses it to force an immediate
+ * `composer.render()`. Without it, a reduced-motion visitor (whose
+ * `renderStatic()` runs exactly once, before the image has had any chance
+ * to finish loading) would never see the emblem at all: the animated loop
+ * would eventually pick it up on its next frame, but the static path never
+ * gets a "next frame". */
+const buildParticleLogo = (particleScale: number, onReady: () => void): ParticleLogo => {
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(3), 3));
   const material = new THREE.PointsMaterial({
     color: COLOR.logoGlow,
     size: 0.05,
@@ -158,14 +141,71 @@ const buildParticleLogo = (particleScale: number): ParticleLogo => {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
-
   const points = new THREE.Points(geometry, material);
   points.frustumCulled = false;
 
-  const update = (elapsedSeconds: number, pointerLocal: THREE.Vector2 | null) => {
-    const assembleT = Math.min(elapsedSeconds / PARTICLE_LOGO_ASSEMBLE_DURATION_S, 1);
-    const ease = 1 - Math.pow(1 - assembleT, 3); // easeOutCubic
-    const settled = assembleT >= 1;
+  let count = 0;
+  let start: Float32Array | null = null;
+  let target: Float32Array | null = null;
+  let phase: Float32Array | null = null;
+  let breatheSpeed: Float32Array | null = null;
+  let hoverX: Float32Array | null = null;
+  let hoverY: Float32Array | null = null;
+  // Anchors the assembly ease to the first `update()` call *after* the
+  // image is ready, not to `elapsedSeconds === 0` — the image can take an
+  // arbitrary amount of time to decode, and without this the ease would
+  // already be partway (or fully) through `PARTICLE_LOGO_ASSEMBLE_DURATION_S`
+  // by the time real positions exist, reading as an instant pop-in instead
+  // of an assembly.
+  let assembleStartSeconds: number | null = null;
+
+  // Sparser sampling (fewer particles) on lower-capability tiers — mirrors
+  // every other particleScale consumer in this codebase. A solid-filled
+  // emblem icon samples far denser than sparse wordmark text at the same
+  // step, so the baseline step is larger than the old text sampler used.
+  const step = Math.max(3, Math.round(6 / Math.sqrt(particleScale)));
+
+  const image = new Image();
+  image.onload = () => {
+    target = sampleImageParticlePositions(image, PARTICLE_LOGO_TARGET_SIZE, step);
+    count = target.length / 3;
+
+    start = new Float32Array(count * 3);
+    phase = new Float32Array(count);
+    breatheSpeed = new Float32Array(count);
+    hoverX = new Float32Array(count);
+    hoverY = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      // Scattered start: a loose sphere around the emblem's resting position.
+      const radius = 4.5 + Math.random() * 3.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      start[i * 3] = Math.sin(phi) * Math.cos(theta) * radius;
+      start[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
+      start[i * 3 + 2] = Math.cos(phi) * radius;
+      phase[i] = Math.random() * Math.PI * 2;
+      breatheSpeed[i] = 0.5 + Math.random() * 0.5;
+    }
+
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(start), 3));
+    onReady();
+  };
+  image.onerror = () => {
+    console.error(`[hero-scene] failed to load particle logo source: ${PARTICLE_LOGO_SRC}`);
+  };
+  image.src = PARTICLE_LOGO_SRC;
+
+  /** Shared per-particle write — `ease`/`settled` are supplied by the two
+   * callers below rather than computed in here, so the "force fully
+   * assembled, right now" path (`renderAssembledOnce`) can skip the
+   * `assembleStartSeconds` timing state entirely rather than fighting it. */
+  const writeParticles = (
+    ease: number,
+    settled: boolean,
+    elapsedSeconds: number,
+    pointerLocal: THREE.Vector2 | null,
+  ) => {
+    if (!target || !start || !phase || !breatheSpeed || !hoverX || !hoverY) return;
     const posAttr = geometry.attributes.position;
 
     for (let i = 0; i < count; i++) {
@@ -176,7 +216,7 @@ const buildParticleLogo = (particleScale: number): ParticleLogo => {
       const baseZ = start[i * 3 + 2] + (target[i * 3 + 2] - start[i * 3 + 2]) * ease;
 
       // Repulsion only once settled — scattering mid-assembly would fight
-      // the ease and never visibly resolve into the wordmark.
+      // the ease and never visibly resolve into the emblem.
       let pushX = 0;
       let pushY = 0;
       if (settled && pointerLocal) {
@@ -198,7 +238,30 @@ const buildParticleLogo = (particleScale: number): ParticleLogo => {
     material.opacity = 0.3 + ease * 0.6 + (settled ? Math.sin(elapsedSeconds * 0.8) * 0.08 : 0);
   };
 
-  return { points, update };
+  const update = (elapsedSeconds: number, pointerLocal: THREE.Vector2 | null) => {
+    if (count === 0) return;
+    assembleStartSeconds ??= elapsedSeconds;
+    const localElapsed = elapsedSeconds - assembleStartSeconds;
+    const assembleT = Math.min(Math.max(localElapsed / PARTICLE_LOGO_ASSEMBLE_DURATION_S, 0), 1);
+    const ease = 1 - Math.pow(1 - assembleT, 3); // easeOutCubic
+    writeParticles(ease, assembleT >= 1, elapsedSeconds, pointerLocal);
+  };
+
+  /** Forces the fully-assembled, non-breathing resting frame, independent
+   * of `assembleStartSeconds`/the time-based `update()` path above — used
+   * both by `renderStatic()` (every reduced-motion render) and by
+   * `onReady` (the one render that fires the instant the image finishes
+   * loading, for a reduced-motion visitor whose single `renderStatic()`
+   * call already happened before that — see `onReady`'s own comment).
+   * Deliberately doesn't touch `assembleStartSeconds`: if the animated
+   * loop is also running, its own next `update()` call still anchors and
+   * eases normally from the true scatter, unaffected by this. */
+  const renderAssembledOnce = () => {
+    if (count === 0) return;
+    writeParticles(1, false, 0, null);
+  };
+
+  return { points, update, renderAssembledOnce };
 };
 
 export const createHeroScene = (
@@ -209,7 +272,7 @@ export const createHeroScene = (
   // Deliberately no `scene.background`/fog — the renderer's canvas (`alpha:
   // true` below) stays transparent wherever nothing is drawn, so the
   // persistent Earth globe and ambient shapes (mounted at the app root)
-  // show through behind the particle wordmark. Reverses ADR-0068's "the
+  // show through behind the particle emblem. Reverses ADR-0068's "the
   // hero occludes the globe" decision for this one scene — that decision
   // existed to let the old digital-twin diorama read as the hero's only 3D
   // content; with the diorama removed outright, there's nothing left to
@@ -233,13 +296,25 @@ export const createHeroScene = (
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
-  const particleLogo = buildParticleLogo(particleScale);
+  // `onReady` references `composer`, assigned just below — safe because
+  // the callback only ever runs later, asynchronously, from the image's
+  // `onload` (well after `composer` exists), never during this
+  // synchronous construction. Forces one fully-assembled frame — the fix
+  // for a reduced-motion visitor whose one-and-only `renderStatic()` call
+  // already happened before the image had any chance to load (see
+  // `renderAssembledOnce`'s own comment); harmless, invisible-in-practice
+  // no-op for the normal animated path, which picks the real geometry up
+  // on its own very next frame regardless.
+  const particleLogo = buildParticleLogo(particleScale, () => {
+    particleLogo.renderAssembledOnce();
+    composer.render();
+  });
   particleLogo.points.position.set(...PARTICLE_LOGO_POSITION);
   scene.add(particleLogo.points);
 
   // Selective bloom would need the 3-composer/`THREE.Layers` trick
   // `build-planet-scene.ts` uses (ADR-0034) — not needed here, since the
-  // *entire* visible scene is the particle wordmark and everything in frame
+  // *entire* visible scene is the particle emblem and everything in frame
   // is meant to glow. A single composer + `UnrealBloomPass` over the whole
   // render is both correct and simpler; mirrors `build-solaris-scene.ts`'s
   // own single-composer shape. optimize-3d-scene skill §7: scale bloom by
@@ -260,13 +335,13 @@ export const createHeroScene = (
 
   // Pointer — smoothed for the gentle camera parallax below, and raycast
   // each frame (scratch objects below, never reallocated per-frame) to find
-  // where the cursor sits in the wordmark's own local space, driving the
+  // where the cursor sits in the emblem's own local space, driving the
   // hover-repulsion in `buildParticleLogo`. `setPointer` is only ever called
   // by `HeroScene.tsx` after a *real* `pointermove` (its own ticker
   // subscription gates on `pointer.hasMoved` before calling this) — never
   // synthesized from the shared pointer store's default (0,0) snapshot,
   // which would otherwise punch a permanent repulsion hole through the
-  // centre of the wordmark on every touch device and every page that
+  // centre of the emblem on every touch device and every page that
   // hasn't been touched yet (optimize-3d-scene skill §11).
   let pointerTargetX = 0;
   let pointerTargetY = 0;
@@ -295,12 +370,17 @@ export const createHeroScene = (
   };
 
   const renderStatic = () => {
-    // Forces the particle logo to its fully-assembled resting state rather
-    // than the scattered construction state it starts in — `renderStatic`
-    // never calls `renderFrame`'s own time-driven update, so without this a
-    // reduced-motion visitor would see a permanent scattered particle cloud
-    // instead of the wordmark. No pointer interaction under reduced motion.
-    particleLogo.update(PARTICLE_LOGO_ASSEMBLE_DURATION_S, null);
+    // Forces the fully-assembled resting state rather than the scattered
+    // construction state (or, before the image has loaded, nothing at
+    // all) — `renderStatic` never calls `renderFrame`'s own time-driven
+    // `update()`, so without this a reduced-motion visitor would see
+    // either a permanent scattered particle cloud or an empty canvas,
+    // never the emblem. No pointer interaction under reduced motion. Also
+    // called (possibly more than once — `HeroScene.tsx` calls this again
+    // on every resize while `prefers-reduced-motion` holds) independent of
+    // whether the image has loaded yet; `renderAssembledOnce` itself
+    // no-ops cleanly until it has.
+    particleLogo.renderAssembledOnce();
     composer.render();
   };
 

@@ -37,6 +37,45 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Hero particle effect switched from a text "GEOPORTE" wordmark to the real Geoporte emblem image — sampled asynchronously, with a reduced-motion race caught and fixed before shipping)
+
+Same-day follow-up to the hero redesign below: use the actual circular
+logo emblem (`/assets/logo/geoporte-logo.png`, the navbar/footer mark),
+not text, for the particle effect. Same colour, same assembly/breathe,
+large on the right. Full reasoning in [[decisions-log]] ADR-0094; short
+version here.
+
+- Confirmed the asset first, not assumed: a `node` PNG-header read
+  showed 480×480, RGBA (has alpha) — already background-removed, so the
+  same alpha-threshold sampling technique applies directly.
+- **Real architecture change, not just a swapped function**: image
+  decode is asynchronous (`image.onload`), unlike canvas-rendered text,
+  but `createHeroScene` still has to return synchronously (every other
+  scene builder in this codebase shares that contract). The
+  `THREE.Points` object is now built immediately with an invisible
+  placeholder, then its real position attribute is swapped in once the
+  image loads.
+- The assembly timer now anchors to "the image became ready", not "the
+  scene was created" — otherwise a slow decode would skip partway
+  through the 2s ease before any real positions existed.
+- **Caught a real race before shipping, not after**: a reduced-motion
+  visitor's one-and-only `renderStatic()` call fires before the async
+  image could possibly have loaded — with the old synchronous text
+  design that was fine, but with an async image it meant a
+  reduced-motion visitor would never see the emblem at all. Fixed with a
+  second force-render once the image is ready
+  (`renderAssembledOnce()`), built deliberately independent of the
+  animated path's own assembly timer so it can't desync it if both are
+  running at once — an earlier version of the fix would have caused a
+  visible assemble→scatter→reassemble glitch on the very next frame,
+  caught by reasoning through the interaction, not by watching it happen.
+- Particle sampling density re-tuned (baseline step doubled) for a
+  solid-filled icon shape rather than sparse wordmark strokes, which
+  would otherwise oversample by a large factor at the old step value.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; both `next build` (Turbopack) and `next build --webpack`
+  clean. **Not verified in a live browser this turn.**
+
 ## 2026-10-12 (Homepage hero redesigned "AiMatic-style": the digital-twin diorama removed outright, replaced by a two-column layout with a glowing particle "GEOPORTE" wordmark and a now-transparent background over the persistent globe)
 
 Explicit redesign brief naming a reference style. Full reasoning in

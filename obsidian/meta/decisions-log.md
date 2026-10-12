@@ -17,6 +17,88 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0094 — Hero particle effect switched from a text "GEOPORTE" wordmark to the real Geoporte emblem image, sampled asynchronously
+
+**Status:** Accepted · 2026-10-12 · **Amends ADR-0093 (same day, same feature).**
+
+**Context.** Explicit follow-up: use the actual Geoporte circular logo
+emblem (the navbar/footer globe icon, `/assets/logo/geoporte-logo.png`),
+not the "GEOPORTE" text wordmark ADR-0093 shipped a few hours earlier.
+Same colour (`#4FC3F7`), same assembly/breathe animation, large on the
+right side, everything else unchanged.
+
+**Decision — sample the real asset, confirmed before coding.** Checked
+the actual file rather than assuming: `node`'s PNG-header read on
+`public/assets/logo/geoporte-logo.png` confirmed 480×480, colour type 6
+(RGBA, has alpha) — already background-removed (per the asset's own
+catalog note, `scripts/process-logo.mjs`'s luminance-threshold cutout),
+so the exact same "alpha ≥ 128 is an \"on\" pixel" sampling technique the
+text sampler used applies directly, no new logic needed for the
+alpha-threshold step itself.
+
+**Decision — image loading forced a real architecture change, not just a
+swapped sampling function.** Canvas-rendered text is available
+synchronously the instant it's drawn; an `<img>`'s pixel data is not —
+`image.onload` is asynchronous, and `createHeroScene` must still return
+its `HeroSceneHandle` synchronously (every other scene factory in this
+codebase shares that same contract; changing it would ripple through
+`HeroScene.tsx` and all 8 service-page builders). Resolved by building the
+`THREE.Points` object immediately with a one-vertex invisible placeholder,
+then replacing its position attribute once `image.onload` fires with the
+real sampled positions and per-particle scatter/phase arrays (previously
+all built synchronously inside one function; now split across
+construction time and the `onload` callback).
+
+**Decision — anchor the assembly timer to "image ready", not "scene
+created".** A naive port would still start easing from `elapsedSeconds`
+measured from scene construction — if the image takes any real time to
+decode, the ease would already be partway (or fully) through
+`PARTICLE_LOGO_ASSEMBLE_DURATION_S` the instant real positions exist,
+reading as an instant pop-in rather than an assembly. `assembleStartSeconds`
+now anchors to the first successful `update()` call, i.e. the first call
+after the image is ready — found and fixed by reasoning through the
+timing, not by observing it (no live browser available).
+
+**Decision — a real race the image swap introduced, found and fixed
+before shipping, not after.** `HeroScene.tsx` calls `renderStatic()`
+exactly once for a reduced-motion visitor, synchronously, long before an
+async image load could possibly resolve. With the original (synchronous
+text-canvas) design, forcing full assembly inside that one call was
+sufficient. With an async image, that one call now fires while `count`
+is still `0` — the reduced-motion visitor would see nothing, forever, with
+no second chance (the animated loop that would otherwise pick up the real
+geometry on its next frame never runs for this visitor at all). Fixed with
+a second, independent force-render: `onReady` (fired once from
+`image.onload`) calls a new `renderAssembledOnce()` — deliberately not the
+time-based `update()`, and deliberately not touching `assembleStartSeconds`
+at all, so it can't corrupt the *animated* path's own independent timing
+if that path happens to be running concurrently (an earlier draft of this
+fix called `update()` directly from `onReady`, which would have anchored
+`assembleStartSeconds` to an arbitrary value and produced a visible
+assemble→scatter→reassemble glitch on the very next real frame — caught
+by reasoning through the interaction before writing it, not by observing
+the bug).
+
+**Decision — particle density re-tuned for a solid-filled icon, not
+sparse text.** The old sampler's baseline step (tuned for thin wordmark
+strokes) would oversample a solid-filled circular emblem by a large
+factor at the same step value — the new sampler's baseline step is
+doubled (6 vs. the text sampler's 4) to land in a comparable, safe
+particle-count range regardless of exactly how much of the 480×480 canvas
+the emblem's circular silhouette fills. Not measured against a live
+render; a documented, reasoned choice rather than an arbitrary one.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean. `.claude/scripts/
+verify.sh`: unchanged (same pre-existing FAIL/WARNs — a raw `new Image()`
+in a `.ts` scene-builder file isn't JSX, so the "raw `<img>`" markup rule
+doesn't fire). Both `next build` (Turbopack) and `next build --webpack`
+clean. **Not verified in a live browser this turn** — same caveat as
+ADR-0093; the emblem's visual density, the assembly timing fix, and the
+reduced-motion race fix are all reasoned through code review, not
+confirmed by watching it run.
+
+---
+
 ## ADR-0093 — Homepage hero redesigned "AiMatic-style": the digital-twin diorama removed outright, replaced by a two-column layout (left text / right particle wordmark) with the hero background now transparent over the persistent globe
 
 **Status:** Accepted · 2026-10-12 · **Reverses ADR-0068's "hero occludes the globe" decision; supersedes ADR-0023's digital-twin diorama and the particle logo placement from this session's earlier, smaller particle-logo addition.**
