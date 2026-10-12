@@ -17,6 +17,106 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0085 — Dedicated card WebGL contexts unmount again once scrolled well past (hysteresis, not a one-way latch); third width-based "mobile" degradation request declined, same reasoning as ADR-0081/83
+
+**Status:** Accepted · 2026-10-12 · **Extends ADR-0084; declines a request on the same grounds as ADR-0081/83.**
+
+**Context.** Third request in this project's history to gate WebGL/motion
+degradation on `screen.width` / "mobile" rather than device capability —
+this one specifically: max 2 concurrent WebGL contexts, −50% particles, DPR
+capped at 1, ambient shapes off, ticker off, globe half-resolution, all
+mini-scenes paused, every point conditioned on width alone, "regardless of
+tier." Justification given: "Mobile Safari has limited WebGL memory" —
+correct as a premise (WebKit's WebGL implementation is genuinely more
+memory/context-constrained than desktop Chromium, independent of chip
+speed), but the prescribed fix conflates "narrow viewport" with "weak
+browser" exactly the way ADR-0078 reversed and ADR-0081/83 both declined to
+reintroduce — and would catch this request's own point of comparison, a
+real iPhone 15 Pro Max, the same device ADR-0078/79 specifically fought to
+keep on full WebGL.
+
+**Decision — declined the width gate, third time, briefly.** Not
+re-litigated at length in the changelog or in chat — the user has now
+confirmed the capability-based approach twice (ADR-0081, ADR-0083), so a
+short pointer back to that reasoning was judged sufficient rather than a
+full re-explanation.
+
+**Decision — found and fixed the real gap underneath the request.**
+Re-reading ADR-0084's near-viewport deferral while evaluating "pause all
+mini-scenes, max 2 contexts" surfaced a genuine, capability-*agnostic*
+shortcoming: `ServiceCard.tsx`'s gate was a one-way latch
+(`sceneWarmed`, set `true` once and never reset) — it delayed reaching the
+pre-ADR-0084 context ceiling, it didn't lower it. A user who scrolls past
+all 7 `DEDICATED_CARD_SCENES` cards still ends up with all 7 contexts
+mounted simultaneously by the end, same as before that fix, just reached
+progressively instead of instantly.
+
+**Fix.** Replaced the latch with the live `useDynamicInView` boolean
+directly (`rootMargin: "800px 0px"`, unchanged from ADR-0084) — a card's
+`<HeroScene>` now mounts *and unmounts* following actual viewport
+proximity. The symmetric `rootMargin` (IntersectionObserver expands the
+root on every side, so "in view" starts 800px before arrival and ends
+800px after departure) gives hysteresis for free: wide enough that normal
+scrolling never thrashes mount/unmount every frame, tight enough to bound
+the concurrent ceiling to roughly "however many cards fit in a ~1600px
+scroll band," not every card ever visited. `HeroScene`'s own
+`isLowPowerDevice()` gate is untouched and still applies underneath this on
+every tier.
+
+Two follow-on fixes surfaced while building this, both independently
+correct regardless of cause:
+- Switched from `useDynamicInView({ trigger: cardRef })` to the hook's
+  callback-ref form (`setNode`) — the proven pattern already used by
+  `StatCounter`/`ExperienceStatBox`. `trigger` reads `trigger.current`
+  once, inside an effect whose dependency array never changes again
+  afterward; whether it ever observes anything then depends on the ref
+  already being attached at that exact moment, which isn't guaranteed the
+  way it is for an *externally*-supplied, already-mounted trigger (how
+  `in-view.tsx` — the protected engine's own `<Inview>` — uses it).
+- That callback had to be `useCallback`-memoized, not an inline closure:
+  `<Hover>`'s `ref` prop is a callback ref, and React detaches (`null`)
+  then reattaches a callback ref whenever its *identity* changes between
+  renders, not just on mount/unmount. An unmemoized closure gets a new
+  identity every render, and the hook's own state setter triggers a
+  render — so every render it caused would detach-then-reattach,
+  re-triggering the setter again: a self-sustaining churn that never let
+  the observer hold a stable-enough subscription to report back.
+
+**Verification surfaced an important correction to ADR-0084's own "flagged,
+not resolved" item.** Live-testing this fix initially looked completely
+broken (zero dedicated-card canvases ever appeared, even scrolled directly
+onto a card) — traced to the *test tab*, not the code:
+`document.hidden === true`, `document.hasFocus() === false`, zero
+`requestAnimationFrame` ticks in a full second. A backgrounded tab, which
+Chrome throttles `IntersectionObserver` callbacks on right along with rAF.
+Forcing a `Page.captureScreenshot` (forces a compositor tick) unblocked it
+immediately: 12 canvases at the services section, 5 again after scrolling
+back to the top, both directions confirmed working as designed. This
+strongly implicates the **same** mechanism in ADR-0084's own unresolved
+"genuine renderer hang... 45s `Runtime.evaluate` timeouts" finding — a
+severely deprioritized background tab reads exactly like a hang to CDP
+automation, not an infinite loop. Downgrading that finding from "worth
+reproducing via DevTools" to "most likely a test-harness artifact" — see
+the changelog for the explicit correction, since ADR-0084 itself still
+reads as an open concern.
+
+**Why this is the actually-correct answer to the stated concern.** Every
+platform benefits from a bounded concurrent-context count — iOS Safari
+most of all, since it's the one with a real documented ceiling — without
+needing to be narrow to get it. A width gate would have "fixed" the
+concern for exactly the wrong set of devices: it demotes a capable wide
+Android tablet alongside a weak one, and spares a narrow *desktop* browser
+window that never had the WebKit constraint in the first place.
+
+**When building.** When a request's justification is a real platform/engine
+constraint (here: WebKit's WebGL limits) but its prescribed implementation
+is a width/viewport check, implement the platform-appropriate version
+instead of the literal one — the two are not the same axis, and this
+project has now hit that exact mismatch three times (ADR-0081, ADR-0083,
+this one).
+
+---
+
 ## ADR-0084 — Globe render loop gated on tab visibility and wired into the FPS watchdog; dedicated card WebGL contexts deferred to near-viewport (12→5 canvases on initial load)
 
 **Status:** Accepted · 2026-10-12 · **Follows the `optimize-3d-scene` skill's §0/§4; extends ADR-0082.**

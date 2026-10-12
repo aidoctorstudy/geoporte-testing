@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { Hover } from "@/components/animation/springs/hover";
 import { SceneViewport } from "@/components/scene/SceneViewport";
 import { HeroScene } from "@/components/scene/HeroScene";
@@ -58,39 +58,60 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   const dedicatedVideo = DEDICATED_CARD_VIDEOS[service.slug];
   const builder = MINI_SCENES[service.slug];
 
-  // Defers each dedicated card scene's own `WebGLRenderer`/`EffectComposer`
-  // trio until the card is within ~one viewport of coming on screen, instead
-  // of every one of the up to 7 `DEDICATED_CARD_SCENES` cards creating its
-  // own fresh WebGL context the instant `ServicesSection` mounts (which
-  // happens on initial page load, regardless of scroll position — nothing
-  // about SSR/hydration defers it). Up to 7 contexts plus the always-on
-  // globe/ambient/shared-mini-viewport singletons is close to or past the
-  // context budget real browsers enforce (notably mobile Safari), and a
-  // dropped context reads as "the scene never showed up" or general jank —
-  // not a GPU-power problem, a context-count one. `HeroScene`'s own
-  // `isLowPowerDevice()` gate still applies underneath this — on a tier
-  // that skips WebGL outright, "warming" early just swaps in the (free)
-  // CSS fallback sooner, not a wasted context. Once warmed, stays mounted
-  // (no re-gating on scroll back out) — `HeroScene`'s own
-  // `IntersectionObserver` already pauses the render *loop* for an
-  // off-screen card; tearing the whole context down and recreating it on
-  // every scroll in/out would cost more than it saves.
-  const [, nearView] = useDynamicInView({ trigger: cardRef, rootMargin: "800px 0px" });
-  const [sceneWarmed, setSceneWarmed] = useState(false);
-  useEffect(() => {
-    if (nearView) setSceneWarmed(true);
-  }, [nearView]);
+  // Mounts each dedicated card scene's own `WebGLRenderer`/`EffectComposer`
+  // trio only while the card is within ~800px of the viewport — not just
+  // deferred until first arrival (ADR-0084), but *unmounted* again once
+  // scrolled well past, instead of accumulating forever. A one-way "warm
+  // once, keep forever" latch (this component's previous shape) still lets
+  // total concurrent contexts climb back up to the pre-ADR-0084 count by the
+  // time a user has scrolled past all 7 `DEDICATED_CARD_SCENES` cards — it
+  // only delayed reaching that ceiling, it didn't lower it. Symmetric
+  // `rootMargin` (expands the intersection root by 800px on every side, so
+  // a card is "in view" from 800px before it arrives until 800px after it
+  // leaves) gives this hysteresis for free: generous enough that ordinary
+  // scrolling never thrashes mount/unmount, tight enough to bound the
+  // concurrent ceiling to roughly "however many cards fit in a ~1600px
+  // scroll band" instead of every card ever visited. This is the real,
+  // capability- and platform-agnostic answer to "Mobile Safari has limited
+  // WebGL memory" — every device benefits from a bounded context count,
+  // not just narrow ones, and a capable phone (this project's own iPhone
+  // 15 Pro Max example — see ADR-0078/79/81/83) keeps full WebGL rather
+  // than losing it to a viewport-width check. `HeroScene`'s own
+  // `isLowPowerDevice()` gate still applies underneath this regardless.
+  //
+  // Uses the callback-ref form (`setNode`), not `trigger: cardRef` — proven
+  // pattern, same as `StatCounter`/`ExperienceStatBox`. `cardRef` is still
+  // needed separately for `hoverRef` on the `SceneViewport` branch below,
+  // so both refs are set from one `useCallback`-memoized callback — not an
+  // inline closure: `Hover`'s `ref` prop is a callback ref, and React
+  // detaches (`null`) then reattaches a callback ref whenever its identity
+  // changes between renders, not just on mount/unmount. An unmemoized
+  // closure gets a new identity every render, and `setInViewNode` (the
+  // state setter driving `nearView`) itself triggers a render — so every
+  // render it caused would detach-then-reattach the ref, re-triggering
+  // `setInViewNode` again: a loop that churns without ever letting the
+  // `IntersectionObserver` hold a stable-enough subscription to report
+  // back, which is what silently made `nearView` never turn `true` before
+  // this was memoized.
+  const [setInViewNode, nearView] = useDynamicInView({ rootMargin: "800px 0px" });
+  const setCardNode = useCallback(
+    (node: HTMLElement | null) => {
+      cardRef.current = node;
+      setInViewNode(node);
+    },
+    [setInViewNode],
+  );
 
   return (
     <Hover
-      ref={cardRef}
+      ref={setCardNode}
       tag="article"
       from={{ y: 0 }}
       to={{ y: -8 }}
       config={{ tension: 300, friction: 24 }}
       className="border-line bg-surface hover:border-accent/60 relative overflow-hidden rounded-2xl border p-7 transition-colors duration-[var(--duration-normal)] ease-entrance"
     >
-      {dedicatedScene && sceneWarmed && (
+      {dedicatedScene && nearView && (
         <>
           <HeroScene
             createScene={dedicatedScene}

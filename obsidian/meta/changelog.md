@@ -37,6 +37,75 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Dedicated card WebGL contexts now unmount again once scrolled well past, not just deferred on arrival — bounds the concurrent ceiling for every device; a width-based "mobile" degradation request declined for the third time, same iPhone 15 Pro Max reasoning)
+
+Client request: "Mobile Safari has limited WebGL memory," with a 7-point
+fix list gated entirely on `screen.width < 1024` / "on mobile" — max 2
+WebGL contexts, −50% particles, DPR capped at 1, ambient shapes off, ticker
+off, globe at half resolution, all mini-scenes paused, all **regardless of
+device capability**. The premise (mobile Safari has real, documented WebGL
+memory/context constraints independent of chip speed) is legitimate; the
+prescribed fix (gate on viewport width) is the same pattern declined in
+ADR-0081 and ADR-0083 — it would catch this request's own named device, a
+real iPhone 15 Pro Max, exactly like the previous two. Declined the width
+gate again, same reasoning, briefly (not re-litigated at length — the user
+has now confirmed the capability-based approach twice). Checked each of the
+7 points against what already exists:
+
+- DPR cap, particle counts, ambient-shape gating, ticker pause-on-
+  reduced-motion: all already capability-driven (`isLowPowerDevice()`/
+  `isReducedMotion()`/`getTierBudget`), not width-driven. Width-gating them
+  instead would be a regression for any capable phone, not an improvement.
+- "Pause all mini-scenes, max 2 contexts": partially already true
+  (ADR-0084's near-viewport deferral) — but re-reading that fix surfaced a
+  real, capability-*agnostic* gap worth closing: it only delayed reaching
+  the pre-fix context ceiling, it didn't lower it. A one-way "warm once,
+  keep forever" latch meant total concurrent contexts still climbed back
+  toward 12 by the time a user had scrolled past all 7
+  `DEDICATED_CARD_SCENES` cards.
+
+**Fixed:** `ServiceCard.tsx`'s dedicated-scene gate is no longer a one-way
+latch — it now tracks the live `IntersectionObserver` state with a
+symmetric 800px `rootMargin` (expands the intersection root on every side),
+so a card's WebGL context unmounts again once scrolled ~800px past, not
+just deferred on arrival. This bounds the concurrent context ceiling to
+roughly "however many cards fit in a ~1600px scroll band" for every device
+— capable phone or desktop alike — rather than every card the user has ever
+scrolled past. This is judged the actually-correct, capability-agnostic
+answer to "Mobile Safari has limited WebGL memory": every platform
+benefits from a bounded context count, and a device doesn't need to be
+narrow to benefit from it.
+
+**Also fixed in the same pass (found while verifying the above, not
+requested):** the first version of this unmount/remount gate used an inline
+arrow function as `<Hover>`'s callback ref. React detaches (`null`) and
+reattaches a callback ref whenever its *identity* changes between renders,
+not just on mount/unmount — an unmemoized closure gets a new identity every
+render, and the `IntersectionObserver` hook's own state setter triggers a
+render, so this churned in a detach/reattach loop that never let the
+observer hold a subscription long enough to report back. Wrapped in
+`useCallback`, keyed on the setter (itself referentially stable). Real,
+independently-worth-fixing bug regardless of cause.
+
+**Browser-verified end to end**, and importantly, this **also resolved the
+"genuine renderer hang" flagged as unexplained in the entry below.**
+Testing live, the fix initially looked completely broken — zero dedicated
+card canvases ever appeared, even scrolled directly into the services
+section. Root cause turned out to be the test tab itself: `document.hidden`
+was `true`, `document.hasFocus()` `false`, 0 `requestAnimationFrame` ticks
+in a full second — a backgrounded tab, which Chrome throttles
+`IntersectionObserver` callbacks on right along with rAF. Forcing a
+`Page.captureScreenshot` (which forces a compositor tick) immediately
+unblocked it: 12 canvases at the services section, 5 again after scrolling
+back to the top — exactly as designed, both directions confirmed. This
+strongly suggests the "unresponsive to `Runtime.evaluate`, repeatedly,
+45s timeouts" finding in the entry below was the **same** backgrounded-tab
+throttling, not a real site bug — severe JS scheduling delay for a
+deprioritized background tab, not an infinite loop. Downgrading that
+finding from "flag for DevTools reproduction" to "likely a test-harness
+artifact, not real" — noted here since the entry below still reads as an
+open concern and shouldn't be acted on as one.
+
 ## 2026-10-12 (Globe render loop now pauses on a hidden tab and reports its own FPS; dedicated card WebGL contexts deferred to near-viewport — 12→5 canvases on initial homepage load)
 
 Two bundled reports: (1) "Tier 1 content below the fold not loading" and

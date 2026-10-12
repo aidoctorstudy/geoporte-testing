@@ -442,12 +442,18 @@ ADR-0036/ADR-0043/ADR-0044/ADR-0045/ADR-0047/ADR-0048/ADR-0051/ADR-0054 in
 [[decisions-log]] for why these seven cards need their own dedicated
 `HeroScene` context rather than the shared mini-scene renderer. As of
 ADR-0084, each of these 7 `<HeroScene>` mounts is deferred behind
-`useDynamicInView({ trigger: cardRef, rootMargin: "800px 0px" })` — without
+`useDynamicInView({ rootMargin: "800px 0px" })` (the hook's callback-ref
+form, `setNode` — not `trigger`, see ADR-0085 for why; merged with `cardRef`
+via one `useCallback`-memoized ref so `<Hover>`'s callback ref identity
+stays stable across renders) — without
 it, all 7 (plus the globe/ambient/shared-viewport singletons and the
 homepage's own `HeroScene`) created their WebGL context the instant
 `ServicesSection` was in the tree, regardless of scroll position: measured
 12 simultaneous canvases on initial homepage load, down to 5 after the
-gate. Stays mounted once warmed (no re-gating on scroll back out).
+gate. As of ADR-0085, this is a *live* gate, not a one-way latch — the
+symmetric `rootMargin` means a card's scene also unmounts again once
+scrolled ~800px past, bounding the concurrent context ceiling for the
+whole scroll session instead of only delaying when it's reached.
 
 **Project Control Services is the eighth exception, and the only one not
 WebGL** (`DEDICATED_CARD_VIDEOS` lookup, a sibling to
