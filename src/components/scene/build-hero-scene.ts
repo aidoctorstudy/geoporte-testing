@@ -65,7 +65,20 @@ const PARTICLE_LOGO_POSITION: [number, number, number] = [2.6, 0.2, 0];
 // anywhere on the page, not specifically over the hero.
 const HOVER_REPULSE_RADIUS = 0.5;
 const HOVER_REPULSE_STRENGTH = 0.6;
-const HOVER_SPRING_RATE = 0.12;
+// How fast a particle's hover-repulsion offset decays back toward zero once
+// the cursor moves away (or was never close enough to begin with) — the
+// guarantee that particles "reassemble to logo shape on mouseleave." 0.18
+// means ~70% of any offset is gone within 6 frames (~100ms) and over 99% is
+// gone within half a second; raised from 0.12 for a snappier, more
+// obviously-deliberate return to rest.
+const HOVER_SPRING_RATE = 0.18;
+// Idle breathe/drift amplitude, in world units — kept well under what ~2px
+// of on-screen drift works out to at this scene's camera framing (roughly
+// 0.02 world units per CSS pixel at a typical viewport height; see the
+// camera setup below), so the wiggle reads as "subtle life in the shape,"
+// never as motion large enough to look like it's leaving the logo outline.
+const BREATHE_AMPLITUDE = 0.012;
+const DRIFT_AMPLITUDE = 0.008;
 
 /** Draws `image` to an offscreen canvas at its own native resolution and
  * returns one 3D point per sampled "on" pixel (alpha ≥ 128 — the logo PNG
@@ -216,7 +229,22 @@ const buildParticleLogo = (particleScale: number, onReady: () => void): Particle
   /** Shared per-particle write — `ease`/`settled` are supplied by the two
    * callers below rather than computed in here, so the "force fully
    * assembled, right now" path (`renderAssembledOnce`) can skip the
-   * `assembleStartSeconds` timing state entirely rather than fighting it. */
+   * `assembleStartSeconds` timing state entirely rather than fighting it.
+   *
+   * `baseX`/`baseY`/`baseZ` are recomputed from `target` fresh every single
+   * frame — never integrated/accumulated from the *previous* frame's
+   * position — so there is no mechanism by which the breathe/drift wiggle
+   * (or anything else in here) can compound over time and carry a particle
+   * away from its target: each frame's position is always `target +
+   * (bounded, recentred-every-frame offset)`, never `previous position +
+   * offset`. Once `ease` reaches 1 (permanently, once assembled — see
+   * `update()` below) this is mathematically a 100% pull toward the target
+   * every frame, stronger than any lerp rate could express — the resting
+   * state cannot drift away on its own. The only term that can move a
+   * particle away from `target` at all is the cursor-hover repulsion below,
+   * and that decays back toward zero (`HOVER_SPRING_RATE`) the moment the
+   * cursor isn't close enough to justify it — there is no separate
+   * "scatter/explode" animation anywhere in this file. */
   const writeParticles = (
     ease: number,
     settled: boolean,
@@ -227,8 +255,12 @@ const buildParticleLogo = (particleScale: number, onReady: () => void): Particle
     const posAttr = geometry.attributes.position;
 
     for (let i = 0; i < count; i++) {
-      const breathe = settled ? Math.sin(elapsedSeconds * breatheSpeed[i] + phase[i]) * 0.04 : 0;
-      const drift = settled ? Math.cos(elapsedSeconds * breatheSpeed[i] * 0.6 + phase[i]) * 0.025 : 0;
+      const breathe = settled
+        ? Math.sin(elapsedSeconds * breatheSpeed[i] + phase[i]) * BREATHE_AMPLITUDE
+        : 0;
+      const drift = settled
+        ? Math.cos(elapsedSeconds * breatheSpeed[i] * 0.6 + phase[i]) * DRIFT_AMPLITUDE
+        : 0;
       const baseX = start[i * 3] + (target[i * 3] - start[i * 3]) * ease + drift;
       const baseY = start[i * 3 + 1] + (target[i * 3 + 1] - start[i * 3 + 1]) * ease + breathe;
       const baseZ = start[i * 3 + 2] + (target[i * 3 + 2] - start[i * 3 + 2]) * ease;

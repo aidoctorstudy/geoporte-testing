@@ -17,6 +17,61 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0098 — Particle emblem: noise amplitude shrunk further, hover-reassembly sped up, and the "no scatter/explode mechanism exists" guarantee made explicit in code
+
+**Status:** Accepted · 2026-10-12 · **Follow-up to ADR-0097 (same session, same complaint repeated).**
+
+**Context.** Same report again, with an explicit technical prescription
+this time: lerp current position toward target every frame at rate
+≥0.08, cap noise at ±1.5–2px, remove any post-assembly scatter/explode
+mechanism, and guarantee reassembly on cursor-leave while still allowing
+hover-scatter.
+
+**Re-verified the maths before changing anything, rather than assuming
+ADR-0097's fix was insufficient.** `writeParticles` recomputes
+`baseX`/`baseY`/`baseZ` fresh from `target` *every frame* — never
+`previousPosition + offset` — so there is no integration/accumulation
+path through which breathe/drift could compound over time; each frame's
+base position is always `target + (a bounded, recentred offset)`. Once
+`ease` reaches 1 (permanent, once assembled — clamped, monotonic, never
+decreases), this is a 100% pull to target every frame — stronger than
+any lerp rate, let alone the requested 0.08 floor. The only thing that
+can move a particle away from `target` at all is the cursor-hover term,
+already tightened in ADR-0097.
+
+**Decision.** Rather than leave the diagnosis purely theoretical a
+second time, made the resting state unambiguously tighter and the
+guarantees explicit in code:
+- Idle breathe/drift amplitude shrunk again: breathe `0.04 → 0.012`,
+  drift `0.025 → 0.008` (named constants now, `BREATHE_AMPLITUDE`/
+  `DRIFT_AMPLITUDE`). Reasoned against the brief's literal "±1.5–2px"
+  ask via this scene's own camera framing (FOV 45°, camera distance 9 →
+  roughly 0.02 world units per CSS pixel at a typical viewport height),
+  landing comfortably under that ceiling — an approximation (world-unit-
+  to-pixel ratio isn't fixed across viewport sizes in a perspective
+  scene), not an exact per-pixel guarantee, but conservative in the
+  requested direction.
+- `HOVER_SPRING_RATE` `0.12 → 0.18` — faster, more obviously-deliberate
+  decay back to rest once the cursor isn't close enough to repel a given
+  particle (~70% of any offset gone within 6 frames, >99% within half a
+  second) — the concrete mechanism behind "reassemble on mouseleave,"
+  satisfied continuously/asymptotically rather than via a discrete DOM
+  event (there is no literal DOM target to attach `mouseleave` to for
+  individual WebGL particles).
+- Added an explicit code comment on `writeParticles` stating the
+  no-accumulation/no-scatter-mechanism invariant directly, so a future
+  reader (or a future turn of this same conversation) doesn't have to
+  re-derive it from scratch a third time.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh` unchanged (same pre-existing FAIL/WARNs).
+`next build` (Turbopack) clean. **Not verified in a live browser this
+turn** — same caveat as every hero-scene entry this session; the
+exact px-equivalence of the new amplitudes depends on camera/viewport
+specifics that weren't checked against an actual render.
+
+---
+
 ## ADR-0097 — Fixed a real bug: the assembled particle emblem read as "breaking apart into random scatter" because the hover-repulsion radius covered more than half the emblem's own diameter
 
 **Status:** Accepted · 2026-10-12

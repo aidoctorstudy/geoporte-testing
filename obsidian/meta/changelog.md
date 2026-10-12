@@ -37,6 +37,35 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Particle emblem: noise shrunk further, hover-reassembly sped up, "no scatter mechanism" invariant made explicit — same complaint repeated with a specific technical prescription)
+
+Same report again, this time with an explicit spec: lerp toward target
+≥0.08/frame, noise capped at ±1.5–2px, no post-assembly scatter
+mechanism, guaranteed reassembly on cursor-leave. Full reasoning in
+[[decisions-log]] ADR-0098; short version here.
+
+- Re-verified the maths before changing anything: positions are
+  recomputed fresh from `target` every frame (never accumulated from
+  the previous frame), and once assembled the pull to target is
+  effectively 100% every frame — already stronger than any lerp rate.
+  The only thing that can move a particle at all is cursor-hover,
+  already tightened last entry.
+- Shrunk the idle breathe/drift amplitude further (now named constants
+  `BREATHE_AMPLITUDE`/`DRIFT_AMPLITUDE`: `0.04→0.012`, `0.025→0.008`),
+  reasoned against the literal "±1.5–2px" ask via this scene's own
+  camera framing — an approximation, not an exact per-pixel guarantee.
+- Sped up hover-repulsion decay (`HOVER_SPRING_RATE` `0.12→0.18`) for a
+  snappier, more obviously-deliberate return to rest once the cursor
+  moves away — the concrete mechanism behind "reassemble on
+  mouseleave" (asymptotic, since there's no literal DOM `mouseleave`
+  target for individual WebGL particles).
+- Added an explicit code comment stating the no-accumulation/
+  no-scatter-mechanism invariant directly, so it doesn't need
+  re-deriving from scratch again.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; `next build` (Turbopack) clean. Not verified in a live
+  browser this turn.
+
 ## 2026-10-12 (Fixed: the assembled particle emblem looked like it "broke apart into random scatter" — the hover-repulsion radius covered more than half the emblem's own diameter)
 
 Report: particles assemble correctly, then break apart into scatter;
