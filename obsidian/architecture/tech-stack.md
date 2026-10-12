@@ -728,6 +728,11 @@ zero. Also route-gated
 like the globe below it — `usePathname()` skips mounting on
 `/services/geotechnical-engineering`, where the shapes competed with Solaris's own
 particle/aurora geometry rather than complementing it. See ADR-0027, ADR-0041.
+As of ADR-0090, also renders `SceneFallbackGradient` (`--raw-gradient-
+fallback-ambient`) instead of bare `null` on the low capability tier —
+previously the one persistent app-root scene with no static fallback,
+unlike every sibling fixed-background scene, which read as a flat-black
+page on Tier 1.
 
 **Cinematic Earth globe** (`src/components/scene/build-planet-scene.ts` +
 `PlanetBackground.tsx`) — a *fourth* standalone WebGL-context pattern, same
@@ -772,6 +777,10 @@ ADR-0087: also disposes fully on `pagehide` (not just the existing
 ref-count-to-zero path — a real iOS crash report prompted this), and the
 three cloud layers' sphere segment count is capability-scaled
 (`sqrt(particleScale)` off a `64×64` ceiling) rather than a flat constant.
+As of ADR-0090: renders `SceneFallbackGradient`
+(`--raw-gradient-fallback-planet`, the globe's own brand-blue glow)
+instead of bare `null` on the low capability tier — same gap/fix as
+`AmbientBackground` above.
 
 **Route-scoped background exclusivity.** `PlanetBackground.tsx` and
 `AmbientBackground.tsx` both read `isGlassBackgroundRoute()`

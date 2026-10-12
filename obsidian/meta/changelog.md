@@ -37,6 +37,49 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Tier 1's "flat black background" root-caused and fixed: `PlanetBackground`/`AmbientBackground` get the same static-gradient fallback their 9 sibling scenes already had; the Tier 1 glass-panel fill lightened for contrast)
+
+Report: "Tier 1 is too aggressive — plain black background with just
+text," asking for dark navy + images + glass panels + all sections to
+stay, with WebGL/animation/blur/parallax gone. Checked first, not
+assumed: everything the report says should already be removed (WebGL,
+CSS transitions/animations, backdrop-filter blur) already was, confirmed
+against `globals.css` and the prior "baqala mode" commit — no section
+hides itself wholesale on this tier either (grepped `src/views/` for
+`isLowPowerDevice()`: zero matches). Full root-cause trace in
+[[decisions-log]] ADR-0090; short version here.
+
+- **Root cause:** `--background` (`#01040e`) is the real body colour on
+  every tier, but it's never actually seen alone except on Tier 1 — every
+  other tier has the Earth globe (`PlanetBackground`) and drifting
+  wireframe shapes (`AmbientBackground`) giving the page its depth. Both
+  returned bare `null` on `isLowPowerDevice()`, unlike their 9 sibling
+  fixed-background scenes (`SolarisBackground` etc.), which already
+  render a `SceneFallbackGradient` for exactly this reason. `#01040e`
+  with nothing in front of it reads as black.
+- **Fixed:** two new tokens, same shape as the existing
+  `--raw-gradient-fallback-*` set — `--raw-gradient-fallback-planet` (the
+  globe's own brand-blue glow) and `--raw-gradient-fallback-ambient`
+  (subtler, matching the existing team-starfield tone).
+  `PlanetBackground.tsx`/`AmbientBackground.tsx` now render
+  `SceneFallbackGradient` instead of `null` on the low tier (excluded on
+  the 9 routes that already have their own scene, same as before).
+- **Also fixed:** `--raw-color-glass-fill-tier1` was `rgba(4, 6, 15,
+  0.85)` — within 6 RGB units of `--background`, so a "glass panel" was
+  never visually distinct from the page even before this bug. Lightened
+  to `rgba(10, 24, 48, 0.85)`, matching the new ambient fallback's centre
+  tone; still a flat, non-blurred fill, same no-blur Tier 1 design as
+  before.
+- Nothing e86e26a ("baqala mode") already removed was reintroduced — this
+  adds a background behind content, not WebGL/animation/blur.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged (no new WARN/FAIL); `next build --webpack` clean; confirmed
+  both new tokens and the lightened fill compiled into the real CSS
+  output via `grep` on `.next/static/css/*.css`. **Not verified visually
+  in a browser this turn** (Chrome extension wasn't connected) — a
+  contrast/perception bug like this is exactly the kind a screenshot
+  would confirm better than code review; flagged rather than assumed.
+
 ## 2026-10-12 (Language switcher and the i18n stack rebuilt from scratch — restores ADR-0024's nav/headings/buttons scope; LibreTranslate's hosted API now needs a key, so MyMemory is the practical default provider)
 
 Bug report: "the language switcher doesn't work on Vercel." Checked the

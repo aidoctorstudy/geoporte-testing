@@ -43,8 +43,13 @@
      surface's backdrop-filter with a flat near-opaque fill (no blur at all,
      backdrop-filter is GPU-cost independent of WebGL). Toggled via
      `[data-perf-tier="low"]` on `<html>`, set by `reduced-motion.tsx` from
-     the capability tier. See obsidian/meta/decisions-log.md. */
-  --raw-color-glass-fill-tier1: rgba(4, 6, 15, 0.85);
+     the capability tier. A visibly lighter navy than `--background`
+     (#01040e) on purpose — matched to `--raw-gradient-fallback-ambient`'s
+     centre tone (#0a1830) below, so a panel reads as a distinct dark-navy
+     card against that gradient instead of blending into flat black the way
+     the original near-identical rgba(4,6,15,…) did. See
+     obsidian/meta/decisions-log.md. */
+  --raw-color-glass-fill-tier1: rgba(10, 24, 48, 0.85);
   /* Tailwind's own blur scale only steps 16px/24px (blur-lg/blur-xl); the
      glass-panel spec needs exactly 20px. */
   --raw-blur-glass: 20px;
@@ -157,6 +162,19 @@
      vignette rather than the "toward a bright accent" shape every other
      entry here uses. */
   --raw-gradient-fallback-team-starfield: radial-gradient(ellipse at 50% 45%, #0a1830 0%, #040d1a 55%, #01040e 100%);
+  /* The homepage (and every non-glass-background route)'s two persistent
+     app-root WebGL layers — `PlanetBackground`/`AmbientBackground` — render
+     nothing at all on the "low" capability tier (`isLowPowerDevice()`), no
+     fallback, unlike every sibling fixed full-page scene above. Unlike
+     those pages (which have a competing scene to fall back from), the
+     homepage's real `--background` is `--raw-color-navy-950` (#01040e) —
+     visually indistinguishable from black without the globe/shapes giving
+     it depth. These two tokens close that gap — the Earth globe's own
+     brand-blue glow, and a subtler version for the sparser ambient shapes —
+     see `PlanetBackground.tsx`/`AmbientBackground.tsx` and
+     obsidian/meta/decisions-log.md. */
+  --raw-gradient-fallback-planet: radial-gradient(ellipse at 50% 30%, #1f6ae0 0%, #040d1a 55%, #01040e 100%);
+  --raw-gradient-fallback-ambient: radial-gradient(ellipse at 50% 60%, #0a1830 0%, #040d1a 60%, #01040e 100%);
 
   /* Loaded via Fontshare <link> in layout.tsx — not a next/font/google face,
      so there is no generated CSS variable to bind to; the stack lives here. */

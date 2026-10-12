@@ -9,6 +9,7 @@ import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import { getTierBudget, isLowPowerDevice } from "@/lib/scene/device-tier";
 import { useWindowWidth } from "@/hooks/use-window-size";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
+import { SceneFallbackGradient } from "./SceneFallbackGradient";
 
 // Every route with its own fixed full-page WebGL background
 // (`glass-background-routes.ts`) — the wireframe shapes clash with those
@@ -24,14 +25,19 @@ import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
  * scene's canvas is appended straight to `document.body` by
  * `ambient-background-renderer.ts`, same technique as the shared mini-scene
  * renderer. See ADR-0078.
+ *
+ * On the "low" capability tier, renders a subtle static CSS gradient
+ * instead (`--raw-gradient-fallback-ambient`) rather than nothing — same
+ * reasoning as `PlanetBackground`'s own fallback.
  */
-export const AmbientBackground = (): null => {
+export const AmbientBackground = () => {
   const width = useWindowWidth();
   const pathname = usePathname();
   const budget = getTierBudget(width);
+  const skipWebgl = width > 0 && isLowPowerDevice();
   const enabled =
     width > 0 &&
-    !isLowPowerDevice() &&
+    !skipWebgl &&
     !isReducedMotion() &&
     !isGlassBackgroundRoute(pathname);
 
@@ -42,6 +48,15 @@ export const AmbientBackground = (): null => {
       dprClamp: budget.dprClamp,
     });
   }, [enabled, budget.ambientShapeCount, budget.dprClamp]);
+
+  if (skipWebgl && !isGlassBackgroundRoute(pathname)) {
+    return (
+      <SceneFallbackGradient
+        gradient="var(--raw-gradient-fallback-ambient)"
+        className="pointer-events-none fixed inset-0 -z-10 h-full w-full"
+      />
+    );
+  }
 
   return null;
 };

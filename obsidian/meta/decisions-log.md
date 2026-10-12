@@ -17,6 +17,94 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0090 — Tier 1's "flat black background" root-caused: the two app-root WebGL layers had no static fallback, unlike every sibling scene
+
+**Status:** Accepted · 2026-10-12 · **Fixes a real gap in ADR-0078/ADR-0079's design, closed by e86e26a's "baqala mode"; does not change what e86e26a already removed.**
+
+**Context.** Report: "Tier 1 is too aggressive — showing plain black
+background with just text," with a fix list that (correctly) assumes
+WebGL/animation/blur/parallax should already be gone on this tier, but
+wants dark navy, images, glass panels, and all sections to still read as
+a normal, well-designed static site.
+
+**Investigated before changing anything.** Every item the report says
+should already be *removed* (WebGL, CSS transitions/animations,
+backdrop-filter blur) already was — confirmed by reading `globals.css`'s
+`[data-perf-tier="low"]` rules and the prior "baqala mode" commit
+(e86e26a): zero WebGL via `isLowPowerDevice()` gates sitewide, `* {
+transition: none; animation: none }` on this tier, `.glass-panel`/
+`backdrop-blur-*` already flattened to a solid fill. No section
+conditionally hides itself on this tier either (grepped every
+`src/views/` file for `isLowPowerDevice()` — zero matches; only
+decorative sub-components gate, never a whole section). So the report's
+own "should already have" list was already true, and the complaint had
+to be something else.
+
+**Root cause, found by tracing what's actually visible, not by
+assumption.** `--background` (`--raw-color-navy-950`, `#01040e`) is this
+site's real body colour on *every* tier — but on every tier except Tier 1
+it's never actually seen on its own, because the two persistent app-root
+WebGL layers (`PlanetBackground`'s Earth globe, `AmbientBackground`'s
+drifting wireframe shapes, both mounted in `layout.tsx` alongside 9
+sibling fixed full-page scenes) sit on top of it and give the page its
+real visual depth. Every one of those 9 siblings (`SolarisBackground`,
+`AetherFluxBackground`, etc.) already renders a `SceneFallbackGradient`
+static CSS gradient when `isLowPowerDevice()` — explicitly, by that
+component's own doc comment, "so a page doesn't go flat black just
+because its particle field didn't mount." `PlanetBackground.tsx` and
+`AmbientBackground.tsx` were the two exceptions: both returned bare
+`null` on the low tier, no fallback at all. `#01040e` with nothing in
+front of it reads as black to a real viewer — exactly the report's
+complaint — on the homepage and every other non-glass-background route
+(the 9 sibling-scene pages were never affected; they already had their
+own fallback).
+
+**Decision — give both the same treatment their 9 siblings already
+have.** New tokens in `globals.css`, same naming/shape convention as the
+existing `--raw-gradient-fallback-*` set: `--raw-gradient-fallback-planet`
+(the globe's own brand-blue glow, `--raw-color-azure-600` `#1f6ae0`,
+fading through the existing navy tokens) and
+`--raw-gradient-fallback-ambient` (subtler, no bright accent, matching
+`--raw-gradient-fallback-team-starfield`'s tone — the ambient shapes are
+faint wireframes, a loud fallback would misrepresent them).
+`PlanetBackground.tsx`/`AmbientBackground.tsx` now render
+`<SceneFallbackGradient>` instead of `null` when `isLowPowerDevice()` is
+true (and the route isn't one of the 9 that already has its own scene —
+same exclusion these two already applied for WebGL, now applied to the
+fallback too, so Tier 1 never stacks two competing gradients on those
+pages).
+
+**Decision — `--raw-color-glass-fill-tier1` lightened.** Was `rgba(4, 6,
+15, 0.85)` — within 6 RGB units of `--background` itself, so a "glass
+panel" on Tier 1 was never visually distinguishable from the page behind
+it even before this fix, compounding the same problem at the component
+level. Changed to `rgba(10, 24, 48, 0.85)`, matching the new ambient
+fallback's centre tone, so a panel now reads as a dark-navy card with
+real contrast against its backdrop — still a flat, non-blurred fill (the
+report's own "no blur" constraint, and the pre-existing, already-accepted
+Tier 1 design), just no longer indistinguishable from black-on-black.
+
+**Not changed.** Everything e86e26a ("baqala mode") already removed stays
+removed — this fix adds a background behind the content, it does not
+reintroduce WebGL, CSS animation, or blur on this tier. `isLowPowerDevice()`'s
+detection logic itself is untouched (per ADR-0081/83/85/86/87's now-long
+history of confirming it's correct and the real bug is always elsewhere).
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean. `.claude/scripts/
+verify.sh`: unchanged from before this turn, no new WARN/FAIL. `next
+build --webpack` clean; confirmed both new tokens and the lightened
+glass-fill value compiled into the actual CSS output (`grep` on
+`.next/static/css/*.css`: `raw-gradient-fallback-planet`,
+`-ambient`, and `raw-color-glass-fill-tier1:#0a1830d9` — `d9` = 0.85
+alpha, correct). **Not verified visually in a browser this turn** — the
+Chrome extension wasn't connected this session, and this specific bug
+(a colour-contrast/perception issue) is the kind a screenshot would
+confirm far more convincingly than code review. Flagged rather than
+silently assumed fixed; worth a real screenshot on the deployed build
+before calling this fully closed.
+
+---
+
 ## ADR-0089 — Language switcher and i18n stack rebuilt from scratch — restores ADR-0024's scope, not ADR-0065's; LibreTranslate's hosted API now requires a key, so MyMemory is the practical default provider
 
 **Status:** Accepted · 2026-10-12 · **Reverses ADR-0077; restores and amends ADR-0024 (not ADR-0065's wider scope).**

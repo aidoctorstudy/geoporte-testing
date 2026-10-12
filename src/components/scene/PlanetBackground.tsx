@@ -9,6 +9,7 @@ import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import { getDeviceTier, getTierBudget, isLowPowerDevice } from "@/lib/scene/device-tier";
 import { useWindowWidth } from "@/hooks/use-window-size";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
+import { SceneFallbackGradient } from "./SceneFallbackGradient";
 
 // Every route with its own fixed full-page WebGL background
 // (`glass-background-routes.ts`) gets the globe stepping aside instead —
@@ -25,22 +26,36 @@ import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
  * `getTierBudget` numbers (DPR, particle counts). This is easily the
  * heaviest scene here (a Draco-compressed GLB, custom day/night shaders,
  * three `EffectComposer` passes), so it gets the same discipline, not less.
- * Renders nothing itself; the scene's canvas is appended straight to
- * `document.body`, matching `ambient-background-renderer.ts`'s own
- * technique. See ADR-0078 (superseded ADR-0056's mobile-width skip).
+ * On the "low" capability tier, renders a static CSS gradient instead
+ * (`--raw-gradient-fallback-planet`) rather than nothing — matching every
+ * sibling fixed full-page scene (`SolarisBackground` etc), which already
+ * fall back to `SceneFallbackGradient` for exactly this reason: the
+ * homepage's real `--background` reads as flat black without it. See
+ * ADR-0078 (superseded ADR-0056's mobile-width skip) and the fallback ADR
+ * in decisions-log.md.
  */
-export const PlanetBackground = (): null => {
+export const PlanetBackground = () => {
   const width = useWindowWidth();
   const pathname = usePathname();
   const tier = getDeviceTier(width);
   const budget = getTierBudget(width);
+  const skipWebgl = width > 0 && isLowPowerDevice();
   const enabled =
-    width > 0 && !isLowPowerDevice() && !isReducedMotion() && !isGlassBackgroundRoute(pathname);
+    width > 0 && !skipWebgl && !isReducedMotion() && !isGlassBackgroundRoute(pathname);
 
   useEffect(() => {
     if (!enabled) return;
     return startPlanetBackground({ dprClamp: budget.dprClamp, tier, particleScale: budget.particleScale });
   }, [enabled, tier, budget.dprClamp, budget.particleScale]);
+
+  if (skipWebgl && !isGlassBackgroundRoute(pathname)) {
+    return (
+      <SceneFallbackGradient
+        gradient="var(--raw-gradient-fallback-planet)"
+        className="pointer-events-none fixed inset-0 -z-20 h-full w-full"
+      />
+    );
+  }
 
   return null;
 };
