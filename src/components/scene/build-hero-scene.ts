@@ -123,12 +123,13 @@ interface ParticleLogo {
  * close, springing back once it moves away.
  *
  * `onReady` is called once, synchronously from the image's `onload`, after
- * the real geometry is in place — the caller uses it to force an immediate
- * `composer.render()`. Without it, a reduced-motion visitor (whose
- * `renderStatic()` runs exactly once, before the image has had any chance
- * to finish loading) would never see the emblem at all: the animated loop
- * would eventually pick it up on its next frame, but the static path never
- * gets a "next frame". */
+ * the real geometry is in place — the caller uses this hook to force an
+ * immediate fully-assembled render *only* for a reduced-motion visitor
+ * (whose `renderStatic()` runs exactly once, before the image has had any
+ * chance to finish loading, so without this they'd never see the emblem
+ * at all). The normal animated path deliberately does nothing here — see
+ * the call site in `createHeroScene` for why forcing a render
+ * unconditionally caused a visible "flash of the solid logo" bug. */
 const buildParticleLogo = (particleScale: number, onReady: () => void): ParticleLogo => {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(3), 3));
@@ -165,7 +166,15 @@ const buildParticleLogo = (particleScale: number, onReady: () => void): Particle
   // step, so the baseline step is larger than the old text sampler used.
   const step = Math.max(3, Math.round(6 / Math.sqrt(particleScale)));
 
+  // Never appended to the DOM — only ever drawn into the detached offscreen
+  // `<canvas>` inside `sampleImageParticlePositions`, which is also never
+  // appended — so neither element can render visibly on its own regardless
+  // of style. Explicit `opacity: 0`/`display: none` anyway, defensively and
+  // for anyone reading this later: this `Image` is a pure pixel-data source,
+  // never a visible element, by construction, not by CSS.
   const image = new Image();
+  image.style.opacity = "0";
+  image.style.display = "none";
   image.onload = () => {
     target = sampleImageParticlePositions(image, PARTICLE_LOGO_TARGET_SIZE, step);
     count = target.length / 3;
@@ -296,18 +305,33 @@ export const createHeroScene = (
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
 
-  // `onReady` references `composer`, assigned just below — safe because
-  // the callback only ever runs later, asynchronously, from the image's
-  // `onload` (well after `composer` exists), never during this
-  // synchronous construction. Forces one fully-assembled frame — the fix
-  // for a reduced-motion visitor whose one-and-only `renderStatic()` call
-  // already happened before the image had any chance to load (see
-  // `renderAssembledOnce`'s own comment); harmless, invisible-in-practice
-  // no-op for the normal animated path, which picks the real geometry up
-  // on its own very next frame regardless.
+  // `onReady` references `composer`/`particleLogo`, assigned just below —
+  // safe because the callback only ever runs later, asynchronously, from
+  // the image's `onload` (well after both exist), never during this
+  // synchronous construction.
+  //
+  // Forces a fully-assembled render ONLY under `prefers-reduced-motion` —
+  // that visitor's one-and-only `renderStatic()` call already happened
+  // before the image had any chance to load, so without this they'd never
+  // see the emblem at all (see `renderAssembledOnce`'s own comment).
+  // Deliberately does NOT force anything for the normal animated path: an
+  // earlier version of this fix called `renderAssembledOnce()`
+  // unconditionally here, which rendered one frame of the *fully
+  // assembled* (and, at this particle density, visually solid-looking —
+  // easy to mistake for "the original logo image flashing") emblem the
+  // instant the image loaded, before the real scatter-based intro had
+  // drawn a single frame. Skipping the forced render for the animated
+  // case means the canvas shows nothing (an empty, invisible placeholder
+  // point) until the real data exists, and the very first frame that data
+  // ever appears in is the genuine scattered start — never the assembled
+  // shape — because `update()`'s own `assembleStartSeconds ??=
+  // elapsedSeconds` anchors to exactly that first real `renderFrame` call,
+  // not to this callback.
   const particleLogo = buildParticleLogo(particleScale, () => {
-    particleLogo.renderAssembledOnce();
-    composer.render();
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      particleLogo.renderAssembledOnce();
+      composer.render();
+    }
   });
   particleLogo.points.position.set(...PARTICLE_LOGO_POSITION);
   scene.add(particleLogo.points);

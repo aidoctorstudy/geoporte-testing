@@ -17,6 +17,53 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0096 — Fixed a real bug: the particle emblem's "flash of the solid logo" before the scatter-to-assemble intro played
+
+**Status:** Accepted · 2026-10-12 · **Fixes a real bug introduced by ADR-0094, same day.**
+
+**Context.** Report: the Geoporte logo particle effect flashes the
+original logo image for about a second before the particles appear.
+
+**Root-caused, not guessed.** The `Image` object `build-hero-scene.ts`
+loads to sample pixel positions is never appended to the DOM and is only
+ever drawn into a second, equally-detached offscreen `<canvas>` — neither
+element can render visibly by construction, confirmed by re-reading the
+code rather than assumed. The actual cause was `onReady` (the callback
+`image.onload` fires once real particle positions exist): it
+unconditionally called `renderAssembledOnce()` + `composer.render()` —
+forcing one frame of the particles in their **fully assembled** resting
+position, at this image's particle density dense enough to look like a
+solid rendering of the logo, not a particle effect — the instant the
+image finished loading, *before* the real scatter-based 2s intro had
+drawn a single frame. The previous ADR's own comment had called this
+"harmless, invisible-in-practice" — wrong, and the actual bug.
+
+**Decision.** `onReady` now forces that render only when
+`prefers-reduced-motion` is active — the one case that genuinely needs
+it (that visitor's single `renderStatic()` call already ran before the
+image could load, so without a forced render they'd never see the
+emblem at all). For the normal animated path, `onReady` now does nothing
+at all: the canvas stays on its invisible one-vertex placeholder until
+the next real `renderFrame` tick, whose own `update()` anchors
+`assembleStartSeconds` to exactly that call and computes the true
+scattered start — so the very first frame real particle data ever
+appears in is the genuine scatter, never the assembled shape. No "flash"
+window exists for it to render into.
+
+**Also, defensively:** the detached `Image` element now gets explicit
+`opacity: 0`/`display: none` styles — redundant given it's never
+DOM-attached, but direct, harmless, and documents the invariant for
+anyone who later changes that.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh` unchanged (same pre-existing FAIL/WARNs).
+`next build` (Turbopack) clean. **Not verified in a live browser this
+turn** — the fix is reasoned from re-reading the render-timing logic
+line by line (the same way the bug itself was found), not confirmed by
+watching the actual animation play.
+
+---
+
 ## ADR-0095 — Nav bar fill changed from dark navy to pure black
 
 **Status:** Accepted · 2026-10-12

@@ -37,6 +37,35 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Fixed: the particle emblem flashed the solid logo shape for about a second before its scatter-to-assemble intro played)
+
+Report: the hero's particle logo effect shows the original logo image
+briefly before breaking into particles. Full root-cause in
+[[decisions-log]] ADR-0096; short version here.
+
+- The loaded `Image`/offscreen `<canvas>` used to sample pixel positions
+  were never DOM-attached, so neither could render visibly — confirmed
+  by re-reading the code, not guessed. The real cause: the callback that
+  fires once the image finishes loading unconditionally forced one frame
+  of the particles in their *fully assembled* position — dense enough,
+  at this image's sampling density, to look like a solid logo render,
+  not particles — before the real 2-second scatter-based intro had drawn
+  a single frame. A previous entry's own comment had called this
+  "harmless" — it was the bug.
+- Fixed: that forced render now only happens for
+  `prefers-reduced-motion` visitors (the one case that actually needs
+  it). The normal animated path renders nothing until the next real
+  frame tick, whose own logic anchors the assembly timer to exactly that
+  moment — so the very first frame of real particle data is always the
+  genuine scatter, never the assembled shape.
+- Also added explicit (if redundant, given it's never DOM-attached)
+  `opacity: 0`/`display: none` on the source `Image` element, for
+  anyone reading the code later.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; `next build` (Turbopack) clean. **Not verified in a live
+  browser this turn** — reasoned from the render-timing logic, same way
+  the bug itself was found.
+
 ## 2026-10-12 (Nav bar fill changed from dark navy to pure black)
 
 Explicit request: nav background `rgba(0, 0, 0, 0.85)` +
