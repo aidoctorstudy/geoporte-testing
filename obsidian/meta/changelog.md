@@ -37,6 +37,34 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (`--foreground-muted` split into two roles — "normal" body text is now actually white; small-uppercase labels get their own `--label`/`text-label`)
+
+Follow-up: "make the normal text fully white." `--foreground` (body
+text) was already white, but `--foreground-muted` — retargeted to slate
+in the previous entry's colour retint, intending it for "section
+labels" — turned out to also back dozens of plain paragraph/caption
+call sites with no label styling at all (hero subtext, About's intro
+paragraphs, card descriptions, nav hover states, …), so most of the
+site's actual reading text was rendering grey instead of white. Full
+reasoning in [[decisions-log]] ADR-0092.
+
+- `--foreground-muted` → white. Every non-label consumer (the broad,
+  plain-paragraph majority) picks this up automatically, no per-file
+  changes needed.
+- New `--label` role (same slate, `#94A3B8`) → new `text-label` utility,
+  for the 38 genuine small-uppercase-label lines specifically (eyebrows,
+  form labels, Footer column headers, nav labels) — found by grepping
+  every `text-foreground-muted` + `uppercase` co-occurrence, then
+  mechanically swapped via `sed` across 19 files.
+- The Geotechnical page's own page-scoped `--foreground-muted` override
+  (bright pale blue, for contrast against its warm background) is
+  untouched.
+- `npx eslint`/`npx tsc --noEmit` clean; `.claude/scripts/verify.sh`
+  unchanged; `next build` (Turbopack) clean — confirmed in the compiled
+  CSS that `text-label` (and its `/50` opacity variant) and the
+  retargeted `--foreground-muted` both compiled correctly. Not verified
+  in a live browser this turn.
+
 ## 2026-10-12 (A pushed commit silently never deployed on Vercel — no code change, just the incident)
 
 Report: "nothing changed on the live site" after the font/colour/particle-

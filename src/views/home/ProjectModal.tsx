@@ -99,7 +99,7 @@ export const ProjectModal = () => {
 
           <div className="flex flex-col gap-5 p-6 sm:p-8">
             <div>
-              <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+              <p className="text-label text-xs tracking-[0.14em] uppercase">
                 {project.category}
               </p>
               <h2 id={TITLE_ID} className="text-foreground mt-2 text-2xl font-medium leading-tight">
@@ -109,7 +109,7 @@ export const ProjectModal = () => {
 
             <dl className="border-line grid grid-cols-1 gap-4 border-y py-4 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
+                <dt className="text-label text-xs tracking-[0.1em] uppercase">
                   Location
                 </dt>
                 <dd className="text-foreground mt-1">
@@ -117,7 +117,7 @@ export const ProjectModal = () => {
                 </dd>
               </div>
               <div>
-                <dt className="text-foreground-muted text-xs tracking-[0.1em] uppercase">
+                <dt className="text-label text-xs tracking-[0.1em] uppercase">
                   Discipline
                 </dt>
                 <dd className="text-foreground mt-1">

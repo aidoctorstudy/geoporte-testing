@@ -37,7 +37,7 @@ export const SectionHeading = ({
 
   return (
     <>
-      <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+      <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
         {translatedEyebrow}
       </p>
       <TextEngine

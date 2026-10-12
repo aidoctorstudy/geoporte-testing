@@ -69,7 +69,7 @@ export const ContactForm = () => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       <div>
-        <label htmlFor="contact-name" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+        <label htmlFor="contact-name" className="text-label mb-2 block text-xs uppercase tracking-[0.12em]">
           Name
         </label>
         <input
@@ -85,7 +85,7 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor="contact-email" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+        <label htmlFor="contact-email" className="text-label mb-2 block text-xs uppercase tracking-[0.12em]">
           Email
         </label>
         <input
@@ -100,7 +100,7 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor="contact-phone" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+        <label htmlFor="contact-phone" className="text-label mb-2 block text-xs uppercase tracking-[0.12em]">
           Phone <span className="normal-case text-foreground-muted/60">(optional)</span>
         </label>
         <input
@@ -115,7 +115,7 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor="contact-company" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+        <label htmlFor="contact-company" className="text-label mb-2 block text-xs uppercase tracking-[0.12em]">
           Company <span className="normal-case text-foreground-muted/60">(optional)</span>
         </label>
         <input
@@ -130,7 +130,7 @@ export const ContactForm = () => {
       </div>
 
       <div>
-        <label htmlFor="contact-message" className="text-foreground-muted mb-2 block text-xs uppercase tracking-[0.12em]">
+        <label htmlFor="contact-message" className="text-label mb-2 block text-xs uppercase tracking-[0.12em]">
           Message
         </label>
         <textarea

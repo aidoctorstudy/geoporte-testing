@@ -30,7 +30,7 @@ export function AboutView() {
         aria-labelledby="about-heading"
         className="glass-panel relative z-10 mx-auto mt-24 max-w-6xl px-6 py-16 md:mt-32 md:px-8 md:py-24"
       >
-        <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+        <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
           About Geoporte
         </p>
         <AboutHeading
@@ -117,7 +117,7 @@ export function AboutView() {
           ))}
         </Inview>
 
-        <p className="text-foreground-muted mt-14 text-xs tracking-[0.2em] uppercase">
+        <p className="text-label mt-14 text-xs tracking-[0.2em] uppercase">
           Project experience
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">

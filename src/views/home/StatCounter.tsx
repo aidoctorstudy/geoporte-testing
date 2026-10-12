@@ -39,7 +39,7 @@ export const StatCounter = ({ value, label, suffix = "+", prefix = "" }: StatCou
       <animated.span className="text-foreground text-5xl font-medium md:text-6xl">
         {number.to((n) => `${prefix}${Math.round(n)}${suffix}`)}
       </animated.span>
-      <span className="text-foreground-muted mt-3 text-sm tracking-[0.16em] uppercase">
+      <span className="text-label mt-3 text-sm tracking-[0.16em] uppercase">
         {label}
       </span>
     </div>

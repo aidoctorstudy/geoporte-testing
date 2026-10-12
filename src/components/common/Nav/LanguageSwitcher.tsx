@@ -75,7 +75,7 @@ export const LanguageSwitcher = () => {
                 }`}
               >
                 {lang.nativeLabel}
-                <span className="text-foreground-muted text-xs uppercase">{lang.code}</span>
+                <span className="text-label text-xs uppercase">{lang.code}</span>
               </button>
             </li>
           ))}

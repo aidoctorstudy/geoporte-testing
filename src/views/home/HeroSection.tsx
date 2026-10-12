@@ -30,7 +30,7 @@ export const HeroSection = () => {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-8">
-        <p className="text-foreground-muted [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
+        <p className="text-label [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
           Civil · Geotechnical · Structural · Telecom
         </p>
         <HeroHeading

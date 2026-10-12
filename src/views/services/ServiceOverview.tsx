@@ -91,7 +91,7 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2">
           {service.capabilityGroups.map((group) => (
             <div key={group.heading}>
-              <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
+              <h3 className="text-label text-xs tracking-[0.2em] uppercase">
                 {group.heading}
               </h3>
               <ul className="text-foreground-muted/90 mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
@@ -111,7 +111,7 @@ export const ServiceOverview = ({ service }: ServiceOverviewProps) => {
             page rather than 16 separate routes). */}
         {service.subServices && (
           <div className="mt-16">
-            <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
+            <h3 className="text-label text-xs tracking-[0.2em] uppercase">
               In more detail
             </h3>
             <dl className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">

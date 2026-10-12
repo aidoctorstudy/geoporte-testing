@@ -86,7 +86,7 @@ export const TeamPanel = () => {
       }}
     >
       <div>
-        <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
+        <h3 className="text-label text-xs tracking-[0.2em] uppercase">
           Our team
         </h3>
         <ul className="mt-4 flex flex-col gap-2">
@@ -96,7 +96,7 @@ export const TeamPanel = () => {
         </ul>
       </div>
       <div>
-        <h3 className="text-foreground-muted text-xs tracking-[0.2em] uppercase">
+        <h3 className="text-label text-xs tracking-[0.2em] uppercase">
           What drives us
         </h3>
         <ul className="mt-4 flex flex-wrap gap-2">

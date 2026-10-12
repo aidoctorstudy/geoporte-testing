@@ -18,7 +18,7 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
     >
       <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.2fr_1fr]">
         <div>
-          <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+          <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
             About Geoporte
           </p>
           <AboutHeading

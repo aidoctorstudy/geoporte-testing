@@ -249,7 +249,16 @@
   --surface: var(--raw-color-surface);
   --surface-raised: var(--raw-color-surface-raised);
   --foreground: var(--raw-color-white);
-  --foreground-muted: var(--raw-color-label-slate);
+  /* Normal/body text is fully white — `--foreground-muted` now matches it
+     rather than the slate it briefly held: that slate value moved to the
+     new `--label` role below, which is what every small-uppercase section
+     label/eyebrow/form-label actually uses now (`text-label`, swapped in
+     at each of those ~38 call sites). `--foreground-muted` still exists as
+     its own role (nav-link hover states, placeholder text, disabled
+     states already key off it by name) — it just no longer reads as a
+     visually distinct "muted" colour from `--foreground`. */
+  --foreground-muted: var(--raw-color-white);
+  --label: var(--raw-color-label-slate);
   --heading: var(--raw-color-heading-blue);
   --accent: var(--raw-color-azure-600);
   --accent-foreground: var(--raw-color-white);
@@ -304,6 +313,7 @@
   --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
+  --color-label: var(--label);
   --color-heading: var(--heading);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);

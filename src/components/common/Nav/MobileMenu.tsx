@@ -39,7 +39,7 @@ export const MobileMenu = ({ open, onNavigate, services }: MobileMenuProps) => {
     >
       <nav className="flex flex-1 flex-col gap-8 px-6">
         <div>
-          <p className="mb-3 text-xs tracking-[0.15em] text-foreground-muted uppercase">
+          <p className="mb-3 text-xs tracking-[0.15em] text-label uppercase">
             <TranslatedText text="Services" />
           </p>
           <ul className="grid grid-cols-1 gap-2">

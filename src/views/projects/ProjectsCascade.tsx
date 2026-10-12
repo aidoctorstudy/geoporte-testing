@@ -142,7 +142,7 @@ export const ProjectsCascade = () => {
   if (reducedMotion) {
     return (
       <section id="projects" aria-labelledby="projects-cascade-heading" className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
-        <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
+        <p className="text-label text-xs tracking-[0.3em] uppercase">
           GEOPORTE · Selected Work
         </p>
         <h1 id="projects-cascade-heading" className="font-heading text-heading leading-display mt-4 text-3xl font-medium md:text-5xl">
@@ -179,7 +179,7 @@ export const ProjectsCascade = () => {
                   }}
                 />
                 <div className="relative">
-                  <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+                  <p className="text-label text-xs tracking-[0.14em] uppercase">
                     {project.category}
                   </p>
                   <h3 className="text-foreground mt-1 text-sm font-medium">
@@ -213,7 +213,7 @@ export const ProjectsCascade = () => {
           className="pointer-events-none absolute inset-x-0 top-1/3 z-10 mx-auto max-w-2xl px-6 text-center"
           style={{ opacity: intro }}
         >
-          <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+          <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
             GEOPORTE · Selected Work
           </p>
           <h1 id="projects-cascade-heading" className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
@@ -269,7 +269,7 @@ export const ProjectsCascade = () => {
                 }}
               />
               <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-                <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
+                <p className="text-label text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
                   {project.category}
                 </p>
                 <h3 className="text-foreground mt-2 text-xl font-medium md:text-2xl [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">

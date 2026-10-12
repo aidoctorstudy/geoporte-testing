@@ -59,7 +59,7 @@ export const GeologicalCrossSection = () => {
             from={{ opacity: 0, x: 24 }}
             to={{ opacity: 1, x: 0 }}
             config={{ tension: 260, friction: 26 }}
-            className="text-foreground-muted text-xs tracking-[0.1em] uppercase"
+            className="text-label text-xs tracking-[0.1em] uppercase"
           >
             {layer.label}
           </Spring>

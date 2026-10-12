@@ -38,7 +38,7 @@ export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}
               to={{ opacity: 1, y: 0 }}
               delayIn={index * 100}
             >
-              <h3 className="text-foreground-muted text-sm tracking-[0.16em] uppercase">
+              <h3 className="text-label text-sm tracking-[0.16em] uppercase">
                 {category}
               </h3>
               <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

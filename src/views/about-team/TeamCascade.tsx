@@ -161,7 +161,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
   if (reducedMotion) {
     return (
       <section aria-labelledby="team-cascade-heading" className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32">
-        <p className="text-foreground-muted text-xs tracking-[0.3em] uppercase">
+        <p className="text-label text-xs tracking-[0.3em] uppercase">
           GEOPORTE · Our People
         </p>
         <h1 id="team-cascade-heading" className="font-heading text-heading leading-display mt-4 text-3xl font-medium md:text-5xl">
@@ -229,7 +229,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
           className="pointer-events-none absolute inset-x-0 top-1/3 z-10 mx-auto max-w-2xl px-6 text-center"
           style={{ opacity: intro }}
         >
-          <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+          <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
             GEOPORTE · Our People
           </p>
           <h1 id="team-cascade-heading" className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
@@ -284,7 +284,7 @@ export const TeamCascade = ({ members }: TeamCascadeProps) => {
                   {member.title}
                 </p>
                 {member.experience ? (
-                  <p className="text-foreground-muted mt-1 text-xs tracking-[0.08em] uppercase">
+                  <p className="text-label mt-1 text-xs tracking-[0.08em] uppercase">
                     {member.experience}
                   </p>
                 ) : null}

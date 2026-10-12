@@ -17,6 +17,64 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0092 — "Normal text" wasn't actually white: `--foreground-muted` was doing double duty as both "section label" and "general muted body text" — split into two roles
+
+**Status:** Accepted · 2026-10-12 · **Amends ADR-0091.**
+
+**Context.** Follow-up to ADR-0091's colour retint: "make the normal text
+fully white." `--foreground` (literal body text) was already pure white,
+unchanged since ADR-0091 — but `--foreground-muted`, which ADR-0091
+retargeted to the new slate (`#94A3B8`) for "section labels," turned out
+to be used far more broadly than that one bucket. Grepped every call
+site: 38 lines combine `text-foreground-muted` with `uppercase` (the
+genuine small-caps label pattern — eyebrows, form labels, Footer's
+"Services"/"Company"/"Offices" column headers, nav/dropdown labels) —
+but dozens more use the same class for plain paragraph/caption body copy
+with no uppercase styling at all (hero subtext, About's two intro
+paragraphs, card descriptions, nav link hover states, phone/address
+lines). Collapsing all of that into one slate value made most of the
+site's visible "normal" reading text grey instead of white — not what
+either this request or ADR-0091's own bucket list actually asked for.
+
+**Decision.** Split the role in two rather than re-collapsing everything
+back to one value:
+- `--foreground-muted` → `--raw-color-white`. Every non-label usage
+  (the dozens of plain body/caption/paragraph call sites) picks this up
+  automatically, with zero per-file changes — the entire point of
+  changing a Tier 2 role once rather than hunting down every consumer.
+- New Tier 2 role `--label` → `--raw-color-label-slate` (the same
+  `#94A3B8` ADR-0091 introduced) → new `text-label` utility. The 38
+  genuine small-uppercase-label lines were mechanically switched from
+  `text-foreground-muted` to `text-label` via `sed` (one per-line
+  substitution gated on the line also containing `uppercase`, verified
+  against the full grep list first so the pattern couldn't misfire on an
+  unrelated line) across 19 files — `SectionHeading.tsx`, `ContactForm.tsx`,
+  `Footer.tsx`, `Nav`/`MobileMenu`/`LanguageSwitcher`/`ServicesDropdown`,
+  and every view with its own eyebrow/label markup
+  (`AboutSection`/`about.tsx`, `TeamCascade.tsx`, `ProjectsCascade.tsx`/
+  `ProjectsShowreel.tsx`, `ProjectCard`/`ProjectModal`/`ProjectsSection`,
+  `ServiceOverview`/`GeotechnicalAnalysisHero`, `TeamPanel`,
+  `StatCounter`, `GeologicalCrossSection`, `ScrollCue`,
+  `ProjectExperienceSection`, `HeroSection`).
+- The Geotechnical service page's own `[data-glass-readability]`
+  page-scoped override of `--foreground-muted` (→ `#d6f0ff`, a bright
+  pale blue, for contrast against Solaris's warm background) is
+  untouched — still valid, still page-scoped, doesn't interact with the
+  new `--label` role at all.
+
+**Verification.** `npx eslint`/`npx tsc --noEmit` clean.
+`.claude/scripts/verify.sh`: unchanged (same pre-existing FAIL/WARNs).
+`next build` (default Turbopack path) clean; confirmed in the compiled
+CSS that `.text-label,.text-label\/50{color:var(--label)}` generated
+correctly (the `/50` opacity variant — `ScrollCue.tsx`'s own usage —
+compiled too) and `--foreground-muted:var(--raw-color-white)` landed as
+expected, with the Geotechnical page's own override line
+(`--foreground-muted:var(--raw-color-glass-muted-bright)`) still present
+and unchanged. **Not verified visually in a browser this turn** — same
+caveat as ADR-0091; worth a real look at the deployed site.
+
+---
+
 ## ADR-0091 — Heading/body font pair (Playfair Display + Inter), a dedicated `--heading` colour role, a particle GEOPORTE wordmark in the hero scene, services-heading copy, and a Company field on the contact form
 
 **Status:** Accepted · 2026-10-12

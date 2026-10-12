@@ -245,11 +245,23 @@ buttons/links) so a heading reads as its own typographic role. Every
 shared heading component (`SectionHeading`, `HeroHeading`/`HeroSubtext`,
 `AboutHeading`, `GeotechnicalPlexusHeading`) and every literal large h1/h2
 outside them use `font-heading text-heading` instead of
-`font-sans`/`text-foreground`. `--foreground-muted` (the eyebrow/
-section-label colour, and every other "muted" text sitewide) was
-retargeted from an azure-tinted blue to a calm slate
-(`--raw-color-label-slate` `#94A3B8`) at the same time. `--foreground`
-(body text) was already `--raw-color-white` (`#ffffff`) — unchanged.
+`font-sans`/`text-foreground`. `--foreground` (body text) is
+`--raw-color-white` (`#ffffff`).
+
+**Small-uppercase section labels** (eyebrows, form labels, column
+headers — any `text-xs`/`text-sm` block with `uppercase` + letter-
+tracking) are their own Tier 2 role too: `--label`
+(`--raw-color-label-slate`, `#94A3B8`) → `text-label` utility. This was
+split out of `--foreground-muted` on 2026-10-12 — that role briefly held
+the same slate value sitewide (making "normal" body/caption text read
+grey instead of white), then got rebound to white so only genuine
+section-label text stays the muted slate. If you're adding a new small-
+uppercase label, use `text-label`, not `text-foreground-muted` — the
+latter is now identical to `text-foreground` by value. The Geotechnical
+service page's own `[data-glass-readability]` override of
+`--foreground-muted` (→ a bright pale blue, for contrast against
+Solaris's warm background) is untouched and still page-scoped; it
+doesn't touch `--label`.
 
 ## Styling rules
 

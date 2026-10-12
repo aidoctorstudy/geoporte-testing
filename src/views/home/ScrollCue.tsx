@@ -66,7 +66,7 @@ export const ScrollCue = () => {
         />
         <circle ref={dotRef} cx="10" cy={DOT_REST_Y} r="2" fill="currentColor" className="text-accent" />
       </svg>
-      <span className="text-foreground-muted/50 text-xs tracking-[0.3em] uppercase">
+      <span className="text-label/50 text-xs tracking-[0.3em] uppercase">
         Scroll
       </span>
     </animated.div>

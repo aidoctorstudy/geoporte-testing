@@ -34,7 +34,7 @@ export const Footer = () => {
       >
         <div className="border-line flex flex-col gap-6 border-b pb-12 md:flex-row md:items-end md:justify-between md:gap-4">
           <div>
-            <p className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
+            <p className="text-label text-xs uppercase tracking-[0.2em]">
               Let&apos;s talk
             </p>
             <h2 className="font-heading text-heading mt-3 max-w-xl text-3xl leading-[1.15] font-medium md:text-4xl">
@@ -89,7 +89,7 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
+            <h3 className="text-label text-xs uppercase tracking-[0.2em]">
               Services
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm">
@@ -107,7 +107,7 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
+            <h3 className="text-label text-xs uppercase tracking-[0.2em]">
               Company
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm">
@@ -133,7 +133,7 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-foreground-muted text-xs uppercase tracking-[0.2em]">
+            <h3 className="text-label text-xs uppercase tracking-[0.2em]">
               Offices
             </h3>
             <ul className="mt-4 flex flex-col gap-3 text-sm">

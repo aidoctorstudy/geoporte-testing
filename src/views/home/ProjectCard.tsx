@@ -39,7 +39,7 @@ export const ProjectCard = ({ project, priority = false }: ProjectCardProps) => 
       </div>
       <div className="flex flex-1 flex-col justify-between p-6">
         <div>
-          <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+          <p className="text-label text-xs tracking-[0.14em] uppercase">
             {project.sector}
           </p>
           <h3 className="text-foreground mt-2 text-lg font-medium">

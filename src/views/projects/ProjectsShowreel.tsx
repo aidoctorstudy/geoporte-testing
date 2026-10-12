@@ -144,7 +144,7 @@ export const ProjectsShowreel = () => {
         }}
       />
       <div className="relative">
-        <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
+        <p className="text-label text-xs tracking-[0.14em] uppercase [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
           {tile.project.sector}
         </p>
         <h3 className="text-foreground mt-1 text-sm font-medium [text-shadow:0_1px_10px_rgba(0,0,0,.6)]">
@@ -187,7 +187,7 @@ export const ProjectsShowreel = () => {
               }}
             />
             <div className="relative">
-              <p className="text-foreground-muted text-xs tracking-[0.14em] uppercase">
+              <p className="text-label text-xs tracking-[0.14em] uppercase">
                 {tile.project.sector}
               </p>
               <h3 className="text-foreground mt-1 text-sm font-medium">
@@ -211,7 +211,7 @@ export const ProjectsShowreel = () => {
           className="pointer-events-none absolute inset-x-0 top-1/3 z-10 mx-auto max-w-2xl px-6 text-center"
           style={{ opacity: s.intro }}
         >
-          <p className="text-foreground-muted mb-4 text-xs tracking-[0.3em] uppercase">
+          <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
             27 projects · 7 countries
           </p>
           <h2 className="font-heading text-heading leading-display text-3xl font-medium md:text-5xl">
