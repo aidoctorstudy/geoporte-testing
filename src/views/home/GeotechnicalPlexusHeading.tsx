@@ -4,7 +4,6 @@
 
 import TextEngine from "spring-text-engine";
 import { easings } from "@react-spring/web";
-import { useTranslated } from "@/hooks/i18n/use-translated";
 
 export interface GeotechnicalPlexusHeadingProps {
   id: string;
@@ -23,10 +22,6 @@ export interface GeotechnicalPlexusHeadingProps {
  * reason (`SectionHeading.tsx`, `HeroHeading.tsx`).
  */
 export const GeotechnicalPlexusHeading = ({ id, text, className }: GeotechnicalPlexusHeadingProps) => {
-  // `TextEngine` reads `children` directly — translate before it reaches
-  // the component, per ADR-0024/ADR-0088.
-  const translatedText = useTranslated(text);
-
   return (
     <TextEngine
       tag="h2"
@@ -39,7 +34,7 @@ export const GeotechnicalPlexusHeading = ({ id, text, className }: GeotechnicalP
       lineConfig={{ duration: 800, easing: easings.easeOutCubic }}
       overflow
     >
-      {translatedText}
+      {text}
     </TextEngine>
   );
 };

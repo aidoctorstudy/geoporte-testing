@@ -27,21 +27,9 @@ const publicSchema = z.object({
   NEXT_PUBLIC_SITE_URL: optionalUrl(),
 });
 
-const optionalString = () =>
-  z.preprocess((v) => (v === "" ? undefined : v), z.string().optional());
-
 const serverSchema = z.object({
   /** Optional upstream the contact endpoint forwards leads to (CRM / webhook). */
   CONTACT_ENDPOINT: optionalUrl(),
-  /** Self-hosted (or paid-tier) LibreTranslate instance for `/api/translate`.
-   * Unset by default — the official hosted API now requires its own
-   * `LIBRETRANSLATE_API_KEY` (see https://portal.libretranslate.com), so the
-   * route falls back to MyMemory (free, keyless) whenever this is unset or
-   * the request fails. See `obsidian/frontend/i18n.md`. */
-  LIBRETRANSLATE_ENDPOINT: optionalUrl(),
-  /** API key for `LIBRETRANSLATE_ENDPOINT`, when the configured instance
-   * requires one (the official libretranslate.com API always does). */
-  LIBRETRANSLATE_API_KEY: optionalString(),
 });
 
 /** Public env — safe to read anywhere (server or client). */
@@ -58,8 +46,6 @@ let cachedServerEnv: z.infer<typeof serverSchema> | undefined;
 export function getServerEnv() {
   cachedServerEnv ??= serverSchema.parse({
     CONTACT_ENDPOINT: process.env.CONTACT_ENDPOINT,
-    LIBRETRANSLATE_ENDPOINT: process.env.LIBRETRANSLATE_ENDPOINT,
-    LIBRETRANSLATE_API_KEY: process.env.LIBRETRANSLATE_API_KEY,
   });
   return cachedServerEnv;
 }

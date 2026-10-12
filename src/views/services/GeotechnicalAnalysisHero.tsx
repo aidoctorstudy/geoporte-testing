@@ -2,7 +2,6 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { GeotechnicalFeaScene } from "@/components/scene/GeotechnicalFeaScene";
 import { Magnetic } from "@/components/common/Magnetic";
-import { TranslatedText } from "@/components/common/TranslatedText";
 
 /**
  * Bespoke hero for the Geotechnical Engineering service page — replaces
@@ -53,7 +52,7 @@ export const GeotechnicalAnalysisHero = () => {
                 href="#service-overview"
                 className="bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] uppercase"
               >
-                <TranslatedText text="Explore Our Capabilities" />
+                Explore Our Capabilities
               </Link>
             </Magnetic>
           </div>

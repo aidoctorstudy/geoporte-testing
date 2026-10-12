@@ -38,7 +38,6 @@ humans and AI agents (Claude Code, Cursor).
 - [[component-conventions]] — how to write & place components
 - [[html-semantics]] — semantic, accessible, SEO-correct markup rules
 - [[seo-metadata]] — metadata generation & bot detection
-- [[i18n]] — nav language switcher: translation proxy, persisted language, RTL
 - [[components/animation-springs|Spring components catalog]]
 - [[components/common|Common components catalog]]
 - [[components/about-team|`/about/team` (Cards Cascade) catalog]]

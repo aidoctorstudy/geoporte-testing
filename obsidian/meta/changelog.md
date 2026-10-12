@@ -37,6 +37,39 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-12 (Language switcher and the i18n stack removed again — English only)
+
+Explicit direction: remove the language switcher entirely, English
+only — the globe icon/"EN" text in the navbar, all i18n code,
+translation hooks, language-related components. Second removal of this
+exact feature in this project's history (first ADR-0077, rebuilt
+earlier this same session under ADR-0088/89/91/92, now gone again). Full
+reasoning in [[decisions-log]] ADR-0100; short version here.
+
+- Deleted entirely: `app/api/translate/route.ts`, `TranslatedText.tsx`,
+  `LanguageDirection.tsx`, `Nav/LanguageSwitcher.tsx`, `hooks/i18n/`,
+  `lib/i18n/`, `obsidian/frontend/i18n.md`.
+- Every call site reverted to its plain string/prop: Nav/MobileMenu/
+  ServicesDropdown/Footer links and buttons, the four shared heading
+  components (`SectionHeading`, `HeroHeading`/`HeroSubtext`,
+  `GeotechnicalPlexusHeading`, `AboutHeading`), and every
+  `<Magnetic>`-wrapped CTA button that had been wired for translation.
+  `layout.tsx` no longer mounts `<LanguageDirection>` — `<html lang="en">`
+  is permanently static again.
+- `src/env.ts`/`.env.example`: `LIBRETRANSLATE_ENDPOINT`/
+  `LIBRETRANSLATE_API_KEY` removed.
+- Confirmed zero remaining references via a full `grep` sweep of `src/`.
+  `npx eslint` clean; `npx tsc --noEmit` initially flagged a stale
+  Next.js auto-generated route-validator reference to the just-deleted
+  route — not a real error, confirmed clean after `next build`
+  regenerated it. `next build` (Turbopack) clean, route count 22 → 21.
+  `.claude/scripts/verify.sh` unchanged.
+- Also caught and fixed in the same pass: a stale `#removed` note in
+  `components/common.md` from the *first* removal (ADR-0077) that never
+  got updated when the feature was rebuilt mid-session — now states the
+  full two-removals history so a future turn doesn't rebuild this a
+  third time from an outdated vault read.
+
 ## 2026-10-12 (Open Graph image replaced — a leftover stock statue photo swapped for a real, branded 1200×630 card; canonical/og:url confirmed already correct on the live site)
 
 Report: `og:image` shows a random statue instead of the Geoporte logo;

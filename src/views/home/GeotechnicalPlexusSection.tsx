@@ -2,7 +2,6 @@ import Link from "next/link";
 import { GeotechnicalPlexusScene } from "@/components/scene/GeotechnicalPlexusScene";
 import { Inview } from "@/components/animation/springs/in-view";
 import { Magnetic } from "@/components/common/Magnetic";
-import { TranslatedText } from "@/components/common/TranslatedText";
 import { GeotechnicalPlexusHeading } from "./GeotechnicalPlexusHeading";
 
 /**
@@ -77,7 +76,7 @@ export const GeotechnicalPlexusSection = () => {
                 href="/services/geotechnical-engineering"
                 className="bg-accent-engineering hover:bg-accent-engineering/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] text-white uppercase"
               >
-                <TranslatedText text="Explore Geotechnical Engineering" />
+                Explore Geotechnical Engineering
               </Link>
             </Magnetic>
           </Inview>

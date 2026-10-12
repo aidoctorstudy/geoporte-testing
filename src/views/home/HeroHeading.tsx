@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 import TextEngine from "spring-text-engine";
 import { easings } from "@react-spring/web";
 import { subscribeToTicker } from "@/lib/animation/ticker";
-import { useTranslated } from "@/hooks/i18n/use-translated";
 
 const SHIMMER_PERIOD_S = 5;
 const SHIMMER_WIDTH_PERCENT = 16;
@@ -34,9 +33,6 @@ export interface HeroHeadingProps {
  */
 export const HeroHeading = ({ id, text, className }: HeroHeadingProps) => {
   const shimmerRef = useRef<HTMLDivElement>(null);
-  // `TextEngine` reads `children` directly — translate before it reaches
-  // the component, per ADR-0024/ADR-0088.
-  const translatedText = useTranslated(text);
 
   useEffect(() => {
     return subscribeToTicker((time) => {
@@ -61,7 +57,7 @@ export const HeroHeading = ({ id, text, className }: HeroHeadingProps) => {
         wordConfig={{ duration: 700, easing: easings.easeOutCubic }}
         overflow
       >
-        {translatedText}
+        {text}
       </TextEngine>
       <div
         ref={shimmerRef}
@@ -93,8 +89,6 @@ export interface HeroSubtextProps {
  * engine.
  */
 export const HeroSubtext = ({ text, className }: HeroSubtextProps) => {
-  const translatedText = useTranslated(text);
-
   return (
     <TextEngine
       tag="p"
@@ -106,7 +100,7 @@ export const HeroSubtext = ({ text, className }: HeroSubtextProps) => {
       letterStagger={14}
       letterConfig={{ duration: 1, easing: easings.linear }}
     >
-      {translatedText}
+      {text}
     </TextEngine>
   );
 };

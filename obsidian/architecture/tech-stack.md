@@ -961,11 +961,14 @@ only when a project needs them (ADR-0020):
 > `@payloadcms/next` 3.88 peer-requires `next >=16.2.6 <17`. The starter is on
 > `16.3.1`, so it now satisfies that range. Re-check when either side moves.
 
-i18n was adopted 2026-08-23 and fully removed 2026-09-01 under explicit user
-direction — the site is English-only again, no nav language switcher, no
-`app/api/translate` proxy, no `zod`/`zustand` i18n plumbing. See ADR-0077 in
-[[decisions-log]]. Still undecided: payments, data-fetching libraries,
-testing. Document here when adopted and add an ADR to [[decisions-log]].
+i18n was adopted 2026-08-23, fully removed 2026-09-01 (ADR-0077), rebuilt
+2026-10-12 (ADR-0088/0089/0091/0092), and removed again the same day
+(ADR-0100) — the site is English-only, no nav language switcher, no
+`app/api/translate` proxy, no `zod`/`zustand` i18n plumbing, no
+`hooks/i18n/`/`lib/i18n/`. Check [[decisions-log]] ADR-0100 (the latest
+entry on this) before assuming any earlier state. Still undecided:
+payments, data-fetching libraries, testing. Document here when adopted
+and add an ADR to [[decisions-log]].
 
 ## Related
 

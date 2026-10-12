@@ -17,6 +17,78 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0100 — Language switcher and the i18n stack removed again — site is English-only
+
+**Status:** Accepted · 2026-10-12 · **Reverses ADR-0088/0089/0091/0092; re-establishes ADR-0077's English-only decision.**
+
+**Context.** Explicit direction: remove the language switcher entirely
+for now, English only — the globe icon and "EN" text in the navbar, all
+i18n code, translation hooks, and language-related components. Second
+time this exact feature has been built then removed in this project's
+history (first ADR-0077, then rebuilt earlier in this same session under
+ADR-0088/89/91/92, now removed again).
+
+**Decision.** Removed outright, not hidden behind a flag — matching
+ADR-0077's own precedent and this project's general practice for
+retiring a feature (see `ThemeController`, ADR-0066).
+
+Deleted entirely: `src/app/api/translate/route.ts`,
+`src/components/common/TranslatedText.tsx`,
+`src/components/common/LanguageDirection.tsx`,
+`src/components/common/Nav/LanguageSwitcher.tsx`, `src/hooks/i18n/`
+(`use-language-store.ts`, `use-translated.ts`), `src/lib/i18n/`
+(`languages.ts`, `translation-queue.ts`), `obsidian/frontend/i18n.md`.
+
+Every call site reverted to its plain string/prop, the same mechanical
+shape as ADR-0077's own removal:
+- `Nav.tsx`/`MobileMenu.tsx`/`ServicesDropdown.tsx`/`Footer.tsx` —
+  `<TranslatedText text={…}/>` → the literal string back in place;
+  `LanguageSwitcher`'s mount and `MobileMenu`'s language-button row
+  removed.
+- `layout.tsx` — `<LanguageDirection />` unmounted; `<html lang="en">`
+  (already static on the tag itself) is now permanently the only
+  lang/dir state again, nothing ever overwrites it.
+- `SectionHeading.tsx`, `HeroHeading.tsx`/`HeroSubtext`,
+  `GeotechnicalPlexusHeading.tsx` — dropped their `useTranslated()`
+  indirection, pass `eyebrow`/`heading`/`text` straight to `TextEngine`
+  again (same reasoning ADR-0077 gave: these components read `children`
+  directly, so the hook call sat between the prop and the engine, not
+  wrapping JSX).
+- `AboutHeading.tsx` — `<TranslatedText tag="span" text={text}/>` → `{text}`
+  directly inside `<Inview>`.
+- Every `<Magnetic>`-wrapped CTA button (`HeroSection.tsx`,
+  `GeotechnicalPlexusSection.tsx`, `ServiceCta.tsx`,
+  `GeotechnicalAnalysisHero.tsx`) — back to a literal string child.
+- `src/env.ts`/`.env.example` — `LIBRETRANSLATE_ENDPOINT`/
+  `LIBRETRANSLATE_API_KEY` removed from the server zod schema (and the
+  now-unused `optionalString()` helper, which only that key used).
+
+**Consequence.** `zustand` itself stays — still backs the scroll store,
+cookie-consent store, and project-modal store, none of which are i18n.
+The MyMemory/LibreTranslate provider research from ADR-0089 (confirmed
+live: LibreTranslate's hosted API now requires a paid key; MyMemory is
+free/keyless/reachable) isn't lost — it's preserved in that ADR's own
+entry, should this be rebuilt a third time.
+
+**Verification.** Confirmed zero remaining references via `grep` across
+all of `src/` for `TranslatedText|useTranslated|useLanguageStore|
+LanguageSwitcher|LanguageDirection|i18n|LIBRETRANSLATE` — none. `npx
+eslint src` clean. `npx tsc --noEmit` initially flagged a stale
+`.next/types/validator.ts` reference to the just-deleted
+`/api/translate/route.ts` — a Next.js auto-generated artifact, not a
+real source error; confirmed by running `next build` (which regenerates
+that file) and re-running the typecheck clean afterward. `next build`
+(Turbopack) itself clean, `/api/translate` gone from the route list (22
+routes → 21). `.claude/scripts/verify.sh` unchanged (same pre-existing
+FAIL/WARNs). Vault catalog notes (`components/common.md`, `hooks.md`,
+`tech-stack.md`, `README.md`'s Map of Content) updated in the same turn
+— a stale `#removed` note from ADR-0077 that was never updated during
+the ADR-0089 rebuild was also caught and fixed here, now stating the
+full two-removals history plainly so a future turn doesn't rebuild this
+a third time from a stale read of an old vault snapshot.
+
+---
+
 ## ADR-0099 — Open Graph image replaced: a leftover stock statue photo swapped for a real, branded 1200×630 card; canonical/og:url already correct
 
 **Status:** Accepted · 2026-10-12

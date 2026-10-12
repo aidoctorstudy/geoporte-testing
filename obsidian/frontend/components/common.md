@@ -271,9 +271,8 @@ Fixed, pill-shaped primary navigation, mounted once in the root layout. Lives in
 |------|------|
 | `Nav.tsx` | Desktop bar — logo, `ServicesDropdown`, secondary links, CTA, mobile toggle |
 | `ServicesDropdown.tsx` | Hover-open services menu (desktop) — CSS-only per ADR-0014, not a spring |
-| `MobileMenu.tsx` | Full-screen mobile nav, `<Spring>`-driven open/close; also renders a row of language buttons (no dropdown needed in a full-screen menu) |
+| `MobileMenu.tsx` | Full-screen mobile nav, `<Spring>`-driven open/close |
 | `nav-links.ts` | Primary nav link data — also consumed by `Footer` |
-| `LanguageSwitcher.tsx` | Desktop nav language dropdown — same hover+tap pattern as `ServicesDropdown`. See [[i18n]] (ADR-0088/0089, restores ADR-0024). |
 
 On every glass-background route (`isGlassBackgroundRoute()`,
 `src/lib/scene/glass-background-routes.ts` — currently Geotechnical,
@@ -342,32 +341,20 @@ ADR-0052, ADR-0053, ADR-0054, ADR-0055, ADR-0057.
 > of this catalog.
 >
 > The nav language switcher (`LanguageSwitcher.tsx`), `LanguageDirection.tsx`
-> and `TranslatedText.tsx` (plus the rest of the i18n stack — `hooks/i18n/`,
-> `lib/i18n/`, `app/api/translate/route.ts`) were likewise fully removed —
-> see [[decisions-log]] ADR-0077. The site is English-only; don't rebuild
-> these from a stale memory of this catalog.
-
-## TranslatedText / LanguageDirection — i18n leaves
-
-`<TranslatedText text="…" tag="span" className?/>` — translates `text` into
-the currently-selected nav language (`useLanguageStore`), rendering the
-English source unchanged while pending/on failure/when the language is
-English. Used for plain JSX children (nav links, buttons). Where a
-component's `children` are read directly by something downstream — a
-heading passed into `TextEngine` — call `useTranslated(text)` directly
-instead and pass the resolved string in; see `SectionHeading.tsx` below.
-
-`<LanguageDirection />` — mounted once in `layout.tsx`, no props, renders
-nothing. Hydrates the persisted language from `localStorage` on mount, then
-keeps `<html lang>`/`dir` in sync (`rtl` for Arabic/Urdu). See [[i18n]]
-(ADR-0088/0089, restores ADR-0024, reversed by ADR-0077).
+> and `TranslatedText.tsx` (plus the rest of the i18n stack —
+> `hooks/i18n/`, `lib/i18n/`, `app/api/translate/route.ts`) have been
+> removed **twice** now — first under ADR-0077, rebuilt under
+> ADR-0088/0089/0091/0092 (restoring ADR-0024's original scope: nav
+> links, section headings, button labels), then removed again under
+> ADR-0100. The site is English-only. Don't rebuild any of this from a
+> stale memory of this catalog, this conversation, or an older vault
+> snapshot — check [[decisions-log]] ADR-0100 for the current, final
+> state before assuming otherwise.
 
 ## SectionHeading — `SectionHeading.tsx`
 
 `<SectionHeading eyebrow heading id tag? headingClassName? />` — the eyebrow +
-`TextEngine` heading pattern repeated across every homepage section. Both
-`eyebrow` and `heading` are translated via `useTranslated()` before reaching
-`TextEngine` (see [[i18n]]). See [[text-engine]].
+`TextEngine` heading pattern repeated across every homepage section.
 
 ## GeotechnicalPlexusSection — `src/views/home/GeotechnicalPlexusSection.tsx`
 
