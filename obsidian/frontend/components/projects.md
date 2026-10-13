@@ -91,8 +91,9 @@ interpolation off `interpolatedProgress`.
 > **If `TeamCascadeDeck.tsx` or any future component reads as not-quite-
 > pinned, this is why — check this first before assuming a logic bug.**
 
-`prefers-reduced-motion` renders a plain static grid instead (no tall
-track, no camera flight, no manual-sticky ticker) — the scroll-jacked
+`prefers-reduced-motion` **or Tier 1** (`isReducedMotion()`, not a raw
+`matchMedia` check — see ADR-0101) renders a plain static grid instead (no
+tall track, no camera flight, no manual-sticky ticker) — the scroll-jacked
 flight has no natural "slower" version, so the honest fallback is the
 collage without motion, not a throttled copy of the same animation.
 
@@ -153,10 +154,11 @@ React), `ProjectsCascade.tsx` is the `"use client"` scroll-driven stage.
   > works, so this button jumps rather than animates. Not fixed in the
   > shared helper itself; other call sites depend on its current
   > behaviour.
-- `prefers-reduced-motion` gets a plain static grid of every project (own
-  copy, not reusing `ProjectsSection`'s grid or `ProjectsShowreel`'s
-  reduced-motion grid) — same rationale both of those already use: the
-  scroll-jacked fold has no natural slower version.
+- `prefers-reduced-motion` or Tier 1 (`isReducedMotion()` — see ADR-0101)
+  gets a plain static grid of every project (own copy, not reusing
+  `ProjectsSection`'s grid or `ProjectsShowreel`'s reduced-motion grid) —
+  same rationale both of those already use: the scroll-jacked fold has no
+  natural slower version.
 - **Cards were not clickable (fixed 2026-10-09).** Unlike `ProjectsShowreel`'s
   tiles, the deck cards (both the animated 3D deck and the reduced-motion
   static grid) shipped with no `onClick`/`onKeyDown`/`role="button"` at all —

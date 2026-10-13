@@ -241,8 +241,21 @@ the cursor trail, the page-load intro, Lenis) reads the same tier through
 `isReducedMotion()`/`isLowPowerDevice()` instead, since it isn't driven by
 react-spring's `Globals`. As of ADR-0083, `globals.css` also kills every
 CSS `transition`/`animation` outright under `data-perf-tier="low"`
-(suspending the ADR-0014 exception on this tier specifically). See
-[[animation-system]] and [[seo-metadata]].
+(suspending the ADR-0014 exception on this tier specifically).
+
+**Caveat found in ADR-0101 — `Globals.skipAnimation` does not cover a
+scrub trigger.** `<SpringTrigger mode="scrub">`/`useProgressTrigger` *is*
+spring-driven, but `skipAnimation` only removes its easing lag — the hook
+still recomputes and re-applies its interpolated value on every scroll
+tick regardless, so a "scrub" section's parallax kept running unmodified
+under this tier until each consumer explicitly checked `isReducedMotion()`
+and set `enabled={false}` on the trigger itself. Not automatic the way
+toggle/threshold springs (`Inview`, `Hover`, `Spring`,
+`SpringTrigger mode="toggle"`) are — any new scrub-driven section must wire
+this check itself. See `ProjectsShowreel.tsx`/`ProjectsCascade.tsx`/
+`TeamCascade.tsx`/`GeologicalCrossSection.tsx` for the pattern.
+
+See [[animation-system]] and [[seo-metadata]].
 
 ## TierImage — `TierImage.tsx`
 

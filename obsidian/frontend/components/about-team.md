@@ -75,9 +75,10 @@ copy, not a shared component.
   `ProjectsCascade.tsx` (`position: sticky` does not work anywhere on this
   site — see ADR-0071's note on why) — this page now has its own copy of
   that workaround too, not a shared hook.
-- `prefers-reduced-motion` gets a plain static grid of every member
-  instead of the scroll-jacked fold — own copy, not reusing `TeamMemberCard`
-  or `ProjectsCascade`'s grid — same rationale every scroll-driven section
+- `prefers-reduced-motion` or Tier 1 (`isReducedMotion()` — see ADR-0101)
+  gets a plain static grid of every member instead of the scroll-jacked fold
+  — own copy, not reusing `TeamMemberCard` or `ProjectsCascade`'s grid —
+  same rationale every scroll-driven section
   in this codebase already uses: the tall track has no natural slower
   version.
 
