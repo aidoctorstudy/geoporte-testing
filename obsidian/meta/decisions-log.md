@@ -17,6 +17,89 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0102 — Homepage stopped rendering past Geotechnical on Tier 1: `<Inview>` observer reliability, not lazy mounting
+
+**Status:** Accepted · 2026-10-13 · Composes around (does not edit) the protected `<Inview>` engine file.
+
+**Context.** Report: on Tier 1 devices, the homepage stops rendering after
+the Geotechnical Engineering section — Services, Project Experience, Stats,
+Projects and Contact never appear. The request's hypothesis was lazy/
+IntersectionObserver-gated section mounting or dynamic imports.
+
+**Investigated, ruled out:**
+- No `next/dynamic`/`import()` lazy-loading exists anywhere in `src/`
+  outside `LazyCookie.tsx` (the cookie banner, unrelated to the homepage) —
+  confirmed by a full-tree grep. There is no deferred import to make eager.
+- No per-section `Suspense`/error boundary exists, and no component below
+  Geotechnical throws synchronously during render — read every section
+  component in the affected range (`ServicesSection`/`ServiceCard`,
+  `ProjectExperienceSection`, `StatsSection`/`StatsGlobe`, home
+  `ProjectsSection`, `ContactSection`) plus `SceneViewport` and
+  `shared-viewport-renderer.ts` (the shared WebGL context every mini-scene
+  in that range besides Geotechnical's own dedicated `HeroScene` goes
+  through) — both correctly gate on `isLowPowerDevice()`/`isReducedMotion()`
+  and wrap their per-frame `update()` in a try/catch that isolates one
+  scene's failure from the rest.
+
+**Real cause — the `<Inview>` observer-reliability gap this project has
+already documented but never fixed.** Every content block in the affected
+range is wrapped in `<Inview mode="once">`: each `ServicesSection` card,
+both halves of `ProjectExperienceSection`, every category block in the
+homepage `ProjectsSection`, and `ContactSection`'s entire address/offices
+block. `Inview`'s revealed (`to`) state depends entirely on its own
+`IntersectionObserver` reporting `isIntersecting: true` at least once
+(`active` in `in-view.tsx`) — `Globals.skipAnimation` (what Tier 1 relies
+on) only changes how fast a spring moves toward its target once `active`
+flips true, it does not make `active` flip. The changelog already flagged
+this exact fragility as a real, unfixed risk ("a device whose observer
+never fires... would see that `Inview` section stuck invisible
+indefinitely, regardless of tier") — this report is that risk materialising
+on real Tier 1 hardware: a slow/low-power main thread (Tier 1's defining
+trait) delays or entirely misses an `IntersectionObserver`'s first
+callback, especially for elements several screens down whose observer
+registers late relative to a fast scroll. The content is genuinely present
+in the DOM, stuck at `from` (`opacity: 0`) — which reads as "stopped
+rendering." `StatsSection` doesn't use `<Inview>`, but `StatCounter`/
+`ExperienceStatBox` have the identical shape: a one-way `hasAnimated` latch
+gated on the same `useDynamicInView` hook, stuck at "0" if `inView` never
+fires.
+
+**Fix — bypass the observer on Tier 1, don't disable it.** `enabled={false}`
+on `<Inview>` forces `active` permanently *false* (shows `from` forever) —
+the opposite of the fix. Since `in-view.tsx` is a protected engine file
+(`.claude/rules/engine-protected.md`), the fix composes around it instead:
+new `src/components/common/TierInview.tsx` renders `<Inview>` unchanged
+normally, but on Tier 1 / reduced motion (gated behind `useWindowWidth() >
+0`, the same post-hydration guard every other tier branch in this codebase
+uses) renders `children` directly, inline-styled with `to`, skipping the
+observer entirely. Swapped in via `import { TierInview as Inview } from
+"@/components/common/TierInview"` (same zero-JSX-diff alias idiom
+`TierImage as Image` already uses) in `ServicesSection.tsx`,
+`ProjectExperienceSection.tsx`, home `ProjectsSection.tsx`, and
+`ContactSection.tsx`. `StatCounter.tsx`/`ExperienceStatBox.tsx` got the
+parallel fix: their `useEffect` now also checks `isReducedMotion()`
+alongside `inView` — deliberately in the effect, not `useState`'s lazy
+initializer, since the initializer runs during render and would disagree
+with the server-rendered "0" the first client render must match.
+
+**Not fixed, by design — `AboutSection`/`GeotechnicalPlexusSection`/
+`HeroSection`.** The report named Services/Project Experience/Stats/
+Projects/Contact specifically, and these three above Geotechnical were
+reported as rendering correctly (plausible: their `<Inview>` content sits
+near enough the top of the page that the observer's first callback fires
+before a Tier 1 main thread falls behind). Left as-is rather than expanding
+scope beyond what was reported — the same underlying gap exists there too
+and in `TeamPanel.tsx`/`AboutHeading.tsx`, worth the same fix if a future
+report surfaces it.
+
+**Not verifiable this turn.** No Chrome extension was connected this
+session (`tabs_context_mcp` returned "Browser extension is not connected"),
+so the fix could not be confirmed against a live, running page — verified
+instead via full code audit, `tsc --noEmit`, `eslint`, `verify.sh`, and both
+`next build` and `next build --webpack`.
+
+---
+
 ## ADR-0101 — Tier 1 "baqala mode" hardened: scroll-scrub triggers actually disabled, base background lifted off near-black
 
 **Status:** Accepted · 2026-10-13 · Extends ADR-0083/0090.

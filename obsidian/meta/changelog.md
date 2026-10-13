@@ -37,6 +37,41 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-13 (Homepage "stops rendering" past Geotechnical on Tier 1 — `<Inview>` observer gap)
+
+Report: homepage stops rendering after the Geotechnical section on Tier 1 —
+Services, Project Experience, Stats, Projects, Contact never appear. Full
+reasoning in [[decisions-log]] ADR-0102; short version here.
+
+- Ruled out the request's own hypotheses first: no `next/dynamic`/`import()`
+  lazy-loading exists anywhere in `src/` outside the unrelated cookie
+  banner; no section throws synchronously during render; `SceneViewport`/
+  `shared-viewport-renderer.ts` (the shared WebGL context every mini-scene
+  in that range uses) both correctly skip on Tier 1 and isolate per-scene
+  failures.
+- **Real cause:** every content block in that range is wrapped in
+  `<Inview mode="once">`, whose revealed state depends entirely on its own
+  `IntersectionObserver` firing at least once — already flagged in this
+  changelog as a real, unfixed fragility. A slow/low-power main thread
+  (Tier 1's defining trait) delays or misses that first callback for
+  elements several screens down, leaving them stuck at `opacity: 0`
+  forever — present in the DOM, invisible, reading as "stopped rendering."
+  `StatCounter`/`ExperienceStatBox` have the identical shape via their own
+  `hasAnimated` latch.
+- **Fix:** new `src/components/common/TierInview.tsx` composes around the
+  protected `<Inview>` engine file (not edited) — renders it normally, but
+  on Tier 1/reduced motion skips the observer and renders the final `to`
+  state directly. Swapped in via a zero-diff `TierInview as Inview` alias
+  in `ServicesSection.tsx`, `ProjectExperienceSection.tsx`, home
+  `ProjectsSection.tsx`, `ContactSection.tsx`. `StatCounter`/
+  `ExperienceStatBox` got the parallel fix in their own `useEffect`.
+- Not touched: `AboutSection`/`GeotechnicalPlexusSection`/`HeroSection` —
+  reported as already rendering correctly; same latent gap, left for a
+  future report rather than expanding scope.
+- Not verifiable this turn: no Chrome extension connected this session, so
+  checked via full code audit, `tsc`, `eslint`, `verify.sh`, and both
+  `next build` and `next build --webpack` instead of a live page.
+
 ## 2026-10-13 (Tier 1 "baqala mode" hardened — scroll-scrub triggers, base background)
 
 Report: Tier 1 ("low" capability) rendered as "plain black background with

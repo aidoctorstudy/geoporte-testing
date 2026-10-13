@@ -1,5 +1,5 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { Inview } from "@/components/animation/springs/in-view";
+import { TierInview as Inview } from "@/components/common/TierInview";
 import { ServiceCard } from "@/components/common/ServiceCard";
 import { services } from "@/data/mocks/services";
 

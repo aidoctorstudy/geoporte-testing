@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 
 export interface StatCounterProps {
   value: number;
@@ -17,13 +18,22 @@ export interface StatCounterProps {
  * spring straight off `inView`) keeps the count-up reliable on mobile: a
  * fast or bouncy scroll can drop the element below the intersection
  * threshold again before/while the spring is running, which — wired
- * directly to `inView` — snapped the number back to 0 mid-animation. */
+ * directly to `inView` — snapped the number back to 0 mid-animation.
+ *
+ * Latched straight to `true` on Tier 1 / reduced motion (ADR-0102) in a
+ * `useEffect` — never in `useState`'s own lazy initializer, which runs
+ * during render and would disagree with the server-rendered "0" the very
+ * first client render has to match, tripping a hydration mismatch — rather
+ * than waiting on `inView` at all. Same observer-reliability gap as
+ * `<Inview>` (see `TierInview.tsx`): a slow/low-power main thread can
+ * delay or entirely miss the `IntersectionObserver`'s first callback,
+ * which otherwise left this counter frozen at 0 forever. */
 export const StatCounter = ({ value, label, suffix = "+", prefix = "" }: StatCounterProps) => {
   const [setNode, inView] = useDynamicInView({ threshold: 0.15 });
   const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
-    if (inView) setHasAnimated(true);
+    if (inView || isReducedMotion()) setHasAnimated(true);
   }, [inView]);
 
   const { number } = useSpring({

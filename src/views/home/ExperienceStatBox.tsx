@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import type { ExperienceStat } from "@/data/mocks/experience";
 
 const VARIANT_CLASSNAME: Record<ExperienceStat["variant"], string> = {
@@ -18,13 +19,15 @@ export interface ExperienceStatBoxProps {
  * spring count-up idiom as `StatCounter`, styled as a flat solid card
  * instead of a plain centred number. Same `hasAnimated` latch as
  * `StatCounter` — see its comment for why driving the spring straight off
- * `inView` was unreliable on mobile. */
+ * `inView` was unreliable on mobile, and for why it's also latched on Tier
+ * 1 / reduced motion (ADR-0102), from a `useEffect` rather than `useState`'s
+ * lazy initializer. */
 export const ExperienceStatBox = ({ stat }: ExperienceStatBoxProps) => {
   const [setNode, inView] = useDynamicInView({ threshold: 0.15 });
   const [hasAnimated, setHasAnimated] = useState(false);
 
   useEffect(() => {
-    if (inView) setHasAnimated(true);
+    if (inView || isReducedMotion()) setHasAnimated(true);
   }, [inView]);
 
   const { number } = useSpring({

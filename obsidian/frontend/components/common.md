@@ -257,6 +257,31 @@ this check itself. See `ProjectsShowreel.tsx`/`ProjectsCascade.tsx`/
 
 See [[animation-system]] and [[seo-metadata]].
 
+## TierInview — `TierInview.tsx`
+
+`<TierInview>` — composes around (does not edit) the protected `<Inview>`
+engine file, same relationship `TierImage` has to `next/image`. Fixes a real
+gap ADR-0102 found: `<Inview mode="once">`'s revealed state depends entirely
+on its own `IntersectionObserver` firing at least once, and a slow/low-power
+main thread (Tier 1) can delay or entirely miss that first callback —
+leaving a section's content genuinely present in the DOM but stuck at
+`opacity: 0` indefinitely, which reads as "the page stopped rendering."
+`enabled={false}` on `<Inview>` itself can't fix this — it forces the
+*hidden* state permanently, the opposite of what's needed. On Tier 1 /
+reduced motion (gated behind `useWindowWidth() > 0`, same post-hydration
+guard every other tier branch in this codebase uses), `<TierInview>` skips
+`<Inview>` and its observer entirely and renders `children` inline-styled
+with `to` directly. Swap the import
+(`import { TierInview as Inview } from "@/components/common/TierInview"`)
+— same zero-JSX-diff alias idiom as `TierImage as Image`. Currently wired
+into `ServicesSection.tsx`, `ProjectExperienceSection.tsx`, home
+`ProjectsSection.tsx`, `ContactSection.tsx` — the sections ADR-0102's report
+named. The identical gap exists in `AboutSection.tsx`/
+`GeotechnicalPlexusSection.tsx`/`TeamPanel.tsx`/`AboutHeading.tsx` (not
+reported broken, left as plain `<Inview>` rather than expanding scope) and
+in `StatCounter.tsx`/`ExperienceStatBox.tsx`'s own `hasAnimated` latch
+(fixed separately, in their own `useEffect`, not via this component).
+
 ## TierImage — `TierImage.tsx`
 
 `<TierImage>` — a `"use client"` drop-in `next/image` replacement; every

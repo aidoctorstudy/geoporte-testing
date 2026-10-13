@@ -1,6 +1,6 @@
 import { TierImage as Image } from "@/components/common/TierImage";
 import Link from "next/link";
-import { Inview } from "@/components/animation/springs/in-view";
+import { TierInview as Inview } from "@/components/common/TierInview";
 import { Magnetic } from "@/components/common/Magnetic";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { experienceCopy, experienceStats, experienceTeamPhoto } from "@/data/mocks/experience";
