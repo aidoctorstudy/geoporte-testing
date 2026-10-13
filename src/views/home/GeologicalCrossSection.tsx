@@ -6,6 +6,7 @@ import { Spring } from "@/components/animation/springs/spring";
 import { SceneViewport, SceneViewportHandle } from "@/components/scene/SceneViewport";
 import { buildGeologicalCrossSection } from "@/components/scene/geological-cross-section";
 import { STRATA_LAYERS } from "@/components/scene/strata-scene-colors";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 
 const LAYER_COUNT = STRATA_LAYERS.length;
 
@@ -24,7 +25,19 @@ const LAYER_COUNT = STRATA_LAYERS.length;
  */
 export const GeologicalCrossSection = () => {
   const sceneRef = useRef<SceneViewportHandle>(null);
-  const [revealedCount, setRevealedCount] = useState(0);
+  // Previously had no reduced-motion handling at all — on Tier 1 ("low"
+  // capability), the WebGL scene itself already skipped correctly
+  // (`SceneViewport`'s own `isLowPowerDevice()` gate), but this trigger's
+  // `onChange` kept firing every scroll tick regardless, doing pointless
+  // work (`sceneRef.current` was always null there, a harmless no-op) and
+  // — the real bug — `revealedCount` started at `0` and only ever climbed
+  // via scroll progress, so if the trigger is now disabled outright
+  // (below) without this, the layer labels would stay invisible forever.
+  // Initialising straight to fully-revealed under reduced motion avoids
+  // that "stuck hidden" trap.
+  const [revealedCount, setRevealedCount] = useState(() =>
+    isReducedMotion() ? LAYER_COUNT : 0,
+  );
 
   return (
     <SpringTrigger
@@ -32,6 +45,7 @@ export const GeologicalCrossSection = () => {
       mode="scrub"
       start="top bottom"
       end="bottom center"
+      enabled={!isReducedMotion()}
       onChange={({ interpolatedProgress }) => {
         sceneRef.current?.setControl(interpolatedProgress);
         const next = Math.min(

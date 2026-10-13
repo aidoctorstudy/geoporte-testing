@@ -7,6 +7,7 @@ import { TierImage as Image } from "@/components/common/TierImage";
 import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import { projects } from "@/data/mocks/projects";
 import { useProjectModalStore } from "@/views/home/project-modal-store";
 import {
@@ -42,8 +43,11 @@ export const ProjectsShowreel = () => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const openProject = useProjectModalStore((s) => s.open);
-  const reducedMotion =
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // `isReducedMotion()` combines the OS setting with the Tier 1 ("low"
+  // capability) performance tier — a raw `matchMedia` check alone misses
+  // Tier 1, leaving this section's full scroll-jacked tall track and 3D
+  // transforms running on exactly the devices Tier 1 exists to protect.
+  const reducedMotion = isReducedMotion();
 
   const tiles = useMemo(() => buildShowreelTiles(projects), []);
 

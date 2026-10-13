@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-10-11
+updated: 2026-10-13
 ---
 
 # Decisions Log (ADRs)
@@ -14,6 +14,93 @@ decisions on top, continuing the numbering. Amending an inherited decision is
 fine; write a new ADR that says so rather than editing the old one.
 
 Template: [[templates/adr-note]].
+
+---
+
+## ADR-0101 — Tier 1 "baqala mode" hardened: scroll-scrub triggers actually disabled, base background lifted off near-black
+
+**Status:** Accepted · 2026-10-13 · Extends ADR-0083/0090.
+
+**Context.** Explicit report that Tier 1 ("low" capability) rendered as "plain
+black background with just text" rather than a complete, professional-looking
+static page. Re-audited the Tier 1 pipeline end to end against the request's
+9-point spec rather than guessing at a single cause.
+
+**Findings — already satisfied, no change needed:**
+- Images: `TierImage.tsx` only halves `next/image` quality (40 vs 75) on Tier
+  1; it never hides an image, and `next/image` lazy-loads by default.
+- Service-page 3D backgrounds: audited all 15 `*Background.tsx` scene
+  components — every one already falls back to `SceneFallbackGradient` (or
+  `VideoBackground`'s poster) on `isLowPowerDevice()`, per ADR-0090.
+- Text colour/fonts/glass-panel-to-flat-fill/animation-and-transition kill:
+  already correct (`[data-perf-tier="low"]` rules in `globals.css`
+  `@layer utilities`); none of these are width- or font-scoped.
+
+**Findings — a real, previously-unverified gap, now fixed.** `reduced-
+motion.tsx`'s own doc comment claims Tier 1 is covered "with zero
+per-component wiring" via `Globals.skipAnimation` (react-spring). That claim
+is true for toggle/threshold springs (`Inview`, `Hover`, `Spring`,
+`SpringTrigger mode="toggle"`) but **not** for a continuously scroll-scrubbed
+trigger (`useProgressTrigger` / `<SpringTrigger mode="scrub">`):
+`skipAnimation` removes the easing *lag*, but the hook still recomputes and
+re-applies its target value on every scroll tick regardless — so a "scrub"
+section's 3D-transform parallax kept running unmodified on Tier 1, the exact
+class of surface Tier 1 exists to protect. Raw `matchMedia("(prefers-
+reduced-motion: reduce)")` checks have the same blind spot: they miss Tier 1
+entirely (no OS reduced-motion flag set), only `isReducedMotion()`
+(`shared-viewport-renderer.ts`) combines both signals correctly.
+
+Fixed four consumers to call `isReducedMotion()` instead of a raw/missing
+check, and to pass `enabled={!isReducedMotion()}` into their `SpringTrigger`:
+`ProjectsShowreel.tsx`, `ProjectsCascade.tsx`, `TeamCascade.tsx` (all three
+already had a raw `matchMedia`-gated static fallback, so broadening the
+check was the whole fix), and `GeologicalCrossSection.tsx` (had **no**
+reduced-motion handling at all — fixed carefully, since disabling the trigger
+outright without also seeding `revealedCount` to `LAYER_COUNT` up front would
+have left its strata-layer labels stuck permanently invisible).
+
+**Decision — base background lifted on Tier 1.** The request asked to "keep
+dark navy background #040d1a," but the sitewide `--background` token is
+`--raw-color-navy-950` (#01040e) — close enough to pure black that stripping
+every WebGL scene and backdrop-blur left it looking like "black screen with
+text," independent of any individual component bug. Added an **unlayered**
+override:
+
+```css
+:root[data-perf-tier="low"] {
+  --background: var(--raw-color-navy-925); /* #040d1a */
+}
+```
+
+Deliberately placed outside any `@layer` block. CSS cascade layers give
+*every* declaration in a named layer lower priority than *any* unlayered
+declaration, regardless of specificity — since the base `--background`
+definition is itself unlayered (plain `:root`), an override written inside
+`@layer utilities` (where the existing Tier 1 rules live) would silently lose
+to it no matter how specific the selector. Relying on the attribute
+selector's higher specificity than plain `:root`, while staying in the same
+unlayered bucket, is what makes this actually take effect — confirmed by
+re-reading how the existing `[data-perf-tier="low"] .glass-panel` rule itself
+only wins today because it and the Tailwind utility it overrides are *both*
+inside `@layer utilities` (same layer, so ordinary specificity/source-order
+applies there) — a different mechanism than what a `--background` override
+needs, because `--background`'s competing declaration isn't in any layer.
+
+**Decision — `--glass-fill-tier1` value unchanged.** The request's literal
+spec (`background: rgba(4, 6, 15, 0.85)`) is within rounding of
+`--raw-color-glass-fill` (rgba(4, 6, 15, 0.65)) and of `--background` itself
+(#01040e) — it is the exact value ADR-0090 already moved away from because it
+read as "blending into flat black" against a dark backdrop. Kept the current
+`rgba(10, 24, 48, 0.85)` rather than reverting to the value already
+documented as the bug.
+
+**Not verifiable this turn.** No browser/Chrome-extension access was
+available this session — the request's item 9 ("test that it looks good at
+375px width") could not be performed visually. Verified instead via: full
+audit of every Tier-1-gated code path, `tsc --noEmit`, `eslint`,
+`.claude/scripts/verify.sh` (pre-existing `@keyframes`-in-prose false
+positive confirmed via `git stash` to predate this change), and both
+`next build` and `next build --webpack`.
 
 ---
 

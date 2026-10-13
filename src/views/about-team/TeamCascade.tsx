@@ -8,6 +8,7 @@ import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import type { TeamMember } from "@/data/mocks/team";
 import {
   cascadeActiveIndex,
@@ -59,8 +60,11 @@ const ACCENT = "#5cc8d7";
 export const TeamCascade = ({ members }: TeamCascadeProps) => {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const reducedMotion =
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // `isReducedMotion()` combines the OS setting with the Tier 1 ("low"
+  // capability) performance tier — a raw `matchMedia` check alone misses
+  // Tier 1, leaving this deck's full scroll-jacked tall track and 3D
+  // transforms running on exactly the devices Tier 1 exists to protect.
+  const reducedMotion = isReducedMotion();
   const lenis = useScroll((s) => s.lenis);
 
   const total = members.length;

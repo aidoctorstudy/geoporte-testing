@@ -8,6 +8,7 @@ import { animated } from "@react-spring/web";
 import { useProgressTrigger } from "@/hooks/animation/use-progress-trigger";
 import { subscribeToTicker } from "@/lib/animation/ticker";
 import { useScroll } from "@/hooks/smooth-scroll/use-scroll";
+import { isReducedMotion } from "@/lib/scene/shared-viewport-renderer";
 import { projects } from "@/data/mocks/projects";
 import { useProjectModalStore } from "@/views/home/project-modal-store";
 import {
@@ -39,8 +40,11 @@ const PROGRESS_SPRING_CONFIG = { tension: 120, friction: 32 };
 export const ProjectsCascade = () => {
   const trackRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const reducedMotion =
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // `isReducedMotion()` combines the OS setting with the Tier 1 ("low"
+  // capability) performance tier — a raw `matchMedia` check alone misses
+  // Tier 1, leaving this deck's full scroll-jacked tall track and 3D
+  // transforms running on exactly the devices Tier 1 exists to protect.
+  const reducedMotion = isReducedMotion();
   const lenis = useScroll((s) => s.lenis);
   const openProject = useProjectModalStore((s) => s.open);
 

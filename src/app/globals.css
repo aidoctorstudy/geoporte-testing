@@ -305,6 +305,23 @@
   --stat-amber: var(--raw-color-stat-amber);
 }
 
+/* Tier 1 (low capability) perf mode — lifts the site-wide base background off
+   `--background` (#01040e, near-black) to the slightly lighter dark-navy
+   already used for the Digital Twin section (--raw-color-navy-925,
+   #040d1a), so a page with every WebGL scene and backdrop-blur stripped
+   still reads as "dark navy site" rather than "black screen with text".
+   Deliberately UNLAYERED (not inside `@layer utilities`): CSS cascade layers
+   give every rule in a named layer lower priority than ANY unlayered rule,
+   regardless of specificity — since the `--background` definition above is
+   itself unlayered (plain `:root`), an override in `@layer utilities` would
+   silently lose to it no matter how specific the selector. Staying unlayered
+   here and relying on the attribute selector's higher specificity than plain
+   `:root` is what makes this actually take effect. See
+   obsidian/meta/decisions-log.md ADR-0101. */
+:root[data-perf-tier="low"] {
+  --background: var(--raw-color-navy-925);
+}
+
 /* ---------------------------------------------------------------------------
    THEME BINDINGS — map semantic tokens into Tailwind namespaces.
    Every entry is exactly `--<tw-namespace>-<role>: var(--<role>)`.

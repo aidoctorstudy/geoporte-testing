@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-10-11
+updated: 2026-10-13
 ---
 
 # Changelog
@@ -36,6 +36,43 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-10-13 (Tier 1 "baqala mode" hardened — scroll-scrub triggers, base background)
+
+Report: Tier 1 ("low" capability) rendered as "plain black background with
+just text" instead of a complete static page. Full reasoning in
+[[decisions-log]] ADR-0101; short version here.
+
+- **Real gap found and fixed:** `Globals.skipAnimation` (what Tier 1 relies
+  on, per `reduced-motion.tsx`) only removes animation *easing* — it does not
+  stop a continuously scroll-scrubbed trigger (`useProgressTrigger` /
+  `<SpringTrigger mode="scrub">`) from recomputing its target every scroll
+  tick. Four sections had their 3D-transform parallax still fully running on
+  Tier 1: `ProjectsShowreel.tsx`, `ProjectsCascade.tsx`, `TeamCascade.tsx`
+  (all three switched from a raw `matchMedia` check to the combined
+  `isReducedMotion()`), and `GeologicalCrossSection.tsx` (had no
+  reduced-motion handling at all — added it, seeding `revealedCount` to fully
+  revealed up front so disabling the trigger can't leave its layer labels
+  stuck invisible).
+- **Base background lifted on Tier 1:** added an unlayered
+  `:root[data-perf-tier="low"] { --background: var(--raw-color-navy-925); }`
+  (#040d1a) override in `globals.css` — the sitewide `--background`
+  (#01040e) is close enough to pure black that, with every WebGL scene and
+  backdrop-blur stripped, the page read as "black screen with text"
+  independent of any single component bug. Must stay unlayered: cascade
+  layers rank *any* unlayered rule above *every* layered one regardless of
+  specificity, and the base `--background` definition is itself unlayered.
+- **Confirmed already correct, no change needed:** image lazy-loading/
+  quality (`TierImage.tsx`), all 15 service-page 3D-background CSS-gradient
+  fallbacks, text colours/fonts, glass-panel flattening, transition/animation
+  kill-switch.
+- **`--glass-fill-tier1` left unchanged** — the request's literal value is
+  within rounding of the exact rgba already documented (ADR-0090) as
+  blending into flat black; kept the fixed value instead of reverting it.
+- Not verifiable this turn: no browser access this session, so the request's
+  375px visual check could not be performed — verified via full code audit,
+  `tsc`, `eslint`, `verify.sh`, and both `next build` and
+  `next build --webpack` instead.
 
 ## 2026-10-12 (Language switcher and the i18n stack removed again — English only)
 
