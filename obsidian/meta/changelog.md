@@ -37,6 +37,37 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-25 (Site-wide maintenance mode — `/maintenance` page + `src/proxy.ts` redirect)
+
+Added a maintenance/coming-soon page and a site-wide redirect to it. Full
+reasoning in [[decisions-log]] ADR-0109; short version here.
+
+- `src/app/maintenance/page.tsx` → `src/views/maintenance.tsx`
+  (`MaintenanceView`): centered particle Geoporte emblem (`build-hero-scene.ts`
+  reused via a new optional `logoPositionXDesktop` framing field, default
+  unchanged — the homepage/service-page emblem stays right-biased), wordmark,
+  heading/subtext, three pulsing dots (`useSpring`, not a progress bar),
+  contact details from `lib/company.ts`. `generateMetadata()` sets
+  `robots: { index: false, follow: false }`. New `--background-maintenance`
+  Tier 2 token (`globals.css`) binds the existing `navy-925` primitive
+  (`#040d1a`) — applied at `/92` opacity so `PlanetBackground` (unchanged,
+  still mounted at the app root) shows through, same technique
+  `HeroSection.tsx` uses.
+- `src/proxy.ts` (new — request asked for `middleware.ts`, which Next.js 16
+  renamed; also has to live under `src/`, not the repo root, since `app/`
+  does) redirects every request to `/maintenance` except that page, `/api/`,
+  `/_next/`, `/assets/`, and `public/`'s other root-level meta files
+  (favicons, `manifest.json`, `robots.txt`, `sitemap.xml`, `open-graph.png`
+  — not in the request's own exemption list, but needed so the maintenance
+  page itself doesn't end up with a broken favicon/OG image, the same bug
+  class ADR-0108 just fixed one layer up).
+- `Nav.tsx`/`Footer.tsx` now return `null` on `/maintenance` (pathname
+  check, same mechanism as their existing glass-background check) — the
+  full site chrome doesn't make sense when every link in it redirects
+  straight back here.
+- To turn maintenance mode off: delete `src/proxy.ts` and redeploy. No env
+  toggle.
+
 ## 2026-10-25 (Favicon fix follow-up — the triangle was `app/favicon.ico`, a shadow file ADR-0107 never touched)
 
 Report: after ADR-0107's fix, the browser tab still showed the Next.js

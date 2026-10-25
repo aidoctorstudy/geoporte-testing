@@ -28,6 +28,14 @@ import type { HeroSceneHandle } from "./hero-scene-types";
 export interface HeroSceneFraming {
   cameraPosition?: [number, number, number];
   cameraLookAt?: [number, number, number];
+  /** Overrides `PARTICLE_LOGO_POSITION_X_DESKTOP` — the emblem's desktop-
+   * reference X position before `computeLogoFraming` scales/clamps it for
+   * narrower aspect ratios. Defaults to the homepage's right-biased value;
+   * pass `0` for a centered emblem (the maintenance page's own use — see
+   * ADR-0109). Combine with a matching `cameraLookAt` x of `0` (the default)
+   * so the camera is actually pointed at a centered emblem, not just the
+   * emblem being centered in world space. */
+  logoPositionXDesktop?: number;
 }
 
 /**
@@ -82,7 +90,10 @@ const getHalfFrustumWidth = (fovDeg: number, aspect: number, distance: number): 
  * instead of overflowing off the right edge. */
 const LOGO_MIN_SCALE = 0.05;
 
-const computeLogoFraming = (halfFrustumWidth: number): { positionX: number; scale: number } => {
+const computeLogoFraming = (
+  halfFrustumWidth: number,
+  desktopX: number = PARTICLE_LOGO_POSITION_X_DESKTOP,
+): { positionX: number; scale: number } => {
   const availableWidth = halfFrustumWidth - LOGO_FRUSTUM_EDGE_MARGIN;
   // Floored well below any real device's aspect ratio — guards only against
   // a pathologically narrow/tall viewport driving `scale` to zero or
@@ -90,9 +101,13 @@ const computeLogoFraming = (halfFrustumWidth: number): { positionX: number; scal
   // scene is expected to look good at.
   const scale = Math.max(LOGO_MIN_SCALE, Math.min(1, availableWidth / PARTICLE_LOGO_TARGET_SIZE));
   const radius = (PARTICLE_LOGO_TARGET_SIZE * scale) / 2;
-  const desiredX = PARTICLE_LOGO_POSITION_X_DESKTOP * scale;
+  const desiredX = desktopX * scale;
+  // `desktopX = 0` (centered) has no minimum-x floor to respect — clamping
+  // to `radius` would always push a centered emblem rightward. Only the
+  // right-biased (positive desktopX) case needs that floor.
+  const minX = desktopX === 0 ? -Infinity : radius;
   const maxX = halfFrustumWidth - LOGO_FRUSTUM_EDGE_MARGIN - radius;
-  const positionX = Math.max(radius, Math.min(desiredX, maxX));
+  const positionX = Math.max(minX, Math.min(desiredX, maxX));
   return { positionX, scale };
 };
 // A radius sized relative to `PARTICLE_LOGO_TARGET_SIZE` (5.6 units
@@ -429,10 +444,13 @@ export const createHeroScene = (
   });
   {
     const initialAspect = (clientWidth || window.innerWidth) / (clientHeight || window.innerHeight || 1);
-    const framing = computeLogoFraming(getHalfFrustumWidth(camera.fov, initialAspect, cameraDistance));
-    logoScale = framing.scale;
-    particleLogo.points.position.set(framing.positionX, ...PARTICLE_LOGO_POSITION_Y_Z);
-    particleLogo.points.scale.setScalar(framing.scale);
+    const initialFraming = computeLogoFraming(
+      getHalfFrustumWidth(camera.fov, initialAspect, cameraDistance),
+      framing.logoPositionXDesktop,
+    );
+    logoScale = initialFraming.scale;
+    particleLogo.points.position.set(initialFraming.positionX, ...PARTICLE_LOGO_POSITION_Y_Z);
+    particleLogo.points.scale.setScalar(initialFraming.scale);
   }
   scene.add(particleLogo.points);
 
@@ -559,10 +577,13 @@ export const createHeroScene = (
 
     // Re-fit the emblem to the new aspect ratio (rotation, or a responsive
     // breakpoint) — same framing math as the initial placement above.
-    const framing = computeLogoFraming(getHalfFrustumWidth(camera.fov, camera.aspect, cameraDistance));
-    logoScale = framing.scale;
-    particleLogo.points.position.setX(framing.positionX);
-    particleLogo.points.scale.setScalar(framing.scale);
+    const resizeFraming = computeLogoFraming(
+      getHalfFrustumWidth(camera.fov, camera.aspect, cameraDistance),
+      framing.logoPositionXDesktop,
+    );
+    logoScale = resizeFraming.scale;
+    particleLogo.points.position.setX(resizeFraming.positionX);
+    particleLogo.points.scale.setScalar(resizeFraming.scale);
   };
 
   const dispose = () => {

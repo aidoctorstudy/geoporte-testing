@@ -331,6 +331,12 @@
 
   --stat-purple: var(--raw-color-stat-purple);
   --stat-amber: var(--raw-color-stat-amber);
+
+  /* The maintenance page's own base — explicitly the lighter dark-navy
+     (navy-925, #040d1a) rather than the sitewide near-black --background
+     (navy-950, #01040e), per an explicit brief. Page-scoped like
+     --surface-engineering above, not a sitewide override. */
+  --background-maintenance: var(--raw-color-navy-925);
 }
 
 /* Tier 1 (low capability) perf mode — lifts the site-wide base background off
@@ -390,6 +396,7 @@
   --color-glow-engineering: var(--glow-engineering);
   --color-stat-purple: var(--stat-purple);
   --color-stat-amber: var(--stat-amber);
+  --color-background-maintenance: var(--background-maintenance);
   --font-sans: var(--raw-font-body);
   --font-heading: var(--raw-font-heading);
 

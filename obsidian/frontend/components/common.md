@@ -707,6 +707,42 @@ first purple/amber tokens in the palette (`--raw-color-stat-purple`/
 `globals.css`), deliberately outside the sitewide azure family, same
 reasoning as the per-service accent tints. See [[changelog]].
 
+## Maintenance page — `src/views/maintenance.tsx` + `src/views/maintenance/`
+
+`MaintenanceView` (`src/views/maintenance.tsx`, route `/maintenance`) — the
+site-wide maintenance mode landing page; see ADR-0109 in [[decisions-log]].
+A Server Component composing:
+
+- `MaintenanceScene` (`src/components/scene/MaintenanceScene.tsx`) — the
+  homepage's particle Geoporte emblem (`build-hero-scene.ts`), centered via
+  the new `logoPositionXDesktop: 0` framing override rather than the
+  homepage's right-biased default. Rendered inside a bordered/rounded
+  `overflow-hidden` card, not full-bleed — its own canvas paints an opaque
+  rectangle (plausibly `UnrealBloomPass`'s alpha-compositing behaviour),
+  invisible on the homepage's full-bleed usage but a hard visible edge in a
+  bounded container; the border/rounded-corner treatment turns that into a
+  deliberate "framed stage" rather than chasing the composer's alpha
+  handling in shared scene code.
+- `MaintenanceWordmark` / `MaintenanceHeading` / `MaintenanceSubtext`
+  (`src/views/maintenance/MaintenanceCopy.tsx`) — three `TextEngine` beats
+  staggered to read in sequence (wordmark → heading word-by-word → subtext
+  letter-by-letter), same settle-then-reveal chaining as
+  `views/home/HeroHeading.tsx`.
+- `MaintenanceDots` (`src/views/maintenance/MaintenanceDots.tsx`) — three
+  dots, each a looping `useSpring` pulse (same technique as `HeroFallback`),
+  staggered 180ms apart. Deliberately not a percentage progress bar — no
+  known completion time to show one against.
+
+Background is `bg-background-maintenance/92` — a new Tier 2 token binding
+the existing `navy-925` primitive (`#040d1a`) — not fully opaque, so
+`PlanetBackground` (unchanged, still mounted at the app root for this
+route) shows through, same transparent-background technique
+`HeroSection.tsx` uses for the homepage hero.
+
+`Nav.tsx`/`Footer.tsx` both early-return `null` when `pathname ===
+"/maintenance"` (same mechanism as their existing `isGlassBackgroundRoute`
+check) — see their own files.
+
 ## Related
 
 [[component-conventions]] · [[components/animation-springs]]

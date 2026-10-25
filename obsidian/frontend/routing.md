@@ -37,6 +37,7 @@ here on route `/` (see [[ai-agent-guide]] / [[new-page]]).
 |-------|------|------|
 | `/` | `src/app/page.tsx` | `views/home.tsx` → `HomeView` |
 | `/about/team` | `src/app/about/team/page.tsx` | `views/about-team.tsx` → `AboutTeamView` |
+| `/maintenance` | `src/app/maintenance/page.tsx` | `views/maintenance.tsx` → `MaintenanceView` |
 
 ## Special files
 
@@ -50,7 +51,7 @@ here on route `/` (see [[ai-agent-guide]] / [[new-page]]).
 | `not-found.tsx` | 404 page — served with a 404 status |
 | `robots.ts` / `sitemap.ts` | Generate `/robots.txt` and `/sitemap.xml` — see [[seo-metadata]] |
 | `api/<resource>/route.ts` | API endpoints (Route Handlers) — see [[api-architecture]] |
-| `src/proxy.ts` | **Replaces `middleware.ts`** — see below. Not present by default. |
+| `src/proxy.ts` | **Replaces `middleware.ts`** — see below. Currently present: site-wide maintenance-mode redirect, see ADR-0109. |
 
 ## `middleware.ts` is gone — it is `proxy.ts`
 
@@ -64,6 +65,16 @@ Keep it thin, per Next's own guidance: routing, rewrites, redirects, and cheap
 cookie checks. Not authorisation — that belongs in the data layer (for Supabase,
 RLS; see [[database-supabase]]). Every matched route runs Node before serving, so
 keep the `matcher` tight or static marketing pages get dragged through it.
+
+**Current use (ADR-0109):** site-wide maintenance mode — redirects every
+request to `/maintenance` except that page itself and the `public/`
+root-level meta/PWA/SEO assets (favicon set, `manifest.json`, OG image,
+`robots.txt`/`sitemap.xml`) and `/api/`/`/assets/` paths a working page (and
+crawlers) still need. To turn maintenance mode off, delete `src/proxy.ts`
+and redeploy — there's no env-var toggle. When adding a new root-level
+`public/` file that needs to survive maintenance mode, add it to this
+file's own exemption list too — forgetting is exactly the class of bug
+ADR-0108 already found once (a shadow `app/favicon.ico` nobody updated).
 
 ## Adding a route
 

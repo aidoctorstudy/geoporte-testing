@@ -20,10 +20,16 @@ const secondaryLinks = [
 
 export const Nav = () => {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   // Every route with its own fixed full-page WebGL background
   // (`glass-background-routes.ts`) gets a darker, more transparent glass
   // tint so that background reads through the nav bar too.
-  const glass = isGlassBackgroundRoute(usePathname());
+  const glass = isGlassBackgroundRoute(pathname);
+
+  // The maintenance page is a standalone landing page, not a page within
+  // the site — its own links would just bounce back here while proxy.ts's
+  // site-wide redirect is active. See ADR-0109.
+  if (pathname === "/maintenance") return null;
 
   return (
     <>

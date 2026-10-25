@@ -17,6 +17,101 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0109 — Site-wide maintenance mode: `/maintenance` page + `proxy.ts` redirect, particle logo reused centered
+
+**Status:** Accepted · 2026-10-25
+
+**Context.** Request: a maintenance/coming-soon page at `/maintenance`, plus
+a site-wide redirect sending every other route there while the site is
+down for work. The request specified `middleware.ts` at the repo root —
+the exact deprecated convention AGENTS.md calls out by name (renamed to
+`proxy.ts` in Next.js 16, same export shape). Also specified exact
+exclusions: `/maintenance` itself, `/_next/`, `/api/`, `/assets/`,
+`/favicon.ico`.
+
+**Deviations from the literal request, and why:**
+- **File is `src/proxy.ts`**, not `middleware.ts` at the repo root — both
+  the rename (AGENTS.md, `.claude/rules/routing-views.md`) and the file's
+  required location (`app/` lives under `src/`, and Next.js requires
+  `proxy.ts` at the same level as `app/`) apply here.
+- **Exemption list extended** beyond the four prefixes given: `public/`'s
+  other root-level meta/PWA/SEO assets — `favicon.png`/`favicon-16x16.png`/
+  `favicon-32x32.png`, the `apple-icon-180x180.png`/`android-icon-*.png`
+  set, `manifest.json`, `browserconfig.xml`, `open-graph.png`,
+  `robots.txt`, `sitemap.xml` — aren't covered by `/assets/` (that's only
+  `public/assets/`, site *content*, per [[seo-metadata]]) or by the other
+  three prefixes. Missing them would have broken the maintenance page's own
+  favicon/OG image/manifest — the exact shape of bug ADR-0108 just fixed
+  one layer up. `generateMetadata()` sets `robots: { index: false, follow:
+  false }` on the maintenance page itself; `robots.txt`/`sitemap.xml` stay
+  reachable (exempted) so crawlers hitting them directly still get real
+  responses, not a redirect loop through a noindex page.
+- **Plain 3xx redirect** (`NextResponse.redirect`, defaults to 307), not a
+  rewrite with a 503 status — a rewrite would've been better practice for a
+  long outage (keeps the real URL in the address bar, lets a 503 +
+  `Retry-After` tell crawlers "temporary, don't deindex"), but the request
+  asked for a redirect specifically and a 503 isn't straightforward to set
+  from a Next.js *page* (only a Route Handler can set an arbitrary status).
+  Flagging this rather than silently picking one: for a maintenance window
+  longer than a day or two, consider a 503-based approach instead.
+
+**Particle logo, centered.** The request asked for "the existing Geoporte
+particle logo effect" centered on screen — `build-hero-scene.ts`'s emblem
+is deliberately right-biased by design (`PARTICLE_LOGO_POSITION_X_DESKTOP`,
+the homepage's "AiMatic-style" split from ADR-0093/94). Rather than forking
+the particle engine or faking centering with camera tricks that would drift
+out of alignment on resize, added one optional field to
+`HeroSceneFraming` — `logoPositionXDesktop` — threaded through
+`computeLogoFraming` and both its call sites (initial placement + resize).
+Defaults preserve the homepage/service-page behaviour exactly;
+`MaintenanceScene.tsx` passes `0` for a true center that holds at every
+aspect ratio, not just the desktop reference one.
+
+**Nav/Footer opt out** of rendering on `/maintenance` (`pathname ===
+"/maintenance"` early-return, same mechanism as their existing
+`isGlassBackgroundRoute` check) — showing the full site nav/footer on a
+page where every one of those links redirects straight back to itself
+would be pointless chrome, not navigation.
+
+**Background: navy + globe, both at once.** The request wanted an exact
+`#040d1a` background *and* the Earth globe kept as background — a literal
+opaque navy fill would hide `PlanetBackground` (mounted at the app root,
+not excluded for this route via `glass-background-routes.ts`) entirely,
+since it paints behind normal page content in the stacking order. Added a
+page-scoped Tier 2 token (`--background-maintenance`, bound to the existing
+`--raw-color-navy-925` primitive — already `#040d1a` exactly, previously
+used only in gradient fallbacks and the Tier-1-perf-mode override) and
+applied it at `/92` opacity as a scrim over the section, the same
+"transparent/translucent background so the persistent scene shows through"
+technique `HeroSection.tsx` already uses for the homepage, just dialled
+toward "navy dominant" instead of "scene dominant."
+
+**Pulsing dots, not a progress bar** (the request offered either): a
+percentage implies a known completion time this maintenance window doesn't
+have. Three dots, each its own looping `useSpring` (real spring physics,
+matching `HeroFallback.tsx`'s identical pulse technique) staggered 180ms
+apart.
+
+**Verified beyond the build:** ran `next build` + `next start` and checked
+live behavior — `/`, `/about`, etc. → `307` to `/maintenance`; `/maintenance`,
+`/api/contact`, `/favicon.ico`, `/robots.txt`, `/manifest.json`,
+`/assets/logo/geoporte-logo.png` → pass through untouched; rendered HTML
+confirmed Nav/Footer absent, `noindex` present, contact details correct.
+Browser-screenshotted the live page once (particle emblem, wordmark,
+heading, dots, contact info, globe faintly visible in the corner, all
+present) — a framed/rounded-border treatment was added around the particle
+scene's own container after that screenshot showed its canvas painting an
+opaque black rectangle with a hard edge against the page's navy scrim
+(plausibly `UnrealBloomPass`'s own well-known alpha-compositing quirk,
+pre-existing in `build-hero-scene.ts`, just invisible on the homepage where
+the same canvas is full-bleed) — turning an apparent rendering bug into a
+deliberate "framed stage" card rather than chasing the composer's alpha
+handling in shared scene code. Repeat screenshots after that fix
+consistently timed out (the extension's script injection failing against
+what's probably this page's own main-thread cost, not a tool fluke) — the
+border fix is shipped on code-level reasoning and the one successful
+screenshot, not a second visual confirmation; worth a manual look.
+
 ## ADR-0108 — Favicon still showed the default after ADR-0107: `app/favicon.ico` shadows `public/favicon.ico`, and a hand-rolled ICO encoder had a header-size bug
 
 **Status:** Accepted · 2026-10-25

@@ -14,7 +14,11 @@ import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 
 export const Footer = () => {
   const year = new Date().getFullYear();
-  const glass = isGlassBackgroundRoute(usePathname());
+  const pathname = usePathname();
+  const glass = isGlassBackgroundRoute(pathname);
+
+  // Same opt-out as Nav.tsx, same reason — see ADR-0109.
+  if (pathname === "/maintenance") return null;
 
   return (
     <footer
