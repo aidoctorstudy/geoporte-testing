@@ -37,6 +37,148 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-25 (Browser tab showed a generic default icon instead of the Geoporte logo)
+
+Report: the browser tab icon was a generic placeholder (a stock figure, not
+a triangle as initially described), not the Geoporte logo. Full reasoning
+in [[decisions-log]] ADR-0107; short version here.
+
+- The metadata was never the bug: `generate-page-metadata.ts` already
+  declares `icons.icon`/`icons.apple` pointing at `/favicon.ico`,
+  `/favicon-16x16.png`, `/favicon-32x32.png`, `/apple-icon-180x180.png` —
+  correctly, as the single source of truth ([[seo-metadata]]). `layout.tsx`
+  doesn't hold inline metadata at all; it calls `generateMetadata()`.
+  Adding an `icons` block there (as the original request asked) would have
+  duplicated/conflicted with that generator rather than fixing anything.
+- The actual bug: every file those paths pointed at — `favicon.ico`,
+  `favicon-16x16.png`, `favicon-32x32.png`, the `apple-icon-*`/
+  `android-icon-*` set, and `manifest.json`'s `name: "App"` — was still the
+  generic placeholder set a favicon generator produces by default, never
+  swapped for the real brand asset at `public/assets/logo/geoporte-logo.png`.
+  Same class of leftover-placeholder bug as the Open Graph image before it
+  ([[seo-metadata]], 2026-10-10).
+- Fix: `scripts/generate-favicons.mjs` (new, `sharp`-based, mirrors the
+  existing `process-logo.mjs`/`generate-og-image.mjs` pattern) renders the
+  real logo down to every required size and hand-builds `favicon.ico` as a
+  multi-resolution PNG-embedded ICO (no ICO-writing dependency available).
+  Re-run it after the logo asset changes. `manifest.json`'s `name`/
+  `short_name` now read "Geoporte" instead of "App".
+
+## 2026-10-13 (Homepage stopped rendering past Services on mobile/tablet — service cards' concurrent WebGL contexts)
+
+Report: homepage stops at the Services section on screens < 1024px —
+Stats/Projects/Contact/footer never appear. Full reasoning in
+[[decisions-log]] ADR-0106; short version here.
+
+- Confirmed half the report's own hypothesis: all 8 service cards are
+  already "heavy" (7 have their own dedicated `WebGLRenderer`/
+  `EffectComposer`/bloom context, the 8th plays a video) — `mini-scenes.ts`'s
+  shared-icon fallback path has been dead code since ADR-0054. Ruled out
+  the literal "all 8 initialize simultaneously" framing — an existing
+  `rootMargin` hysteresis (ADR-0084/85/87) already bounds concurrent
+  mounts, down from a measured 12 to 5 on initial load — but found the
+  real mechanism: below the grid's `lg:grid-cols-3` breakpoint (1024px,
+  the exact width this report reproduces at) cards scroll past one at a
+  time instead of a row sharing one scroll position, so each card's own
+  shader-compile/composer-setup work lands on the main thread right as the
+  page tries to carry the user toward Stats/Projects/Contact — plausibly
+  starving those sections' own `IntersectionObserver` callbacks, the same
+  failure class ADR-0102 already diagnosed for a different trigger.
+- Also found and fixed a second, independent risk: `HeroScene.tsx` called
+  `createScene(container)` uncaught — any scene factory throwing (most
+  plausibly `THREE.WebGLRenderer` when the browser's per-tab WebGL context
+  budget is exhausted) would propagate and unmount everything React
+  renders below it. Now wrapped in `try`/`catch`; a failed scene just
+  never mounts.
+- Fix: `ServiceCard.tsx` skips all 7 dedicated WebGL card scenes entirely
+  below 1024px width (not deferred further — never constructed),
+  rendering each scene's existing `SceneFallbackGradient`/
+  `--raw-gradient-fallback-*` token instead. All 8 cards still show their
+  text/link content regardless. Deliberately a plain width check, not a
+  capability one — the problem is concurrent context count given the
+  layout's column count, independent of how fast any one device's GPU is,
+  so this doesn't reverse the project's established "a capable phone
+  keeps full WebGL" principle (ADR-0078/79/81/83), which still governs
+  `isLowPowerDevice()`/`getTierBudget()` everywhere else.
+
+## 2026-10-13 (GPU-string + FPS-benchmark detection layered onto the performance-tier system; badge + manual override)
+
+Full reasoning in [[decisions-log]] ADR-0105; short version here.
+
+- Added `WEBGL_debug_renderer_info` GPU-string matching and a 60-frame
+  fill-rate benchmark (`gl.finish()`-timed, so it measures real GPU
+  throughput rather than `requestAnimationFrame`'s vsync pacing) to
+  `performance-tier.ts`, combined per the brief's exact per-tier GPU-name
+  lists and FPS bands — but kept the existing Safari/iOS screen-signature
+  heuristic as the fallback: Safari has never implemented
+  `WEBGL_debug_renderer_info`, so the new layer simply never fires there,
+  and removing the fallback would have regressed the real iPhone/iPad
+  misclassification bugs ADR-0078–0083 already fixed.
+- Detection is sync-then-async: a synchronous GPU-string+cores+width pass
+  drives the tier a page's first load actually mounts WebGL at; a
+  background 60-frame benchmark refines what gets *persisted* for next time
+  (and what the new badge shows), never disturbing anything already
+  mounted this session.
+- New `PerformanceTierBadge.tsx` — persistent bottom-left "Performance:
+  Basic/Medium/High/Ultra" pill, click cycles all four tiers via a new
+  `setTierOverride`, which the background benchmark refinement never
+  silently overwrites. `PerformanceWarningToast` (same corner) moved up to
+  `bottom-16` so the two don't overlap.
+- `data-perf-tier` on `<html>` now always reflects the live tier (was
+  present only for "low" before) — existing `[data-perf-tier="low"]` CSS is
+  unaffected.
+- Tuned `PERFORMANCE_TIER_BUDGETS`' `particleScale` to the brief's exact
+  percentages (medium −80%, high −40%) and added a capability-sourced frame
+  cap (30/60/uncapped) merged into `device-tier.ts`'s existing width-driven
+  one by taking the more conservative of the two.
+- **Not done this turn** (flagged in the ADR, not silently skipped):
+  per-scene granular behaviour beyond what `TierBudget` already expresses —
+  Earth-globe geometry segment counts, service-card/ambient-shape toggles,
+  backdrop-filter blur px by tier. Not deployed to Vercel — user will deploy
+  after reviewing.
+
+## 2026-10-13 ("Maximum baqala mode" finished: 4-card project grid, flattened fallback colours, 480px image cap)
+
+Completed and verified work that existed uncommitted from an earlier session
+— full reasoning in [[decisions-log]] ADR-0103. New `TierProjectsGrid.tsx`
+caps the homepage project grid at 4 flat (uncategorized) cards on Tier 1;
+`TierImage.tsx` now also caps `srcset` width at 480px on top of its existing
+quality=40; `globals.css` flattens every scene's gradient-fallback poster
+colour to a flat fill on Tier 1 and strips box-shadow/large-surface radius/
+custom fonts. Found and fixed two `verify.sh` FAILs the uncommitted CSS
+tripped (a Tier 1 override physically misplaced in the Tier 2/`@theme`
+section, and a comment that accidentally quoted the `@theme inline` marker
+text the script's position check keys on) plus a drifted `eslint-disable`
+comment in `TierImage.tsx`.
+
+## 2026-10-13 (iPad/mobile: particle-logo overflow + touch equivalents for cursor effects)
+
+Two reports on iPad/tablet and mobile. Full reasoning in [[decisions-log]]
+ADR-0104; short version here.
+
+- **Particle logo cut off on the right on iPad.** The hero's particle
+  Geoporte emblem (`build-hero-scene.ts`) used a fixed world-space position/
+  size tuned against a wide desktop aspect ratio; a `PerspectiveCamera`'s
+  visible width at a fixed FOV scales with aspect ratio, so the same
+  placement overflows the frame on iPad landscape (4:3) and badly on
+  portrait. Fixed by deriving the emblem's x position and a uniform
+  `THREE.Points.scale` from the current frustum width (`computeLogoFraming`,
+  recomputed on construction and `resize()`) — it now always fits inside the
+  right half of the screen with a fixed margin, shrinking only as much as the
+  aspect ratio requires.
+- **Cursor effects didn't respond to touch.** `CustomCursor`, `Magnetic`, and
+  the shared `usePointer` store all gated on `isFinePointer`
+  (`(hover: hover) and (pointer: fine)`) — a deliberate touch no-op from
+  ADR-0037, not a bug. Reversed for these: `use-pointer.ts` now also listens
+  for `touchstart`/`touchmove`/`touchend`/`touchcancel` and exposes
+  `isTouchActive`; `CustomCursor`/`Magnetic` gate on `isFinePointer ||
+  isTouchActive`, so the cursor dot/ring/glow/trail and the magnetic button
+  drift now track a finger while it's down. `TiltCard` and
+  `ServiceSubServiceGrid`'s `SubServiceCard` (not store-driven) got their own
+  touch handlers mirroring their mouse ones. The hero's own pointer parallax/
+  repulsion was already store-driven and ungated, so it picked up touch for
+  free once the store did.
+
 ## 2026-10-13 (Homepage "stops rendering" past Geotechnical on Tier 1 — `<Inview>` observer gap)
 
 Report: homepage stops rendering after the Geotechnical section on Tier 1 —

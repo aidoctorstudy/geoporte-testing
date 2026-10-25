@@ -89,7 +89,11 @@ const TrailParticle = ({
  * to an accent-filled expanded ring over interactive elements, or a
  * crosshair over anything marked `data-cursor="canvas"`.
  *
- * Gated off entirely on touch (`usePointer().isFinePointer`) and under
+ * Active on fine pointers and, since ADR-0101, on touch for as long as a
+ * finger is down (`usePointer().isFinePointer || isTouchActive`) — the dot/
+ * ring/glow/trail follow the touch point on iPad/mobile while dragging, and
+ * disappear again once the touch lifts (there's no persistent hover position
+ * to keep showing one at, unlike a mouse). Gated off under
  * `prefers-reduced-motion` — the native cursor and default focus rings stay
  * intact there. Position updates ride the shared ticker rather than a
  * per-component `pointermove` listener. Also gated off on every
@@ -99,10 +103,10 @@ const TrailParticle = ({
  * See ADR-0037.
  */
 export const CustomCursor = () => {
-  const { isFinePointer, hasMoved } = usePointer();
+  const { isFinePointer, isTouchActive, hasMoved } = usePointer();
   const pathname = usePathname();
   const reducedMotion = isReducedMotion();
-  const active = isFinePointer && !reducedMotion && !isGlassBackgroundRoute(pathname);
+  const active = (isFinePointer || isTouchActive) && !reducedMotion && !isGlassBackgroundRoute(pathname);
   // Visible only once the pointer has actually moved — before that, `x`/`y`
   // are still the `0,0` default and rendering would show the cursor stuck in
   // the top-left corner instead of staying hidden until first movement.

@@ -25,7 +25,10 @@ const TRANSITION_CONFIG = { tension: 280, friction: 32 };
  * if it was already dismissed once — `performance-monitor.ts`'s own
  * cooldown keeps that to at most one downgrade per 5s. Mirrors
  * `CookieBanner`'s spring/mount-unmount idiom, just bottom-left instead of
- * bottom-right and self-dismissing rather than store-driven.
+ * bottom-right and self-dismissing rather than store-driven. Sits at
+ * `bottom-16` (not `bottom-4`) — ADR-0105's persistent `PerformanceTierBadge`
+ * now occupies the same corner's `bottom-4`, and this toast is the
+ * transient one of the pair.
  */
 export const PerformanceWarningToast = () => {
   const [visible, setVisible] = useState(false);
@@ -58,7 +61,7 @@ export const PerformanceWarningToast = () => {
         <animated.div
           style={style}
           role="status"
-          className="fixed bottom-4 left-4 z-50 flex max-w-xs items-start gap-3 rounded-xl border border-foreground/10 bg-background/95 px-4 py-3 shadow-2xl backdrop-blur-xl"
+          className="fixed bottom-16 left-4 z-50 flex max-w-xs items-start gap-3 rounded-xl border border-foreground/10 bg-background/95 px-4 py-3 shadow-2xl backdrop-blur-xl"
         >
           <p className="text-foreground-muted text-xs leading-relaxed">
             Some visual effects have been simplified for your device.

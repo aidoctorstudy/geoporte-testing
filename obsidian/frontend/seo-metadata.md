@@ -87,6 +87,14 @@ after changing the logo asset or `brand.wordmark`/`brand.tagline`
 statue, 900×600) — a leftover GetLayers template asset never swapped for
 real branding; see [[decisions-log]].
 
+`favicon.ico`/`favicon-*.png`/`apple-icon-*.png`/`android-icon-*.png` and
+`manifest.json`'s `name`/`short_name` are generated the same way, by
+`scripts/generate-favicons.mjs`, from the same `geoporte-logo.png` source
+— re-run it after the logo changes. The `icons` paths themselves are
+declared once, in `generate-page-metadata.ts`; don't add a competing
+`icons` block elsewhere (e.g. `layout.tsx`) — see ADR-0107 in
+[[decisions-log]].
+
 ## Related
 
 [[routing]] · [[utils]] · [[animation-system]] · [[environment-variables]] · [[decisions-log]]

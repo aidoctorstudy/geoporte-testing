@@ -50,10 +50,51 @@ const PARTICLE_LOGO_TARGET_SIZE = 5.6;
 /** World-space position biasing the emblem toward the right half of the
  * frame, so it reads as "right side" against the 2D text content anchored
  * left in `HeroSection.tsx` (that file's own `max-w-xl` left column is the
- * matching half of this layout). Not visually tuned against a live browser
- * — no Chrome extension connected any session this was built across —
- * worth a real look before calling this placement settled. */
-const PARTICLE_LOGO_POSITION: [number, number, number] = [2.6, 0.2, 0];
+ * matching half of this layout). This is the *desktop* reference value —
+ * `computeLogoFraming` below scales both this and `PARTICLE_LOGO_TARGET_SIZE`
+ * down together on narrower aspect ratios, since a fixed world-space value
+ * only clears the camera frustum's right edge at roughly 16:9 and wider: at
+ * iPad landscape (4:3) the emblem's right edge already overflows the visible
+ * frame, and at iPad/phone portrait it overflows by most of its own width.
+ * See ADR-0101 (iPad/mobile particle-logo overflow fix). */
+const PARTICLE_LOGO_POSITION_X_DESKTOP = 2.6;
+const PARTICLE_LOGO_POSITION_Y_Z: [number, number] = [0.2, 0];
+/** World-unit gap kept between the emblem's scaled right edge and the
+ * camera frustum's right edge, so it never touches (let alone crosses) the
+ * screen edge on any aspect ratio. */
+const LOGO_FRUSTUM_EDGE_MARGIN = 0.6;
+
+/** Half the horizontal extent (in world units) visible at the emblem's own
+ * depth, for a camera with vertical field-of-view `fovDeg` sitting
+ * `distance` units away — i.e. half of `tan(fov/2) * distance`, widened by
+ * the current aspect ratio. Perspective-camera horizontal frustum math, not
+ * tied to any particular scene. */
+const getHalfFrustumWidth = (fovDeg: number, aspect: number, distance: number): number =>
+  Math.tan((fovDeg * Math.PI) / 360) * distance * aspect;
+
+/** Derives this emblem's actual position/scale for the current aspect
+ * ratio: shrinks it (never enlarges past the desktop reference size) just
+ * enough that its full width — plus `LOGO_FRUSTUM_EDGE_MARGIN` — fits
+ * inside the right half of the frustum (`[0, halfFrustumWidth]`), then
+ * places it as close to the desktop-reference x position as that fitted
+ * width allows. This is what keeps the emblem fully on-screen (and inside
+ * the page's own right-50% layout half) on iPad and phone aspect ratios
+ * instead of overflowing off the right edge. */
+const LOGO_MIN_SCALE = 0.05;
+
+const computeLogoFraming = (halfFrustumWidth: number): { positionX: number; scale: number } => {
+  const availableWidth = halfFrustumWidth - LOGO_FRUSTUM_EDGE_MARGIN;
+  // Floored well below any real device's aspect ratio — guards only against
+  // a pathologically narrow/tall viewport driving `scale` to zero or
+  // negative (which would invert or disappear the emblem), not a case this
+  // scene is expected to look good at.
+  const scale = Math.max(LOGO_MIN_SCALE, Math.min(1, availableWidth / PARTICLE_LOGO_TARGET_SIZE));
+  const radius = (PARTICLE_LOGO_TARGET_SIZE * scale) / 2;
+  const desiredX = PARTICLE_LOGO_POSITION_X_DESKTOP * scale;
+  const maxX = halfFrustumWidth - LOGO_FRUSTUM_EDGE_MARGIN - radius;
+  const positionX = Math.max(radius, Math.min(desiredX, maxX));
+  return { positionX, scale };
+};
 // A radius sized relative to `PARTICLE_LOGO_TARGET_SIZE` (5.6 units
 // diameter, ~2.8 unit radius from centre) — tight enough that only a
 // deliberate, close hover displaces particles. The previous 1.5-unit
@@ -332,6 +373,12 @@ export const createHeroScene = (
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(px, py, pz);
   camera.lookAt(lx, ly, lz);
+  // Distance from the camera to the emblem's own plane — the other input
+  // (besides fov/aspect) `getHalfFrustumWidth` needs to know how wide the
+  // visible frame is at the emblem's depth. Read once: the camera only ever
+  // nudges by the small parallax offset in `renderFrame` below, negligible
+  // against this distance.
+  const cameraDistance = camera.position.distanceTo(new THREE.Vector3(lx, ly, lz));
 
   const canvas = document.createElement("canvas");
   const renderer = new THREE.WebGLRenderer({
@@ -345,6 +392,12 @@ export const createHeroScene = (
   const { dprClamp, particleScale, bloomScale } = getTierBudget(clientWidth || window.innerWidth);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprClamp));
   renderer.setSize(clientWidth || 1, clientHeight || 1);
+
+  // Mutable: recomputed in `resize()` below whenever the aspect ratio
+  // changes (tablet/phone rotation, a responsive breakpoint) — tracked here
+  // so `renderFrame`'s pointer-local math (further down) can always divide
+  // by the emblem's *current* visual scale, not the desktop-reference one.
+  let logoScale = 1;
 
   // `onReady` references `composer`/`particleLogo`, assigned just below —
   // safe because the callback only ever runs later, asynchronously, from
@@ -374,7 +427,13 @@ export const createHeroScene = (
       composer.render();
     }
   });
-  particleLogo.points.position.set(...PARTICLE_LOGO_POSITION);
+  {
+    const initialAspect = (clientWidth || window.innerWidth) / (clientHeight || window.innerHeight || 1);
+    const framing = computeLogoFraming(getHalfFrustumWidth(camera.fov, initialAspect, cameraDistance));
+    logoScale = framing.scale;
+    particleLogo.points.position.set(framing.positionX, ...PARTICLE_LOGO_POSITION_Y_Z);
+    particleLogo.points.scale.setScalar(framing.scale);
+  }
   scene.add(particleLogo.points);
 
   // Selective bloom would need the 3-composer/`THREE.Layers` trick
@@ -466,9 +525,18 @@ export const createHeroScene = (
       pointerNdc.set(pointerTargetX, -pointerTargetY);
       pointerRaycaster.setFromCamera(pointerNdc, camera);
       if (pointerRaycaster.ray.intersectPlane(pointerPlane, pointerWorldHit)) {
+        // Divide out `logoScale`: the particle geometry's own buffer
+        // attribute holds *unscaled* local-space positions (sampled once at
+        // `PARTICLE_LOGO_TARGET_SIZE`), while `pointerWorldHit` is a world-
+        // space point — on a device where the emblem is rendered shrunk
+        // (`points.scale`, set in `resize()`/above for tablet/phone aspect
+        // ratios), the raw world-space offset would be smaller than the
+        // local-space distances `HOVER_REPULSE_RADIUS` etc. are tuned
+        // against, making the hover/touch repulsion radius read as
+        // effectively larger than intended at every shrunk size.
         pointerLocalScratch.set(
-          pointerWorldHit.x - particleLogo.points.position.x,
-          pointerWorldHit.y - particleLogo.points.position.y,
+          (pointerWorldHit.x - particleLogo.points.position.x) / logoScale,
+          (pointerWorldHit.y - particleLogo.points.position.y) / logoScale,
         );
         pointerLocal = pointerLocalScratch;
       }
@@ -488,6 +556,13 @@ export const createHeroScene = (
     renderer.setSize(width, height);
     composer.setSize(width, height);
     composer.setPixelRatio(renderer.getPixelRatio());
+
+    // Re-fit the emblem to the new aspect ratio (rotation, or a responsive
+    // breakpoint) — same framing math as the initial placement above.
+    const framing = computeLogoFraming(getHalfFrustumWidth(camera.fov, camera.aspect, cameraDistance));
+    logoScale = framing.scale;
+    particleLogo.points.position.setX(framing.positionX);
+    particleLogo.points.scale.setScalar(framing.scale);
   };
 
   const dispose = () => {

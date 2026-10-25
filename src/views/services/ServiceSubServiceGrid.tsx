@@ -42,11 +42,33 @@ const SubServiceCard = ({ title, description }: ServiceSubService) => {
     api.start({ rotateX: 0, rotateY: 0, scale: 1 });
   };
 
+  // Touch equivalent of the mouse handlers above — a finger dragging across
+  // the card on iPad/mobile tilts it the same way (ADR-0101). No `canTilt`
+  // gate: being a touch event already implies the device isn't a fine
+  // pointer.
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    const el = ref.current;
+    if (!touch || !el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (touch.clientX - rect.left) / rect.width - 0.5;
+    const py = (touch.clientY - rect.top) / rect.height - 0.5;
+    api.start({ rotateX: -py * MAX_TILT_DEG, rotateY: px * MAX_TILT_DEG, scale: 1.02 });
+  };
+
+  const handleTouchEnd = () => {
+    api.start({ rotateX: 0, rotateY: 0, scale: 1 });
+  };
+
   return (
     <animated.article
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchMove}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{
         transform: to(
           [style.rotateX, style.rotateY, style.scale],

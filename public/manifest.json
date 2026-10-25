@@ -1,5 +1,6 @@
 {
- "name": "App",
+ "name": "Geoporte",
+ "short_name": "Geoporte",
  "icons": [
   {
    "src": "\/android-icon-36x36.png",

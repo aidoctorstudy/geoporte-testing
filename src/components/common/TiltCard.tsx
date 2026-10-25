@@ -2,7 +2,7 @@
 "use client";
 
 import { animated, to, useSpring } from "@react-spring/web";
-import { KeyboardEvent, MouseEvent, ReactNode, useRef } from "react";
+import { KeyboardEvent, MouseEvent, ReactNode, TouchEvent, useRef } from "react";
 
 export interface TiltCardProps {
   children: ReactNode;
@@ -15,7 +15,9 @@ const MAX_TILT_DEG = 9;
 
 /**
  * A card that tilts in 3D toward the cursor (perspective transform, spring-
- * driven — not CSS keyframes) and exposes a single activation callback. Built
+ * driven — not CSS keyframes), with a touch equivalent — a finger dragging
+ * across the card on iPad/mobile tilts it the same way (ADR-0101) — and
+ * exposes a single activation callback. Built
  * as a `role="button"` div rather than a real `<button>` because its children
  * include heading/paragraph content, which `<button>`'s content model
  * (phrasing content only) does not permit — full keyboard support (Enter /
@@ -49,6 +51,23 @@ export const TiltCard = ({ children, className, onActivate, ...rest }: TiltCardP
     api.start({ rotateX: 0, rotateY: 0, scale: 1 });
   };
 
+  // Touch equivalent of `handleMouseMove`/`handleMouseLeave` above — no
+  // `canTilt` gate, since being a touch event already implies the device
+  // isn't a fine pointer.
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    const el = ref.current;
+    if (!touch || !el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (touch.clientX - rect.left) / rect.width - 0.5;
+    const py = (touch.clientY - rect.top) / rect.height - 0.5;
+    api.start({ rotateX: -py * MAX_TILT_DEG, rotateY: px * MAX_TILT_DEG, scale: 1.02 });
+  };
+
+  const handleTouchEnd = () => {
+    api.start({ rotateX: 0, rotateY: 0, scale: 1 });
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
@@ -65,6 +84,10 @@ export const TiltCard = ({ children, className, onActivate, ...rest }: TiltCardP
       onKeyDown={handleKeyDown}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchMove}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       style={{
         transform: to(
           [style.rotateX, style.rotateY, style.scale],

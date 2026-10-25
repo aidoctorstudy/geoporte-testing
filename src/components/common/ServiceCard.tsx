@@ -5,7 +5,9 @@ import { useCallback, useRef } from "react";
 import { Hover } from "@/components/animation/springs/hover";
 import { SceneViewport } from "@/components/scene/SceneViewport";
 import { HeroScene } from "@/components/scene/HeroScene";
+import { SceneFallbackGradient } from "@/components/scene/SceneFallbackGradient";
 import { useDynamicInView } from "@/hooks/animation/use-dynamic-in-view";
+import { useWindowWidth } from "@/hooks/use-window-size";
 import { getCardSceneRootMargin } from "@/lib/scene/device-tier";
 import { MINI_SCENES } from "@/components/scene/mini-scenes";
 import { createSolarisCardScene } from "@/components/scene/build-solaris-scene";
@@ -38,6 +40,38 @@ const DEDICATED_CARD_SCENES: Record<string, (container: HTMLElement) => HeroScen
   "stormwater-and-flood-modelling": createNegentropySpiralCardScene,
   "advisory-services": createAureoleCardScene,
   "telecom-services": createSpiralGalaxyCardScene,
+};
+
+// Mobile/tablet (`< MOBILE_WEBGL_SKIP_WIDTH`) never mounts any of the
+// `DEDICATED_CARD_SCENES` above — ADR-0106: 7 cards each spinning up their
+// own `WebGLRenderer` + `EffectComposer` + `UnrealBloomPass` (the whole
+// reason they can't share the scissored renderer every other mini-scene
+// uses) is already a real concurrent-WebGL-context pressure point on iOS
+// (ADR-0087's crash report), and below the grid's own `lg:grid-cols-3`
+// breakpoint (1024px) the section lays out 1–2 columns instead of 3,
+// meaning every card scrolls past one at a time rather than a full row's
+// worth sharing one scroll position — each one's shader compile/composer
+// setup is real main-thread work landing right as the page is trying to
+// scroll the user toward Stats/Projects/Contact, which is exactly the kind
+// of transient main-thread stall ADR-0102 already diagnosed as capable of
+// starving an `IntersectionObserver` callback for content further down the
+// page. Reusing each scene's own already-tokenized fallback gradient
+// (`SceneFallbackGradient`, the same component every full-page background
+// shows on the "low" capability tier) instead of inventing a second
+// fallback treatment. Width-gated, not capability-tier-gated — unlike
+// `isLowPowerDevice()`, this applies even to a flagship phone/tablet,
+// because the pressure here is *concurrent context count*, which doesn't
+// care how fast any one of them is.
+const MOBILE_WEBGL_SKIP_WIDTH = 1024;
+
+const DEDICATED_CARD_GRADIENTS: Record<string, string> = {
+  "geotechnical-engineering": "var(--raw-gradient-fallback-solaris)",
+  "design-and-drafting": "var(--raw-gradient-fallback-aether-flux)",
+  "structural-engineering": "var(--raw-gradient-fallback-wormhole)",
+  "civil-engineering": "var(--raw-gradient-fallback-golden-parthenon)",
+  "stormwater-and-flood-modelling": "var(--raw-gradient-fallback-negentropy)",
+  "advisory-services": "var(--raw-gradient-fallback-aureole)",
+  "telecom-services": "var(--raw-gradient-fallback-spiral-galaxy)",
 };
 
 // The one card with a full-bleed background *video* instead of a WebGL
@@ -74,11 +108,17 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   // concurrent ceiling to roughly "however many cards fit in a ~1600px
   // scroll band" instead of every card ever visited. This is the real,
   // capability- and platform-agnostic answer to "Mobile Safari has limited
-  // WebGL memory" — every device benefits from a bounded context count,
-  // not just narrow ones, and a capable phone (this project's own iPhone
-  // 15 Pro Max example — see ADR-0078/79/81/83) keeps full WebGL rather
-  // than losing it to a viewport-width check. `HeroScene`'s own
-  // `isLowPowerDevice()` gate still applies underneath this regardless.
+  // WebGL memory" for any device that actually mounts one of these scenes
+  // at all. `HeroScene`'s own `isLowPowerDevice()` gate still applies
+  // underneath this regardless. As of ADR-0106, below
+  // `MOBILE_WEBGL_SKIP_WIDTH` none of these mount in the first place — a
+  // different concern than per-device *capability* (the "a capable phone
+  // keeps full WebGL rather than losing it to a viewport-width check"
+  // principle ADR-0078/79/81/83 established is about GPU/CPU speed, and
+  // stays true above that width): this is about how many of these
+  // own-composer contexts the 1–2-column mobile/tablet layout can put
+  // "near view" at once, a per-tab resource ceiling no amount of per-device
+  // speed changes.
   //
   // Uses the callback-ref form (`setNode`), not `trigger: cardRef` — proven
   // pattern, same as `StatCounter`/`ExperienceStatBox`. `cardRef` is still
@@ -98,6 +138,12 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
   // this hysteresis is bounding actually lives, independent of capability
   // tier; see `getCardSceneRootMargin`'s own comment.
   const [setInViewNode, nearView] = useDynamicInView({ rootMargin: getCardSceneRootMargin() });
+  // `0` is the pre-hydration/SSR snapshot (see `useWindowWidth`) — treated
+  // as "not mobile yet" so this never mounts WebGL server-side and only
+  // skips it once the client has actually measured a narrow viewport,
+  // matching every other `width > 0 &&` guard in this codebase.
+  const windowWidth = useWindowWidth();
+  const skipDedicatedScene = windowWidth > 0 && windowWidth < MOBILE_WEBGL_SKIP_WIDTH;
   const setCardNode = useCallback(
     (node: HTMLElement | null) => {
       cardRef.current = node;
@@ -115,12 +161,19 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
       config={{ tension: 300, friction: 24 }}
       className="border-line bg-surface hover:border-accent/60 relative overflow-hidden rounded-2xl border p-7 transition-colors duration-[var(--duration-normal)] ease-entrance"
     >
-      {dedicatedScene && nearView && (
+      {dedicatedScene && (skipDedicatedScene || nearView) && (
         <>
-          <HeroScene
-            createScene={dedicatedScene}
-            className="pointer-events-none absolute inset-0"
-          />
+          {skipDedicatedScene ? (
+            <SceneFallbackGradient
+              gradient={DEDICATED_CARD_GRADIENTS[service.slug]}
+              className="pointer-events-none absolute inset-0"
+            />
+          ) : (
+            <HeroScene
+              createScene={dedicatedScene}
+              className="pointer-events-none absolute inset-0"
+            />
+          )}
           <div
             aria-hidden="true"
             className="from-background/90 via-background/40 absolute inset-0 bg-gradient-to-t to-transparent"

@@ -88,7 +88,26 @@ export const HeroScene = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const scene = createScene(container);
+    // A scene factory can throw synchronously — most plausibly
+    // `THREE.WebGLRenderer`'s own constructor, when `canvas.getContext`
+    // returns `null` because the browser's per-tab WebGL context budget is
+    // already exhausted (many concurrent dedicated scenes — e.g. several
+    // `ServiceCard`s' own composers near-view at once — is exactly the
+    // kind of thing that can hit this). Uncaught inside an effect, that
+    // throw would propagate to the nearest error boundary (or none at
+    // all), unmounting everything React renders below this point — stats,
+    // projects, contact, the footer — for a failure that should only ever
+    // cost this one scene its visuals. Caught here instead: this scene
+    // just never mounts (the rest of the page is unaffected, same outcome
+    // as the `skipWebgl` branch above), and the failure is still visible in
+    // the console for debugging. See ADR-0106.
+    let scene: HeroSceneHandle;
+    try {
+      scene = createScene(container);
+    } catch (error) {
+      console.error("[hero-scene] scene construction failed — skipping this scene", error);
+      return;
+    }
     sceneRef.current = scene;
     container.appendChild(scene.canvas);
     onSceneReady?.(scene);

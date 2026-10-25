@@ -25,10 +25,14 @@ import { usePerformanceTier } from "@/hooks/performance/use-performance-tier";
  * driven force. This re-implements the same OS listener directly instead,
  * combined with the live tier on every re-evaluation.
  *
- * Also toggles `data-perf-tier="low"` on `<html>` — the CSS hook
- * `globals.css` reads to flatten every `backdrop-filter`/`.glass-panel`
- * surface to a solid fill on Tier 1 (backdrop-filter is GPU-cost even with
- * WebGL already off). Same "toggle an attribute on `<html>`" convention
+ * Also sets `data-perf-tier` on `<html>` to the live tier value (`"low"` |
+ * `"medium"` | `"high"` | `"ultra"`, ADR-0105 — was `"low"`-only-or-absent
+ * before) — `globals.css`'s `[data-perf-tier="low"]` rules (flattening
+ * every `backdrop-filter`/`.glass-panel` surface to a solid fill, stripping
+ * box-shadow/corner-radius/custom fonts) are unaffected, since they still
+ * key off that exact value; the attribute is just never *absent* now,
+ * which lets a future rule target `[data-perf-tier="medium"]` etc. without
+ * another wiring pass. Same "toggle an attribute on `<html>`" convention
  * `CustomCursor` already uses for `.cursor-hidden`.
  *
  * Renders nothing; mount once at the app root.
@@ -47,8 +51,7 @@ export const ReducedMotion = (): null => {
   }, [tier]);
 
   useEffect(() => {
-    if (tier === "low") document.documentElement.setAttribute("data-perf-tier", "low");
-    else document.documentElement.removeAttribute("data-perf-tier");
+    document.documentElement.setAttribute("data-perf-tier", tier);
     return () => document.documentElement.removeAttribute("data-perf-tier");
   }, [tier]);
 

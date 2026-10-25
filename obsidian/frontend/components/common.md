@@ -119,11 +119,14 @@ this today). Hides the native cursor via a `.cursor-hidden` class toggled on
 on `body` doesn't override links/buttons' own `cursor: pointer`, so this needs the
 `!important` + universal-selector rule under the class instead).
 
-Gated off entirely — renders `null`, native cursor stays — on touch
-(`usePointer().isFinePointer`) and under `prefers-reduced-motion`. Also stays hidden
-until the pointer's first real move (`usePointer().hasMoved`); before that its `x`/`y`
-are the `0,0` default, which would otherwise show the cursor stuck in the top-left
-corner. See ADR-0027.
+Active on fine pointers and, since ADR-0104, on touch for as long as a finger is
+down (`usePointer().isFinePointer || isTouchActive`) — follows the touch point
+on iPad/mobile and disappears again once it lifts, since touch has no
+persistent hover position to keep showing one at. Gated off under
+`prefers-reduced-motion`. Also stays hidden until the pointer's first real move
+(`usePointer().hasMoved`); before that its `x`/`y` are the `0,0` default, which
+would otherwise show the cursor stuck in the top-left corner. See ADR-0027,
+ADR-0104.
 
 Also gated off on `/services/geotechnical-engineering` (`usePathname()` check,
 same shape as `PlanetBackground`'s own route exclusion) — that page's Solaris
@@ -136,8 +139,10 @@ as a second, conflicting effect. See ADR-0038.
 `<Magnetic>` — wraps a button/CTA with magnetic cursor attraction: drifts up to 15px
 toward the pointer inside an 80px radius, springs back outside it
 (`@react-spring/web`, shared-ticker-driven, reads `getPointerSnapshot()` rather than
-re-subscribing per pointer move). No-ops on touch. Applied to the Nav and Hero CTAs
-so far; more call sites land as later phases touch their sections.
+re-subscribing per pointer move). Since ADR-0104, also drifts toward an active
+touch (`isFinePointer || isTouchActive`) and springs back once it lifts — no
+longer a touch no-op. Applied to the Nav and Hero CTAs so far; more call sites
+land as later phases touch their sections.
 
 ### ScrollSignal — `ScrollSignal.tsx`
 
@@ -222,8 +227,21 @@ scene sitewide. The static capability check still runs in dev (it's a real
 hardware read, not a noisy sample). Mirrors `Cookie/CookieBanner.tsx`'s
 `useTransition` mount/unmount idiom (same spring config), bottom-left
 instead of bottom-right, self-dismissing after 6s or via its own × button
-rather than store-driven. See ADR-0033, ADR-0058, ADR-0067 in
+rather than store-driven. Since ADR-0105, positioned at `bottom-16` rather
+than `bottom-4` — the new persistent `PerformanceTierBadge` now occupies
+that corner's `bottom-4`. See ADR-0033, ADR-0058, ADR-0067, ADR-0105 in
 [[decisions-log]].
+
+## PerformanceTierBadge — `PerformanceTierBadge.tsx`
+
+`<PerformanceTierBadge>` — mounted once in the root layout, alongside
+`PerformanceWarningToast` (ADR-0105). A persistent `bottom-4 left-4` pill
+reading "Performance: Basic/Medium/High/Ultra" (the brief's own display
+wording for the internal `"low"`/`"medium"`/`"high"`/`"ultra"` tiers).
+Clicking cycles through all four in order via
+`usePerformanceTier().setOverride`, which persists the choice and marks it
+so the background FPS-benchmark refinement (`performance-tier.ts`) never
+silently replaces it.
 
 ## ReducedMotion — `reduced-motion.tsx`
 
@@ -234,9 +252,10 @@ forces react-spring's global `skipAnimation`, so every spring — and
 `spring-text-engine` — jumps to its end state instead of animating.
 Re-implements the OS listener directly (rather than react-spring's own
 `useReducedMotion()` hook) so the tier can be OR'd in without racing a second
-listener — see ADR-0081. Also toggles `data-perf-tier="low"` on `<html>`,
-which `globals.css` reads to flatten every `backdrop-blur`/`.glass-panel`
-surface to a solid fill on that tier. Non-spring motion (WebGL scene mounts,
+listener — see ADR-0081. Also sets `data-perf-tier` on `<html>` to the live
+tier value (since ADR-0105 — was `"low"`-only-or-absent before), which
+`globals.css` reads to flatten every `backdrop-blur`/`.glass-panel`
+surface to a solid fill on the `"low"` value specifically. Non-spring motion (WebGL scene mounts,
 the cursor trail, the page-load intro, Lenis) reads the same tier through
 `isReducedMotion()`/`isLowPowerDevice()` instead, since it isn't driven by
 react-spring's `Globals`. As of ADR-0083, `globals.css` also kills every
@@ -275,7 +294,10 @@ with `to` directly. Swap the import
 (`import { TierInview as Inview } from "@/components/common/TierInview"`)
 — same zero-JSX-diff alias idiom as `TierImage as Image`. Currently wired
 into `ServicesSection.tsx`, `ProjectExperienceSection.tsx`, home
-`ProjectsSection.tsx`, `ContactSection.tsx` — the sections ADR-0102's report
+`ProjectsSection.tsx` (as of ADR-0103, inside its own `TierProjectsGrid.tsx` —
+`src/views/home/` — rather than the view itself, since Tier 1 there replaces
+the categorized grid outright instead of just skipping its reveal animation),
+`ContactSection.tsx` — the sections ADR-0102's report
 named. The identical gap exists in `AboutSection.tsx`/
 `GeotechnicalPlexusSection.tsx`/`TeamPanel.tsx`/`AboutHeading.tsx` (not
 reported broken, left as plain `<Inview>` rather than expanding scope) and
@@ -464,9 +486,13 @@ enter/leave, not a continuous pointer-tracked transform). Renders a
 `role="button"` `div` rather than a real `<button>`: its children (headings,
 paragraphs) aren't valid inside `<button>`'s phrasing-content-only model, so
 it adds `tabIndex`, `onKeyDown` (Enter/Space) and `aria-haspopup="dialog"`
-itself. Tilt is skipped when `(hover: hover) and (pointer: fine)` doesn't
-match (touch devices). Used by `ProjectCard` (`src/views/home/`) to open the
-project detail modal. See ADR-0025 in [[decisions-log]].
+itself. Mouse-driven tilt is skipped when `(hover: hover) and (pointer: fine)`
+doesn't match; since ADR-0104 it has its own `onTouchStart`/`onTouchMove`/
+`onTouchEnd`/`onTouchCancel` handlers (not gated on that query — being a touch
+event already implies the device isn't a fine pointer) so a finger dragging
+across the card tilts it the same way. Used by `ProjectCard`
+(`src/views/home/`) to open the project detail modal. See ADR-0025, ADR-0104
+in [[decisions-log]].
 
 ## ServiceCard — `ServiceCard.tsx`
 
@@ -510,6 +536,29 @@ ADR-0087, that 800px shrinks to 400px on iOS specifically
 (`getCardSceneRootMargin`, `device-tier.ts`) — a real crash report traced
 to iOS WebKit's lower WebGL memory ceiling, a platform characteristic
 independent of capability tier, so this is not gated by tier either.
+
+**As of ADR-0106**, none of these 7 `<HeroScene>` mounts happens at all
+below `MOBILE_WEBGL_SKIP_WIDTH` (1024px, `ServiceCard.tsx` — matches the
+grid's own `lg:grid-cols-3` breakpoint) — a different report, this time
+the homepage failing to render anything past the Services section on
+mobile/tablet widths. `SceneFallbackGradient` (the same component every
+full-page background already shows on the "low" capability tier) renders
+instead, reusing each scene's own `--raw-gradient-fallback-*` token. Unlike
+the rootMargin gate above (capability-and-platform-agnostic by design, see
+ADR-0078/79/81/83's "a capable phone keeps full WebGL" principle), this one
+*is* a plain viewport-width check — deliberately, because the problem it
+addresses isn't a slow device, it's concurrent WebGL context count, which
+a fast GPU doesn't fix: below 1024px the grid lays out 1–2 columns instead
+of 3, so cards scroll past one at a time rather than a row's worth sharing
+one scroll position, each one's own shader-compile/composer-setup cost
+landing on the main thread right as the page is trying to carry the user
+toward Stats/Projects/Contact — plausibly what was starving those
+sections' own `IntersectionObserver` callbacks (the ADR-0102 failure mode,
+recurring here for a different trigger). `HeroScene.tsx` itself also
+gained a `try`/`catch` around scene construction, so *any* scene factory
+throwing (exhausted WebGL context budget being the most likely cause) can
+no longer propagate past this one scene and unmount everything React
+renders below it.
 
 **Project Control Services is the eighth exception, and the only one not
 WebGL** (`DEDICATED_CARD_VIDEOS` lookup, a sibling to
@@ -560,7 +609,7 @@ purely about which hero component mounts, not the page's `glass` status.
 | Component | Role |
 |-----------|------|
 | `ServiceStats.tsx` | Wraps the existing `StatCounter` (`src/views/home/`, now with an optional `prefix` prop for values like "$2B+") in a 3-stat row |
-| `ServiceSubServiceGrid.tsx` | 6-card grid, local `SubServiceCard` with `@react-spring/web`-driven hover-tilt (not `TiltCard` — these cards aren't clickable) |
+| `ServiceSubServiceGrid.tsx` | 6-card grid, local `SubServiceCard` with `@react-spring/web`-driven hover-tilt (not `TiltCard` — these cards aren't clickable); touch-equivalent handlers added alongside the mouse ones per ADR-0104 |
 | `ServiceProcess.tsx` | Numbered process-step timeline; 5 vs 6 steps switches a static `lg:grid-cols-5`/`lg:grid-cols-6` (Tailwind needs literal class strings, not an interpolated count) |
 | `ServiceRelatedProjects.tsx` | Filters real `projects.ts` data through the curated `SERVICE_PROJECT_CATEGORIES` map (`src/data/mocks/service-project-map.ts`), capped at 6, reuses the existing `ProjectCard`/`ProjectModal` unchanged |
 | `ServiceCta.tsx` | Magnetic CTA linking to `/contact`, heading text templated as "Ready to start your `<service>` project?" |

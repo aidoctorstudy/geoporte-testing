@@ -17,6 +17,301 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0107 — Favicon fix targeted the stale placeholder image files, not `layout.tsx` metadata
+
+**Status:** Accepted · 2026-10-25
+
+**Context.** Report: the browser tab showed a generic default icon instead
+of the Geoporte logo. The request's proposed fix: copy the logo to
+`/public/favicon.ico`/`favicon.png` and add an `icons` block to
+`layout.tsx`'s metadata.
+
+**Investigated rather than taken at face value.** `src/app/layout.tsx`
+holds no inline `Metadata` object — it exports `generateMetadata()` from
+`src/utils/seo/generate-page-metadata.ts` ([[seo-metadata]]), which is the
+project's documented single source of truth for metadata, icons included.
+That generator already declared `icons.icon` (`/favicon.ico`,
+`/favicon-16x16.png`, `/favicon-32x32.png`) and `icons.apple`
+(`/apple-icon-180x180.png`) — correct paths, correct shape. Reading the
+actual PNG bytes at those paths (not just their filenames) showed the bug:
+every one of them, plus the `android-icon-*` set and `manifest.json`
+(`name: "App"`), was still the generic default a favicon generator ships
+before anyone swaps in the real brand mark — never regenerated from
+`public/assets/logo/geoporte-logo.png`. The code and config were already
+right; the asset files were wrong.
+
+**Decision.** Fix the asset files in place rather than add a second,
+competing `icons` declaration on `layout.tsx`:
+- `scripts/generate-favicons.mjs` (new) uses `sharp` — already a
+  resolvable dependency via `process-logo.mjs`/`generate-og-image.mjs` — to
+  render `geoporte-logo.png` to every size the existing metadata
+  references, plus the Android manifest set.
+- `favicon.ico` is hand-assembled as an ICO "format 2" container (ICONDIR +
+  ICONDIRENTRY headers wrapping raw PNG bytes per frame) since no
+  ICO-writing package was available in `node_modules`; this format is
+  universally supported by modern browsers/OS and avoids a new dependency
+  for one file.
+- `manifest.json`'s `name`/`short_name` changed from the generator default
+  `"App"` to `"Geoporte"` — same bug class, same fix.
+
+**Consequence.** `layout.tsx` is untouched; `generate-page-metadata.ts`
+remains the only place icon paths are declared, per [[seo-metadata]]'s
+single-source-of-truth note. Re-run `node scripts/generate-favicons.mjs`
+whenever the logo asset changes, same as the OG-image script.
+
+## ADR-0106 — Homepage stopped rendering past Services on mobile/tablet: service cards' concurrent dedicated WebGL contexts, not addressed by width-agnostic capability gating
+
+**Status:** Accepted · 2026-10-13
+
+**Context.** Report: on mobile devices (any screen width < 1024px), the
+homepage stops rendering at the Services section — Stats, Projects,
+Contact, and the footer never appear. The request's hypothesis: the 8
+service-card mini-scenes initialize simultaneously and exhaust mobile
+memory; fix by removing WebGL from service cards on mobile entirely.
+
+**Investigated rather than taken at face value** — this project has a
+documented history (ADR-0102) of a request's stated hypothesis not
+matching the real cause, and a separate documented principle (ADR-0078/79/
+81/83) that a plain viewport-width check is usually the *wrong* lever for
+a performance problem, since it misclassifies capable narrow devices.
+Checked both before building:
+- **All 8 service cards are already "heavy," confirming half the
+  hypothesis.** `ServiceCard.tsx`'s `MINI_SCENES` fallback path is dead
+  code (ADR-0054 emptied that map) — all 8 cards use either a dedicated
+  `<HeroScene>` with its own `WebGLRenderer`/`EffectComposer`/
+  `UnrealBloomPass` (7 cards) or a `<VideoBackground>` (the 8th,
+  Project Control Services). None share the lightweight scissored
+  renderer every *other* mini-scene in the codebase uses.
+- **"All 8 simultaneously" is not literally true — `ServiceCard.tsx`
+  already gates each dedicated scene behind a live `rootMargin`
+  intersection hysteresis** (ADR-0084/85/87: ~800px, 400px on iOS), which
+  this file's own comments document as having already cut a *measured*
+  12-simultaneous-canvas count on initial load down to 5. So the real
+  number at any given scroll position is lower than "8," but still
+  nonzero and still real: below the grid's `lg:grid-cols-3` breakpoint
+  (also 1024px — the exact width this report reproduces at) the layout
+  drops to 1–2 columns, so cards scroll past one at a time instead of a
+  row's worth sharing one scroll position, and each one's own shader-
+  compile/composer-setup is genuine main-thread work landing while the
+  page is trying to carry the user toward Stats/Projects/Contact — exactly
+  the kind of transient main-thread stall ADR-0102 already diagnosed as
+  capable of starving an `IntersectionObserver` callback for content
+  further down the page. That symptom (content below a point silently
+  never appearing, not a visible crash) matches this report closely.
+- **A second, independent failure mode checked for and found real:**
+  `HeroScene.tsx`'s mount effect called `createScene(container)`
+  uncaught. If a scene factory throws — most plausibly
+  `THREE.WebGLRenderer`'s own constructor, when `canvas.getContext`
+  returns `null` because the browser's per-tab WebGL context budget is
+  already exhausted, which concurrent dedicated card scenes make more
+  likely — that throw propagates out of the `useEffect` to the nearest
+  error boundary (or none at all), unmounting everything React renders
+  below that point. This would produce exactly the reported symptom on
+  its own, independent of the `IntersectionObserver` theory above, and
+  is a credible contributing cause either way.
+- **Stats/Projects/Contact's own reveal mechanics were checked and are not
+  the gap.** `StatCounter`'s `hasAnimated` latch (ADR-0102) is a universal
+  structural fix, not tier-gated. `TierProjectsGrid` (ADR-0103) and
+  `ContactSection`'s `TierInview` cover the Tier 1 case. `StatsGlobe`/
+  `ContactTerrain` both use the shared `SceneViewport` renderer, not a
+  dedicated context — they were not adding to the concurrent-context count.
+
+**Decision.**
+- `ServiceCard.tsx`: below `MOBILE_WEBGL_SKIP_WIDTH` (1024px — the exact
+  width this report reproduces at, and the grid's own `lg:grid-cols-3`
+  breakpoint), none of the 7 `DEDICATED_CARD_SCENES` mount at all — not
+  deferred further, never constructed. `SceneFallbackGradient` (the same
+  component every full-page background already shows on the "low"
+  capability tier) renders in its place, reusing each scene's own
+  `--raw-gradient-fallback-*` token rather than inventing a second
+  fallback treatment. This is a plain width check, deliberately — the
+  problem here is concurrent WebGL *context count* given the layout's
+  column count, not any one device's GPU/CPU speed, so the "a capable
+  phone keeps full WebGL rather than losing it to a viewport-width check"
+  principle (ADR-0078/79/81/83) doesn't apply to this specific mechanism;
+  that principle is about per-device capability and remains true for
+  everything it already governs (`isLowPowerDevice()`, `getTierBudget()`).
+  The 8th card (`DEDICATED_CARD_VIDEOS`, Project Control Services) is
+  untouched — a `<video>` isn't a WebGL context and wasn't implicated.
+  All 8 cards still render their text/link content regardless of tier or
+  width; only the background treatment changes.
+- `HeroScene.tsx`: `createScene(container)` wrapped in `try`/`catch`. On
+  failure, logs to console and returns — this one scene simply never
+  mounts (the same visible outcome as the existing `skipWebgl` branch) —
+  instead of the exception propagating and unmounting everything rendered
+  below it. Applies to every `HeroScene` caller, not just service cards.
+
+**When building.** A report framed as "simultaneous WebGL inits exhaust
+memory" is plausible and worth checking seriously (this one was largely
+right), but check the existing mitigations first — this codebase already
+had a measured, documented concurrent-context count before assuming "zero
+mitigation exists." A width-based gate is the right tool specifically for
+*concurrent resource count* problems tied to a layout's column count; it
+is still the wrong tool for a *device capability* problem — don't let this
+entry's width check be read as license to reintroduce one for the latter
+(see ADR-0078/79/81/83). Any `HeroScene` caller should assume scene
+construction can fail and not rely on an uncaught throw there staying
+contained — ADR-0106's `try`/`catch` is now the one place that's handled,
+not a pattern every call site needs to repeat.
+
+---
+
+## ADR-0105 — GPU-string + FPS-benchmark detection layer added ahead of the existing capability heuristic; badge UI + manual override
+
+**Status:** Accepted · 2026-10-13 · Extends ADR-0058's 4-tier system; supersedes no prior detection logic — the Safari/iOS-specific heuristic (ADR-0058/0078/0079/0080) stays as the fallback, per direct user confirmation.
+
+**Context.** Client request for a "complete performance tier system overhaul": detect GPU via `WEBGL_debug_renderer_info`, run a 60-frame FPS benchmark, combine with `hardwareConcurrency`/screen width into 4 named tiers (Baqala/Simplified 3D/Full 3D Reduced/Ultra) with specific per-tier GPU model lists and FPS bands, persist to `localStorage`, show a bottom-left badge with a manual override, log the GPU string and assigned tier, and apply a tier class to `document.documentElement`. Asked to replace the existing capability-tier system outright; also asked to deploy to Vercel, which was **not** done — confirmed with the user that they'd deploy themselves after reviewing.
+
+**A material fact surfaced before building:** Safari (desktop and iOS) has never implemented `WEBGL_debug_renderer_info` — `gl.getExtension(...)` returns `null` there, same fingerprinting-surface reasoning behind Safari never exposing `navigator.deviceMemory` either (see `performance-tier.ts`'s own long-standing comment on that). A literal "replace the detection system with GPU-string matching" would have silently stopped working on exactly the device class this project has repeatedly, carefully tuned for across ADR-0078 through ADR-0083 (real iPhone/iPad misclassification bugs, each with its own ADR). Decision, not re-litigated with the user a second time since it's an implementation detail rather than a product choice: keep the existing screen-signature/cores/memory heuristic as the *fallback*, reached whenever neither the new GPU-string lists nor the FPS benchmark classify the device — which in practice is every Safari visit. Chromium/Firefox (desktop and Android) get the new GPU-string layer for real; everyone else gets exactly what already worked.
+
+**Decision — layered onto the existing module (`performance-tier.ts`), not a parallel system**, keeping ADR-0058's "one module decides" principle intact so every existing consumer (`device-tier.ts#getTierBudget`/`isLowPowerDevice`, every scene builder, `usePerformanceTier()`) picks up the new layer with zero additional wiring:
+- `detectGPUInfo()` — throwaway 1×1 canvas + `WEBGL_debug_renderer_info`, empty strings (never throws) when unavailable.
+- `runFpsBenchmark()` — renders 60 frames of a fill-rate-heavy fragment shader (nested trig loop) to a small offscreen canvas, calling `gl.finish()` every frame so timing reflects real GPU completion, not just `requestAnimationFrame`'s vsync queuing. Resolves `60` (never rejects) on any failure — "assume capable, let other signals decide" is the safer default than "classify every oddity as weakest."
+- `classifyByGpuTierRules()` — the literal per-tier OR-of-conditions from the brief (GPU name regex lists + FPS bands + cores/width combinations), checked low→ultra→high→medium so a device matching multiple bands lands on the most meaningful one. Returns `null` when nothing matches, which is the signal to fall back to the existing heuristic.
+- Detection is split sync/async: `detectPerformanceTierSync()` (GPU string + cores + width, no benchmark — runs immediately, synchronously, so it never blocks this page's own WebGL mount decision) drives `getOrDetectTier()`'s first-ever-visit value; `detectPerformanceTierAsync()` (adds the benchmark) runs once in the background a frame after that, and only *persists* a different result for the next load plus notifies the reactive context (badge) — it never tears down or rebuilds anything already mounted this session, keeping the established "tier decided once at construction" invariant (optimize-3d-scene skill §2).
+- `setTierOverride()`/`isOverrideActive()` — a manual pick from the badge persists and is never silently replaced by the background refinement. The *runtime* low-FPS auto-downgrade (`downgradeTier`, unchanged) still applies even under an override — a real sustained slowdown is a safety net, not a re-detection.
+- `PERFORMANCE_TIER_BUDGETS` tuned to the brief's exact numbers: medium (Simplified 3D) `particleScale: 0.2` (−80%), high (Full 3D Reduced) `particleScale: 0.6` (−40%), `bloomScale` 0/0/0.5/1 across low/medium/high/ultra already matched the brief's "zero bloom"/"bloom −50%"/"full bloom" exactly. New `frameIntervalMs` per capability tier (30fps medium, 60fps high, uncapped ultra) is merged into `device-tier.ts#getTierBudget`'s `heroFrameIntervalMs` by taking the larger (more conservative) of the width-tier and capability-tier intervals — without that merge, a desktop-*width* machine that's only medium/high *capability* would still render uncapped purely by virtue of its width.
+- `data-perf-tier` on `<html>` (`ReducedMotion.tsx`) now always reflects the live tier value, not just presence/absence for "low" — `[data-perf-tier="low"]`'s existing CSS is unaffected (same selector, same value), this just stops the attribute from being *absent* on the other three tiers.
+- New `PerformanceTierBadge.tsx` — persistent `bottom-4 left-4` pill, "Performance: Basic/Medium/High/Ultra" (brief's own wording — "Basic" display label for the internal `"low"` tier), click cycles through all four and calls `setTierOverride`. `PerformanceWarningToast` (same corner) moved to `bottom-16` so the two never overlap.
+- Console diagnostics (`logTierDiagnostics`) extended to include the GPU renderer/vendor strings, and now also logs a second line once the background benchmark resolves.
+- Storage key bumped to `:v3` (ADR-0086's established one-time-reset policy) — the detection algorithm itself changed, which is exactly the case that policy exists for.
+
+**Not done — flagged, not improvised.** The brief's per-tier "what it does" bullets go well beyond what one `TierBudget` shape can carry (Earth globe geometry segment counts, service-card-mini-scene toggles, ambient-shape toggles beyond `isLowPowerDevice()`'s existing all-or-nothing gate, backdrop-filter blur reduced specifically to 8px, "full liquid glass" at high). Rewiring every individual scene builder (~15 files) to a more granular per-tier contract is a separately-scoped follow-up; what ships now is the *detection* layer plus everything already expressible through the existing `particleScale`/`bloomScale`/`dprClamp`/`frameIntervalMs`/`webglDisabled` budget — which, combined with ADR-0083/0101/0103's already-shipped Tier 1 "baqala mode" behaviour (max 4 project cards, 480px/quality-40 images, zero backdrop-filter/animation/box-shadow/custom-fonts), covers most of Tier 1's list and the coarse particle/bloom/frame-rate shape of Tiers 2–4. **Not deployed to Vercel** — the user will deploy after reviewing.
+
+**When building.** `WEBGL_debug_renderer_info`-based GPU detection only ever works on Chromium/Firefox; never remove or weaken the screen-signature/cores/memory fallback on the assumption the GPU string will be there — on Safari (still the majority of this project's real iPhone/iPad traffic) it never is. A new scene builder that wants a more granular per-tier behaviour than `TierBudget` currently expresses should extend that shared shape, not read `getOrDetectTier()` directly and branch on its own — same "one module decides" guardrail as always.
+
+---
+
+## ADR-0104 — iPad/mobile hero fixes: particle-logo frustum overflow, and touch equivalents for cursor-driven effects
+
+**Status:** Accepted · 2026-10-13
+
+**Context.** Two reports on iPad/tablet and mobile: (1) the homepage hero's
+particle Geoporte emblem (`build-hero-scene.ts`, ADR-0093/94) is cut off on
+the right edge; (2) the emblem, the custom cursor, `Magnetic` buttons, and
+`TiltCard`-style tilt cards don't respond to touch at all.
+
+**Cause of (1).** `PARTICLE_LOGO_POSITION`/`PARTICLE_LOGO_TARGET_SIZE` are
+fixed world-space values, tuned (per ADR-0093's own comment) without a live
+browser, against a wide desktop aspect ratio. A `PerspectiveCamera`'s visible
+horizontal extent at a given depth scales with aspect ratio at a fixed FOV —
+the same world-space placement that clears the frustum's right edge at 16:9
+already overflows it at iPad landscape (4:3), and overflows by most of its
+own width at iPad/phone portrait.
+
+**Fix for (1).** `build-hero-scene.ts` now derives the emblem's position and
+scale every time the aspect ratio changes (`computeLogoFraming`, called at
+construction and from `resize()`): it shrinks the emblem (never enlarges past
+the desktop size) just enough that its full width plus a fixed margin fits
+inside the right half of the frustum, then places it as close to the
+desktop-reference x position as that fitted width allows. The emblem's own
+particle geometry is sampled once at the desktop size and never re-sampled —
+the fit is applied as a uniform `THREE.Points.scale`, so the hover/touch
+repulsion math (which operates in the geometry's local, unscaled space) now
+divides the raycast hit by the current scale factor before comparing against
+`HOVER_REPULSE_RADIUS`.
+
+**Cause of (2), and why it was deliberate.** `use-pointer.ts`'s shared store,
+`Magnetic`, and `CustomCursor` gate every cursor effect on
+`isFinePointer` (`(hover: hover) and (pointer: fine)`) — ADR-0037 and
+`Magnetic`'s own comment call this out explicitly as a deliberate touch
+no-op, not an oversight.
+
+**Decision — reverse that gating for these effects.** Added `isTouchActive`
+to `PointerState`: true from `touchstart` to that touch's `touchend`/
+`touchcancel`, fed by explicit `Touch*` listeners (not relied-upon
+synthesized `pointermove`, since iOS Safari can hand a touch drag off to
+native scrolling mid-gesture and stop dispatching further synthesized
+pointer events for it — `touchmove` keeps firing regardless). `CustomCursor`
+and `Magnetic` now gate on `isFinePointer || isTouchActive`, so the cursor
+dot/ring/glow/trail and the magnetic drift track a finger while it's down and
+disappear/spring back once it lifts — there's no persistent hover position on
+touch the way there is with a mouse, so unlike `isFinePointer` this is not a
+static capability flag. `TiltCard` and `ServiceSubServiceGrid`'s
+`SubServiceCard` (same cursor-tilt pattern, not wired through the shared
+store) each got their own `onTouchStart`/`onTouchMove`/`onTouchEnd`/
+`onTouchCancel` handlers mirroring their mouse ones. `HeroScene`'s pointer
+parallax/repulsion was already store-driven and gate-free, so it started
+receiving touch positions with zero changes beyond the store itself.
+
+**When building.** A new cursor-driven effect should read `isFinePointer ||
+isTouchActive` from `usePointer()` (or `getPointerSnapshot()` for per-frame
+consumers) if it wants a touch equivalent, or `isFinePointer` alone if a
+persistent-hover assumption makes touch meaningless for it. A new full-bleed
+3D scene whose subject is deliberately placed off-center should size/position
+it as a function of the camera's current aspect ratio (`computeLogoFraming`'s
+pattern), not a fixed world-space constant tuned against one viewport. See
+[[components/common]], [[hooks]], obsidian/architecture/tech-stack.md.
+
+---
+
+## ADR-0103 — "Maximum baqala mode": Tier 1 project grid capped at 4 cards, gradient-fallback colours flattened, box-shadow/corner-radius/system-font stripped
+
+**Status:** Accepted · 2026-10-13 · Continuation of ADR-0083's "baqala mode"; the code existed uncommitted from an earlier session, this entry documents it and fixes the gaps found while verifying it.
+
+**Context.** Further hardening of Tier 1 ("low" capability,
+`performance-tier.ts`) past what ADR-0083/0101 already covered: show at most
+4 project cards instead of the full categorized grid, flatten every scene's
+`--raw-gradient-fallback-*` poster colour to a flat fill, cap content-image
+`srcset` width at 480px (on top of ADR-0083's existing quality=40), and strip
+box-shadow and large-surface corner-radius sitewide.
+
+**Decision.**
+- New `TierProjectsGrid.tsx` (`src/views/home/`) — on Tier 1, renders a flat,
+  uncategorized list capped at 4 cards (`TIER1_MAX_PROJECT_CARDS`) instead of
+  `ProjectsSection`'s categorized `<Inview>` sections. Tier is client-only, so
+  the server still sends every project's HTML regardless of tier — this only
+  reduces what ends up *mounted* after hydration, not bytes already
+  downloaded; a server-side tier signal is a separately-scoped decision.
+- `TierImage.tsx` gained a forced `sizes="480px"` on Tier 1 (alongside its
+  existing quality=40), so `next/image`'s `srcset` negotiation never serves a
+  candidate wider than 480px regardless of the caller's own `sizes` or the
+  viewport. `images.formats`' automatic AVIF/WebP negotiation is left alone —
+  forcing a specific format would make images *larger* on an AVIF-capable
+  browser, fighting the actual goal; width is the lever that's purely additive.
+- `globals.css`: a `:root[data-perf-tier="low"]` block overrides every
+  `--raw-gradient-fallback-*` token (each scene's own dominant/centre stop,
+  keeping the per-page identity, just flattened) for `SceneFallbackGradient.tsx`'s
+  "solid colours only" requirement — physically placed inside the Tier 1
+  section of the file (the primitives it overrides are named `--raw-*`), not
+  floated down near the Tier 2/`@theme` blocks the way an earlier draft had
+  it. `[data-perf-tier="low"] *` also gets `box-shadow: none` and a system
+  `font-family` (both needed `!important` + a universal selector to beat
+  Tailwind's build-time-frozen defaults and per-element utility classes); only
+  the large-surface radii (`rounded-lg`/`-xl`/`-2xl`/`-3xl`) are squared off,
+  deliberately not `rounded-full` — avatars/pills/icon buttons would otherwise
+  turn into visibly broken squares.
+
+**Fixed while verifying this turn.** The gradient-fallback override block, in
+its original uncommitted position (between the Tier 2 and `@theme`/THEME
+BINDINGS markers), tripped two `verify.sh` FAILs — "literal in a Tier 2
+semantic token" (the script polices literals by *position* in the file, not
+by whether the name itself starts with `--raw-`) and, after relocating it, a
+second false positive ("literal bound directly in `@theme inline`") caused by
+the block's own comment containing the literal two-word phrase the script's
+`awk` range-matcher keys on, which happened to occur earlier in the file than
+the real `@theme inline {` block and pulled the range starting point forward
+to capture the comment instead. Moving the block into the Tier 1 section and
+rewording the comment to avoid that exact substring cleared both. Also fixed
+a stray lint warning in `TierImage.tsx`: the `eslint-disable-next-line`
+comment had drifted one line away from the `<Image>` JSX it was meant to
+cover (landing on `return (` instead), which both left the real
+`jsx-a11y/alt-text` warning unsuppressed and flagged the disable comment
+itself as unused.
+
+**When building.** `verify.sh`'s token-position checks are plain `awk`
+line-range scans keyed on literal marker text, not a real CSS/comment parser
+— a comment that happens to quote one of those markers (`"@theme inline"`,
+`"TIER 2"`, `"THEME BINDINGS"`) can shift or open a scan range early. Don't
+quote a section marker verbatim inside a comment near a tier boundary; refer
+to it descriptively instead (as this entry's own fix now does). A Tier 1
+override scoped to `:root[data-perf-tier="low"]` (or any other attribute
+selector) belongs physically inside the Tier 1 section of `globals.css`
+regardless of which other rule it's conceptually paired with — the position
+checks don't know about `--raw-*` naming, only about section markers.
+
+---
+
 ## ADR-0102 — Homepage stopped rendering past Geotechnical on Tier 1: `<Inview>` observer reliability, not lazy mounting
 
 **Status:** Accepted · 2026-10-13 · Composes around (does not edit) the protected `<Inview>` engine file.

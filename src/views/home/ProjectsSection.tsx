@@ -1,8 +1,7 @@
 import { SectionHeading } from "@/components/common/SectionHeading";
-import { TierInview as Inview } from "@/components/common/TierInview";
 import { projectCategories, projects } from "@/data/mocks/projects";
-import { ProjectCard } from "./ProjectCard";
 import { ProjectModal } from "./ProjectModal";
+import { TierProjectsGrid } from "./TierProjectsGrid";
 
 export interface ProjectsSectionProps {
   /** Defaults to "h2" (the homepage's own `<h1>` lives in `HeroHeading`).
@@ -24,34 +23,7 @@ export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}
         heading="Landmark projects, across continents"
       />
 
-      <div className="mt-14 flex flex-col gap-16">
-        {projectCategories.map((category, index) => {
-          const categoryProjects = projects.filter(
-            (project) => project.category === category,
-          );
-          return (
-            <Inview
-              key={category}
-              tag="section"
-              mode="once"
-              from={{ opacity: 0, y: 24 }}
-              to={{ opacity: 1, y: 0 }}
-              delayIn={index * 100}
-            >
-              <h3 className="text-label text-sm tracking-[0.16em] uppercase">
-                {category}
-              </h3>
-              <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {categoryProjects.map((project, cardIndex) => (
-                  <li key={project.title}>
-                    <ProjectCard project={project} priority={index === 0 && cardIndex < 3} />
-                  </li>
-                ))}
-              </ul>
-            </Inview>
-          );
-        })}
-      </div>
+      <TierProjectsGrid categories={projectCategories} projects={projects} />
 
       <ProjectModal />
     </section>

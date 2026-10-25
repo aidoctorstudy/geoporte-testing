@@ -17,6 +17,7 @@ import { ScrollProgressBar } from "@/components/common/ScrollProgressBar";
 import { CustomCursor } from "@/components/common/Cursor";
 import { PageLoadIntro } from "@/components/common/PageLoadIntro";
 import { PerformanceWarningToast } from "@/components/common/PerformanceWarningToast";
+import { PerformanceTierBadge } from "@/components/common/PerformanceTierBadge";
 import { RouteTransitionSweep } from "@/components/common/RouteTransitionSweep";
 import { AetherFluxBackground } from "@/components/scene/AetherFluxBackground";
 import { AmbientBackground } from "@/components/scene/AmbientBackground";
@@ -107,6 +108,7 @@ export default function RootLayout({
             <PageLoadIntro />
             <RouteTransitionSweep />
             <PerformanceWarningToast />
+            <PerformanceTierBadge />
           </ScrollLayout>
         </PerformanceTierProvider>
       </body>

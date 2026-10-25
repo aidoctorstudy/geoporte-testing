@@ -21,15 +21,16 @@ export interface MagneticProps {
 /**
  * Wraps a button/CTA with magnetic cursor attraction (item 4 of the homepage
  * motion spec): drifts up to `MAX_DRIFT_PX` toward the pointer once it's
- * within `ATTRACTION_RADIUS_PX`, springs back outside it. No-ops on touch —
- * gated on `usePointer().isFinePointer`, same convention as `TiltCard`.
- * Reads the shared pointer store non-reactively (`getPointerSnapshot`) inside
- * a single shared-ticker subscription, rather than re-subscribing per pointer
- * move.
+ * within `ATTRACTION_RADIUS_PX`, springs back outside it. Also responds to
+ * touch — gated on `usePointer().isFinePointer || isTouchActive`, so a
+ * finger landing near the button on iPad/mobile drifts it the same way a
+ * mouse would, and it springs back once the touch lifts. Reads the shared
+ * pointer store non-reactively (`getPointerSnapshot`) inside a single
+ * shared-ticker subscription, rather than re-subscribing per pointer move.
  */
 export const Magnetic = ({ children, className }: MagneticProps) => {
   const containerRef = useRef<HTMLSpanElement>(null);
-  const { isFinePointer } = usePointer();
+  const { isFinePointer, isTouchActive } = usePointer();
   const [style, api] = useSpring(() => ({
     x: 0,
     y: 0,
@@ -37,7 +38,10 @@ export const Magnetic = ({ children, className }: MagneticProps) => {
   }));
 
   useEffect(() => {
-    if (!isFinePointer) return;
+    if (!isFinePointer && !isTouchActive) {
+      api.start({ x: 0, y: 0 });
+      return;
+    }
 
     return subscribeToTicker(() => {
       const el = containerRef.current;
@@ -57,7 +61,7 @@ export const Magnetic = ({ children, className }: MagneticProps) => {
         api.start({ x: 0, y: 0 });
       }
     }, () => TICKER_FRAMERATE_MS);
-  }, [isFinePointer, api]);
+  }, [isFinePointer, isTouchActive, api]);
 
   return (
     <animated.span

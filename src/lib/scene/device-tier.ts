@@ -177,5 +177,14 @@ export const getTierBudget = (viewportWidth: number): TierBudget => {
     // this at all — `AmbientBackground` gates the whole scene on
     // `isLowPowerDevice()` before ever reading this budget).
     ambientShapeCount: Math.max(1, Math.round(widthBudget.ambientShapeCount * capabilityBudget.particleScale)),
+    // Take the *more conservative* (larger = lower fps) of the two axes'
+    // own frame-rate opinions (ADR-0105) — without this, a desktop-*width*
+    // machine that's only "medium"/"high" *capability* would still render
+    // uncapped purely by virtue of being desktop-width, since
+    // `widthBudget.heroFrameIntervalMs` alone is `0` there regardless of
+    // capability. A narrow/mobile-width device is unaffected: its own
+    // width-tier interval is already the larger of the two in every
+    // realistic case.
+    heroFrameIntervalMs: Math.max(widthBudget.heroFrameIntervalMs, capabilityBudget.frameIntervalMs),
   };
 };

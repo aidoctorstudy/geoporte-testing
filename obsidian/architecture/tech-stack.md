@@ -144,12 +144,20 @@ default `HeroFallback`) stays transparent as well, and the globe (or its
 own Tier-1 `SceneFallbackGradient` fallback) shows through regardless of
 capability tier.
 
-**Not visually tuned against a live browser** — no Chrome extension
-connected any session this was built across — the emblem's exact placement
-(`PARTICLE_LOGO_POSITION`), the "right side" framing relative to the
-hero's own left-anchored 2D text column, and the hover-repulsion feel are
-all best-effort, documented choices. Worth a real look before calling any
-of it fully settled.
+**Aspect-ratio-responsive placement (ADR-0104).** The original fixed
+world-space position/size (tuned without a live browser, against a wide
+desktop aspect ratio) overflowed off the right edge of the frame on iPad
+landscape and badly on iPad/phone portrait — a `PerspectiveCamera`'s visible
+width at a given depth scales with aspect ratio at a fixed FOV, so the same
+placement that cleared the frustum at 16:9 didn't at narrower ratios.
+`computeLogoFraming()` now derives the emblem's x position and a uniform
+`THREE.Points.scale` from the current frustum width every time the aspect
+ratio changes (construction and `resize()`): shrink (never enlarge past the
+desktop size) just enough that the full width plus a margin fits inside the
+right half of the frustum, then place it as close to the desktop x position
+as that fitted width allows. The hover-repulsion math still runs in the
+particle geometry's own unscaled local space, so the raycast hit is divided
+by the current scale factor before comparing against `HOVER_REPULSE_RADIUS`.
 
 **Service hero scenes** (`src/components/scene/service-heroes/`) — each of the
 8 `/services/<slug>` pages passes its own scene factory into the shared
@@ -674,10 +682,11 @@ the literal desktop budget for a flagship phone with no other file touched.
 performance-tier.ts` + `src/hooks/performance/use-performance-tier.tsx`,
 ADR-0058) — Ultra/High/Medium/Low, resolved once per session from
 `navigator.hardwareConcurrency`/`deviceMemory`/mobile-UA/`screen.width`
-and persisted to `localStorage` (`geoporte:performance-tier:v2` — versioned
-as of ADR-0086, a one-time invalidation of every value written before that
-fix existed; see its own entry for why bumping the key is not a reversal
-of "a downgrade should never silently self-heal") so a
+and persisted to `localStorage` (`geoporte:performance-tier:v3` as of
+ADR-0105 — versioned since ADR-0086, each bump a one-time invalidation of
+every value written under an older detection algorithm; see that entry for
+why this is not a reversal of "a downgrade should never silently
+self-heal") so a
 downgrade survives a reload. Also logs the resolved tier, its source
 (stored vs. fresh), and the raw signals behind it to `console.warn` once
 per page load (ADR-0086 — `warn`, not the plain method, since
@@ -699,6 +708,28 @@ these are actually wired (merged into `getTierBudget`'s return value, so
 every existing consumer gets them for free) into the point/bloom code of 14
 scene builders; see ADR-0080 for the per-file list and the two it was
 deliberately left out of.
+
+**As of ADR-0105**, a GPU-string (`WEBGL_debug_renderer_info`) + 60-frame
+FPS-benchmark layer runs *ahead* of all of the above, not instead of it:
+`classifyByGpuTierRules()` tries a per-tier GPU-name regex list + FPS band +
+cores/width combination first, and only the existing heuristic below runs
+when that returns nothing — which in practice is every visit on Safari
+(desktop or iOS), since Safari has never implemented
+`WEBGL_debug_renderer_info`. Detection is sync (GPU string + cores + width,
+drives the tier this page's own WebGL mount decision uses) then async (adds
+the FPS benchmark a frame later, in the background, refining only what's
+*persisted* for next time plus the new `PerformanceTierBadge`'s display —
+never tearing down anything already mounted this session).
+`PERFORMANCE_TIER_BUDGETS` gained `frameIntervalMs` per capability tier
+(30fps medium, 60fps high, uncapped ultra), merged into `getTierBudget`'s
+`heroFrameIntervalMs` by taking the larger (slower) of the width-tier and
+capability-tier values, and `particleScale` was retuned again to
+`0.2`/`0.6` for medium/high (−80%/−40%, this spec's exact numbers).
+`setTierOverride()`/`isOverrideActive()` let a visitor manually pin a tier
+via the badge, persisting through `localStorage` and immune to the
+background benchmark silently overwriting it (the runtime low-FPS
+auto-downgrade still applies regardless — a safety net, not a re-detection).
+Storage key bumped to `:v3`.
 
 As of ADR-0080, the mobile LOW/MEDIUM/HIGH cutoffs read `screen.width`
 directly (not just `hardwareConcurrency`/`deviceMemory`) on top of the

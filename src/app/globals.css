@@ -238,6 +238,34 @@
   --raw-color-stat-amber: #f59e0b;
 }
 
+/* "Maximum baqala mode" (ADR-0103) — every `--raw-gradient-fallback-*`
+   token flattened to a single flat colour on Tier 1 (each scene's own
+   dominant/centre stop, so the per-page identity these fall back to is
+   kept, just without the gradient itself) for the "solid colours only"
+   requirement. A Tier 1 override belongs physically in the Tier 1 section
+   (this one was briefly placed down by the Tier 2 block instead, which
+   `verify.sh` correctly flags — a `--raw-*` name doesn't exempt a literal
+   from the position check). Deliberately unlayered, same reasoning as the
+   `--background` override below: every consumer (`SceneFallbackGradient.tsx`)
+   reads these as a live `var()` in an inline style, not through the frozen
+   Tailwind `@theme` alias path (see the THEME BINDINGS section further down),
+   so a plain unlayered override here is both correct AND sufficient — no
+   attribute-selector catch-all needed. */
+:root[data-perf-tier="low"] {
+  --raw-gradient-fallback-solaris: #ff4500;
+  --raw-gradient-fallback-aether-flux: #c0c0c0;
+  --raw-gradient-fallback-wormhole: #ffffff;
+  --raw-gradient-fallback-golden-parthenon: #ff8c00;
+  --raw-gradient-fallback-negentropy: #0aff7f;
+  --raw-gradient-fallback-aureole: #ff8c00;
+  --raw-gradient-fallback-spiral-galaxy: #6b2bff;
+  --raw-gradient-fallback-pinwheel-galaxy: #1f6ae0;
+  --raw-gradient-fallback-aurum-peak: #c8862f;
+  --raw-gradient-fallback-team-starfield: #0a1830;
+  --raw-gradient-fallback-planet: #0a1830;
+  --raw-gradient-fallback-ambient: #0a1830;
+}
+
 /* ---------------------------------------------------------------------------
    TIER 2 — SEMANTIC  (role names, no namespace prefix)
    Purpose, not appearance. Always `var(--raw-*)` — never a literal.
@@ -484,6 +512,30 @@ body {
   [data-perf-tier="low"] * {
     transition: none !important;
     animation: none !important;
+  }
+
+  /* "Maximum baqala mode" (ADR-0103) — a real Redmi 10A still lagged after
+     the backdrop-blur/transition/animation flattening above, so this goes
+     further: zero box-shadow and system fonts everywhere (both via the
+     same universal `*` + `!important` shape as the transition kill above —
+     `font-family` has to beat both Tailwind's build-time-frozen preflight
+     default AND any element's own `.font-heading`/`.font-sans` utility
+     class, neither of which a plain `--raw-font-*` token override would
+     reach; see the `@theme inline` freeze warning earlier in this file).
+     Border-radius is deliberately NOT a blanket `*` rule — only the
+     large-surface radii (`rounded-lg`/`-xl`/`-2xl`/`-3xl`: cards, panels,
+     modals) are squared off; `rounded-full` is left alone so avatars,
+     pills and icon buttons don't turn into visibly broken squares. */
+  [data-perf-tier="low"] * {
+    box-shadow: none !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+
+  [data-perf-tier="low"] [class*="rounded-lg"],
+  [data-perf-tier="low"] [class*="rounded-xl"],
+  [data-perf-tier="low"] [class*="rounded-2xl"],
+  [data-perf-tier="low"] [class*="rounded-3xl"] {
+    border-radius: 0 !important;
   }
 }
 
