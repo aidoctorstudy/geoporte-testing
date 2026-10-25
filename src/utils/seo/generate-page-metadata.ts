@@ -65,8 +65,10 @@ export function generateMetadata({
       images: [ogImage],
     },
     icons: {
+      // .ico itself is handled by the app/favicon.ico file convention,
+      // which auto-injects its own <link rel="icon" sizes="any"> — listing
+      // it here too would just duplicate that tag. See ADR-0108.
       icon: [
-        { url: "/favicon.ico" },
         { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
         { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       ],

@@ -17,6 +17,74 @@ Template: [[templates/adr-note]].
 
 ---
 
+## ADR-0108 — Favicon still showed the default after ADR-0107: `app/favicon.ico` shadows `public/favicon.ico`, and a hand-rolled ICO encoder had a header-size bug
+
+**Status:** Accepted · 2026-10-25
+
+**Context.** After ADR-0107 shipped — regenerating `public/favicon.ico` and
+the PNG icon set from the real logo — the browser tab still showed the
+Next.js default (a triangle, not Geoporte's logo). The request's proposed
+fix: redo the same asset regeneration, add an `icons` block to
+`layout.tsx`, and add manual `<link rel="icon">` tags to `<head>`.
+
+**Investigated rather than repeating the previous fix.** `git status` was
+clean — ADR-0107's changes were genuinely live on `master`/Vercel, so this
+wasn't a deploy or cache problem. The actual cause was a file Next.js's
+App Router treats specially: **`src/app/favicon.ico` exists**, and the
+`favicon` file convention (`app/favicon.ico` → auto-injected
+`<link rel="icon" href="/favicon.ico" sizes="any">`) is a root-segment
+route that Next.js serves in preference to a same-path file under
+`public/`. `git log --follow` on that file showed only the initial
+`next16-claude-starter` scaffold commit had ever touched it — it was still
+the starter's stock icon the whole time. ADR-0107 correctly fixed
+`generate-page-metadata.ts` and `public/favicon.ico`, but the browser was
+never actually being served either of those for the literal
+`/favicon.ico` request.
+
+Fixing that exposed a second, independent bug: `scripts/generate-favicons.mjs`'s
+hand-rolled ICO encoder allocated its `header` buffer as `6 + 16 * count`
+bytes (54) but only ever wrote the 6-byte `ICONDIR` into it, leaving 48
+bytes of unintended zero padding before the real `ICONDIRENTRY` records —
+corrupting every width/size/offset field. `next build` caught this
+immediately (Turbopack decodes `app/favicon.ico` at build time to compute
+the `<link>` attributes, unlike a `public/` asset, which is never
+introspected) with `unable to decode image data`. Confirmed the fix by
+reading the entries back (`sizes`, byte offsets, and the PNG magic number
+at each recorded offset) and by extracting and viewing the embedded 32×32
+frame.
+
+**Decision.**
+- `scripts/generate-favicons.mjs` now writes the `.ico` to
+  **`src/app/favicon.ico`**, not `public/favicon.ico` — that's the file
+  Next.js actually serves at `/favicon.ico`. `public/favicon.ico` was
+  deleted; keeping a second, unreachable copy around is exactly the kind
+  of duplicate-source-of-truth setup that caused this bug in the first
+  place.
+- `generate-page-metadata.ts`'s `icons.icon` list no longer includes
+  `{ url: "/favicon.ico" }` — the `app/favicon.ico` file convention already
+  injects that `<link>` tag itself; keeping both just produces a duplicate.
+  The config now only lists the two PNG sizes plus the Apple touch icon,
+  which aren't shadowed by anything in `app/`.
+- Did **not** add an `icons` block or manual `<link>` tags to
+  `layout.tsx`, for the same reason as ADR-0107: `layout.tsx` has no
+  inline metadata, and Next.js already auto-generates the correct
+  `<link>` tags from the `app/favicon.ico` file convention and the
+  `generate-page-metadata.ts` config — adding either would duplicate,
+  not fix.
+- Verified end-to-end, not just at build time: ran `next build` then
+  `next start` and checked the live response — `GET /favicon.ico` → `200
+  image/x-icon`, `<head>` carries exactly one `<link rel="icon">` per
+  size with no duplicates, and the extracted 32×32 frame is visibly the
+  Geoporte mark.
+
+**Consequence.** One favicon source per format going forward:
+`src/app/favicon.ico` for the `.ico`, `public/` for the PNG sizes the
+`app/` convention doesn't cover. Re-run
+`node scripts/generate-favicons.mjs` after the logo changes — same as
+ADR-0107, just the corrected destination. Any future favicon report should
+check for an `app/favicon.ico`/`app/icon.*`/`app/apple-icon.*` shadow file
+*before* touching `public/` or the metadata config.
+
 ## ADR-0107 — Favicon fix targeted the stale placeholder image files, not `layout.tsx` metadata
 
 **Status:** Accepted · 2026-10-25

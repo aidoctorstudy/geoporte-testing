@@ -71,10 +71,14 @@ PageSpeed, HeadlessChrome, GTmetrix, Pingdom, Bingbot, Yandexbot.
 
 ## Static assets
 
-The `public/` **root** holds meta/PWA/SEO assets — favicons (multiple sizes),
+The `public/` **root** holds meta/PWA/SEO assets — favicon PNG sizes,
 Android/Apple icons, `manifest.json`, `browserconfig.xml`, `open-graph.png`.
-Site **content** assets (images, videos) go under `public/assets/<section>/` —
-see [[folder-structure]].
+The one exception is `favicon.ico` itself: it lives at **`src/app/favicon.ico`**,
+Next's App Router file convention for the root favicon — that file is served
+at `/favicon.ico` in preference to anything under `public/` at the same
+path, so a same-named `public/favicon.ico` would be silent dead weight (see
+ADR-0108 in [[decisions-log]]). Site **content** assets (images, videos) go
+under `public/assets/<section>/` — see [[folder-structure]].
 
 `open-graph.png` is **1200×630** (the metadata declares the same, via
 `generate-page-metadata.ts`'s `images: [{ url: ogImage, width: 1200,
@@ -87,11 +91,13 @@ after changing the logo asset or `brand.wordmark`/`brand.tagline`
 statue, 900×600) — a leftover GetLayers template asset never swapped for
 real branding; see [[decisions-log]].
 
-`favicon.ico`/`favicon-*.png`/`apple-icon-*.png`/`android-icon-*.png` and
-`manifest.json`'s `name`/`short_name` are generated the same way, by
-`scripts/generate-favicons.mjs`, from the same `geoporte-logo.png` source
-— re-run it after the logo changes. The `icons` paths themselves are
-declared once, in `generate-page-metadata.ts`; don't add a competing
+`src/app/favicon.ico`, `public/favicon-*.png`/`apple-icon-*.png`/
+`android-icon-*.png`, and `manifest.json`'s `name`/`short_name` are
+generated the same way, by `scripts/generate-favicons.mjs`, from the same
+`geoporte-logo.png` source — re-run it after the logo changes. The `icons`
+paths themselves are declared once, in `generate-page-metadata.ts` (minus
+`.ico`, which the `app/favicon.ico` file convention already injects as its
+own `<link>` tag); don't add a competing
 `icons` block elsewhere (e.g. `layout.tsx`) — see ADR-0107 in
 [[decisions-log]].
 

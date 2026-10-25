@@ -27,13 +27,12 @@ async function renderPng(size) {
 // (ICO "format 2" — supported by every modern browser/OS, no BMP encoding needed).
 function buildIco(pngBuffers) {
   const count = pngBuffers.length;
-  const headerSize = 6 + 16 * count;
-  const header = Buffer.alloc(headerSize);
+  const header = Buffer.alloc(6); // ICONDIR is exactly 6 bytes
   header.writeUInt16LE(0, 0); // reserved
   header.writeUInt16LE(1, 2); // type: icon
   header.writeUInt16LE(count, 4);
 
-  let offset = headerSize;
+  let offset = 6 + 16 * count; // past ICONDIR + all ICONDIRENTRYs
   const entries = [];
   for (let i = 0; i < count; i++) {
     const { size, buffer } = pngBuffers[i];
@@ -64,5 +63,10 @@ const icoFrames = [];
 for (const size of icoSizes) {
   icoFrames.push({ size, buffer: await renderPng(size) });
 }
-await writeFile("public/favicon.ico", buildIco(icoFrames));
-console.log("wrote public/favicon.ico");
+const ico = buildIco(icoFrames);
+
+// app/favicon.ico is a Next.js file-convention route — it shadows
+// public/favicon.ico at the /favicon.ico URL, so it's the one that must
+// carry the real icon. See ADR-0108.
+await writeFile("src/app/favicon.ico", ico);
+console.log("wrote src/app/favicon.ico");

@@ -37,6 +37,31 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-10-25 (Favicon fix follow-up — the triangle was `app/favicon.ico`, a shadow file ADR-0107 never touched)
+
+Report: after ADR-0107's fix, the browser tab still showed the Next.js
+default triangle, not Geoporte's logo. Full reasoning in
+[[decisions-log]] ADR-0108; short version here.
+
+- Root cause: `src/app/favicon.ico` — a Next.js App Router file
+  convention that auto-generates its own `<link rel="icon">` and is
+  served at `/favicon.ico` in preference to `public/favicon.ico`. It had
+  never been touched since the starter's initial scaffold commit, so it
+  was always serving the stock triangle regardless of what ADR-0107 fixed
+  in `public/`.
+- A second bug surfaced once that file was targeted:
+  `scripts/generate-favicons.mjs`'s hand-rolled ICO encoder mis-sized its
+  header buffer, corrupting the directory entries. `next build` caught it
+  immediately (`app/favicon.ico` is decoded at build time; `public/`
+  assets aren't) — fixed and verified by reading the entries back and
+  extracting/viewing the embedded frame.
+- Fix: the script now writes to `src/app/favicon.ico` (deleted the now-
+  unreachable `public/favicon.ico`); `generate-page-metadata.ts` no longer
+  lists `/favicon.ico` in `icons.icon` (the file convention already emits
+  that `<link>` tag — keeping both duplicated it). Verified via `next
+  build` + `next start`: `GET /favicon.ico` → `200 image/x-icon`, no
+  duplicate `<link>` tags, correct pixels.
+
 ## 2026-10-25 (Browser tab showed a generic default icon instead of the Geoporte logo)
 
 Report: the browser tab icon was a generic placeholder (a stock figure, not
