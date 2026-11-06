@@ -2,7 +2,13 @@
  * Geoporte's eight service lines — real content sourced from geoporte.com.au,
  * expanded for the detail pages. `sceneTheme` names the tailored 3D scene
  * concept each service page's hero should run (see `components/scene/`).
+ *
+ * `services` (the export every consumer uses) is `baseServices` merged with
+ * any `/admin`-edited overrides in `content.json`, keyed by `slug` — see
+ * `content-overrides.ts`. `slug` itself is never overridable, so the key
+ * never drifts.
  */
+import { siteContent } from "@/lib/content-overrides";
 
 export interface ServiceCapabilityGroup {
   heading: string;
@@ -85,18 +91,31 @@ export interface Service {
   subServiceGrid: ServiceSubService[];
 }
 
-export const services: Service[] = [
+const baseServices: Service[] = [
   {
     slug: "civil-engineering",
     title: "Civil Engineering",
     shortDescription:
       "Designs focused on functionality, constructability, safety and economy.",
     overview:
-      "Geoporte's Civil Design team collaborates with clients, architects, contractors and government entities to deliver designs that emphasise functionality, constructability and well-planning — without compromising safety or economic efficiency. The team brings extensive experience across transport, water and building infrastructure projects.",
+      "Geoporte's Civil Engineering team works together with clients, architects, contractors and government entities to deliver designs that focus on functionality, constructability and detailed planning — without compromising safety or sustainability. The team brings vast expertise and a comprehensive range of experience across transport, water, mining and building infrastructure projects, delivering high-quality, cost-effective outputs for projects ranging from straightforward through to complex and challenging.",
     sceneTheme: "golden-parthenon",
     sceneSummary:
       "A classical temple at golden hour — sun-warmed stone colonnade against a dusk sky, drifting dust motes catching the light, the sun itself following the cursor across the horizon as it sweeps.",
     capabilityGroups: [
+      {
+        heading: "Project Capabilities",
+        items: [
+          "Cross drainage culverts and floodways",
+          "Waterway rehabilitation design",
+          "Waterway rehabilitation work",
+          "Dams, levees and retarding basins",
+          "Sediment control",
+          "Waterways erosion control",
+          "Design of trenchless drainage solutions",
+          "Design of stormwater infrastructure",
+        ],
+      },
       {
         heading: "Design & Planning",
         items: [
@@ -270,38 +289,50 @@ export const services: Service[] = [
       "A breathing navy-to-azure particle sun as the page's full-page background, with a bounded finite-element geotechnical model layered on top of it inside the hero: six geological strata cut away around a deep excavation with retaining walls, a piled foundation and a tunnel bore, a graded FE mesh denser around every structural element, toggleable deformation and analysis-result contours, a 6-stage construction sequence, and a clamped orbit camera.",
     capabilityGroups: [
       {
-        heading: "Ground engineering",
+        heading: "Scoping & Feasibility",
         items: [
-          "Slope Stability Assessment & Stabilisation Design",
-          "Retention Systems — sheet piled walls, diaphragm walls, bored pile walls, gravity retaining walls",
-          "Earthworks Design",
-          "Ground Improvement Design — dynamic compaction, vibrocompaction, vibro-replacement, surcharging",
-          "Ground Settlement (Static and Seismic)",
+          "Scoping and execution of geotechnical investigations",
+          "Feasibility and planning studies with concept design trade-offs",
+          "Soil and rock drilling, sampling and testing",
+          "Geotechnical and geological interpretation",
         ],
       },
       {
-        heading: "Investigation & analysis",
+        heading: "Detailed Design",
         items: [
-          "Site Investigation Planning and Reporting — drilling, soil sampling, laboratory testing, test pitting",
-          "Numerical Modelling — state-of-the-art numerical analysis for complex geotechnical problems",
-          "Seismic Hazard Analyses and Earthquake Geotechnical Design",
-          "Desktop Studies and Geohazard Geotechnical Assessment",
-          "Forensic Geotechnical Engineering — investigating settlement, expansive soil and lateral movement failures",
+          "Retaining structures — water, building and transport infrastructure",
+          "Slope stability assessment and remediation",
+          "Landslide identification and mitigation measures",
+          "Earthworks and landfill",
+          "Foundation design — shallow and deep",
+          "Ground improvement",
+          "Seismic hazard assessment and design",
+          "Dams and levees integrity assessment and design",
+          "Waterway bank stability assessments",
+          "Road formation and related earthworks",
+          "Pavement design",
+          "Renewables geotechnics",
+          "Mining geotechnics",
+          "Ports and marine geotechnical engineering",
         ],
       },
       {
-        heading: "Infrastructure-specific design",
+        heading: "Risk, Quality & Forensic Services",
         items: [
-          "Proof Engineering Services of Geotechnical Design",
-          "Reclamation Works Design",
-          "Road Subgrade Assessment and Design",
-          "Temporary Works Design",
-          "Pipelines — impact assessment of loads on existing pipelines",
-          "Pavement Profile Design — Austroads Guide to Pavement Technology, VicRoads compliant",
+          "Construction quality assessments",
+          "Geotechnical risk assessment and management",
+          "Forensic investigation of geotechnical failures",
+          "Impact assessment of new construction on existing infrastructure",
+          "Operational monitoring and management",
         ],
       },
     ],
     subServices: [
+      {
+        title: "Trenchless Methods",
+        description:
+          "Geoporte's specialists are recognised industry leaders with decades of experience in trenchless methods — large-diameter tunnel crossings, microtunnelling (MTBM) and horizontal directional drilling (HDD) — for transportation and water infrastructure. Core competencies span multi-criteria cost-benefit analysis of trenchless vs. open-cut methods, ground movement and structural-integrity impact assessment via high-precision Plaxis 2D/3D modelling, MTBM/HDD reference designs and performance specifications to Australian standards, tender and contractor support, and design office/site presence through construction, delivering safe, reliable and cost-efficient trenchless solutions that minimise risk and disruption.",
+      },
       {
         title: "Proof Engineering Services of Geotechnical Design",
         description:
@@ -806,6 +837,11 @@ export const services: Service[] = [
     ],
   },
 ];
+
+export const services: Service[] = baseServices.map((service) => ({
+  ...service,
+  ...siteContent.services?.[service.slug],
+}));
 
 export const getServiceBySlug = (slug: string): Service | undefined =>
   services.find((service) => service.slug === slug);

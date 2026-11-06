@@ -3,14 +3,30 @@
  * page at geoporte.com.au, grouped into the site's own three categories.
  *
  * `image` — real photos supplied directly (a local `images/` folder, 27
- * files for these 27 projects), copied unchanged into
+ * files for the original 27 projects), copied unchanged into
  * `public/assets/projects/`. The source filenames carry no project-to-photo
  * correspondence of their own (generic site/software-screenshot names, not
  * project-titled) — matches what ADR-0065/ADR-0071 already found scraping
  * the live site: no real per-project photography exists to map by content.
  * Assigned by position instead: the 27 files sorted alphabetically, zipped
  * 1:1 against this array in its existing order. See ADR-0073.
+ *
+ * Four Middle East entries were added later (Saudi Arabia capability
+ * statement, see ADR-0110) with no new photography supplied — each reuses
+ * an existing file from the same 27-photo pool rather than going without an
+ * image (`Project.image` is required, no gradient-fallback path exists in
+ * `ProjectCard.tsx`). Same "no real correspondence" caveat applies, so this
+ * doesn't break the established convention — it does mean 4 of the 27
+ * photos now appear twice across 31 projects. Swap in real photography for
+ * these four when it's available.
+ *
+ * `projects` (the export every consumer uses) is `baseProjects` merged with
+ * any `/admin`-edited overrides in `content.json`, keyed by
+ * `slugify(baseProjects[i].title)` — see `content-overrides.ts`. The key is
+ * always derived from the *original* hardcoded title, so editing a title
+ * through `/admin` can't orphan its own override.
  */
+import { siteContent, slugify } from "@/lib/content-overrides";
 
 export type ProjectCategory =
   | "Transport"
@@ -32,9 +48,13 @@ export interface Project {
   };
 }
 
-export const projects: Project[] = [
+/** Original, never-overridden data — `/admin` reads this (not `projects`
+ * below) to compute each override's stable key and to show the real
+ * baseline value for comparison. */
+export const baseProjects: Project[] = [
   // Transport
   { title: "Healesville–Koo Wee Rup Road Upgrade", location: "Victoria", country: "Australia", category: "Transport", sector: "Civil Engineering", description: "Corridor grading, drainage and pavement design for a rural arterial upgrade, balancing constructability against a constrained floodplain crossing.", image: { src: "/assets/projects/2222.jpeg", alt: "Healesville–Koo Wee Rup Road Upgrade" } },
+  { title: "Live bridge protection during adjacent deep excavation", location: "Riyadh", country: "Saudi Arabia", category: "Transport", sector: "Geotechnical Engineering", description: "Monitoring and protective design safeguarding an operating bridge structure during deep excavation works on an immediately adjacent site.", image: { src: "/assets/projects/Senior-1.jpg", alt: "Live bridge protection during adjacent deep excavation" } },
   { title: "Melbourne Airport", location: "Victoria", country: "Australia", category: "Transport", sector: "Civil Engineering", description: "Civil design support across airside and landside infrastructure works at one of Australia's busiest aviation hubs.", image: { src: "/assets/projects/Advisory-Photo.jpg", alt: "Melbourne Airport" } },
   { title: "Princes Highway East Rail Bridge", location: "Victoria", country: "Australia", category: "Transport", sector: "Civil Engineering", description: "Structural and civil design for a rail bridge replacement, sequenced to keep both road and rail corridors operating through construction.", image: { src: "/assets/projects/Cover-1.jpg", alt: "Princes Highway East Rail Bridge" } },
   { title: "Airport East Precinct", location: "Sydney, NSW", country: "Australia", category: "Transport", sector: "Civil Engineering", description: "Precinct-scale civil engineering for a transport-adjacent development, coordinating earthworks, drainage and utility corridors.", image: { src: "/assets/projects/GI-1.jpg", alt: "Airport East Precinct" } },
@@ -65,7 +85,15 @@ export const projects: Project[] = [
   { title: "Pakistan Gasport Liquefied Natural Gas Berth", location: "Karachi", country: "Pakistan", category: "Energy, Resources & Water", sector: "Energy", description: "Geotechnical and marine civil engineering for an LNG import berth, addressing challenging coastal ground conditions.", image: { src: "/assets/projects/Yarraman-9.jpeg", alt: "Pakistan Gasport Liquefied Natural Gas Berth" } },
   { title: "Das Island Accommodation Project", location: "Das Island, Abu Dhabi", country: "UAE", category: "Energy, Resources & Water", sector: "Infrastructure", description: "Civil and structural design for offshore accommodation infrastructure serving an active oil and gas processing island.", image: { src: "/assets/projects/g21.png", alt: "Das Island Accommodation Project" } },
   { title: "Hamriyah Free Zone Fuel Pipe Protection Works", location: "Sharjah", country: "UAE", category: "Energy, Resources & Water", sector: "Energy / Infrastructure", description: "Protective works design for fuel pipeline infrastructure within an active industrial free zone.", image: { src: "/assets/projects/g22-1.png", alt: "Hamriyah Free Zone Fuel Pipe Protection Works" } },
+  { title: "Urban wadi flood mitigation", location: "Riyadh", country: "Saudi Arabia", category: "Energy, Resources & Water", sector: "Water", description: "Hydraulic and geotechnical assessment for flood mitigation works along an urban wadi corridor, balancing conveyance capacity against dense surrounding development.", image: { src: "/assets/projects/GI-1.jpg", alt: "Urban wadi flood mitigation" } },
+  { title: "Transmission tower foundations in flood-prone ground", location: "Eastern Province", country: "Saudi Arabia", category: "Energy, Resources & Water", sector: "Energy", description: "Foundation design for high-voltage transmission towers across ground subject to periodic flooding, addressing scour and long-term settlement risk.", image: { src: "/assets/projects/Yarraman-4.jpg", alt: "Transmission tower foundations in flood-prone ground" } },
+  { title: "Utility-scale solar PV plant (2 GW) peer review", location: "Nationwide", country: "Saudi Arabia", category: "Energy, Resources & Water", sector: "Energy / Advisory", description: "Independent peer review of geotechnical and civil design for a 2 GW utility-scale solar PV plant.", image: { src: "/assets/projects/g21.png", alt: "Utility-scale solar PV plant (2 GW) peer review" } },
 ];
+
+export const projects: Project[] = baseProjects.map((project) => ({
+  ...project,
+  ...siteContent.projects?.[slugify(project.title)],
+}));
 
 export const projectCategories: ProjectCategory[] = [
   "Transport",

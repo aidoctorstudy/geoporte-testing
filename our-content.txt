@@ -1,0 +1,624 @@
+GEOPORTE — SITE CONTENT EXTRACT
+Generated 2026-10-25 by extracting literal, user-facing text from the live Next.js source
+(src/app/**/page.tsx -> src/views/**, src/data/mocks/*.ts, src/lib/company.ts).
+Excludes: the temporary /maintenance page and the boilerplate /privacy-policy page.
+
+================================================================================
+SHARED / REUSED CONTENT (src/lib/company.ts, src/lib/site.ts, src/data/mocks/experience.ts, src/data/mocks/team.ts)
+Used across multiple pages below rather than page-specific.
+================================================================================
+
+-- Brand (src/lib/company.ts) --
+Wordmark: GEOPORTE
+Tagline: Design Engineering Advisory
+Mission: Risk-based design and management of complex engineering projects, fuelled by vast local and international experience.
+Philosophy: Complex ground. Complex engineering. Clear decisions.
+
+-- Site meta defaults (src/lib/site.ts) --
+Name: Geoporte
+Description: Design Engineering Advisory — risk-based design and management of complex engineering projects across geotechnical, civil, structural and infrastructure disciplines.
+
+-- Offices --
+Melbourne, Australia — Tower 5, Collins Square, 727 Collins Street, VIC 3008
+Sydney, Australia — Three International Towers, 300 Barangaroo Ave, NSW 2000
+Perth, Australia — 108 St Georges Terrace, WA 6000
+Auckland, New Zealand — 110 Carlton Gore Road, New Market, 1023
+
+-- Contact --
+Email: enquiries@geoporte.com.au
+Response time: 24-hour response
+Phone (Australia): +61 (0) 431 55 4626
+Phone (Australia, alt): +61 (0) 388 21 7758
+Phone (New Zealand): +64 (0) 212 87 0714
+
+-- Culture values --
+Teamwork
+Honesty
+Commitment
+Engineering Excellence
+
+-- Team composition (roles) --
+Civil Engineers
+Geotechnical Engineers
+Numerical Analysts
+Engineering Geologists
+Hydrogeologists
+Foundation Design Specialists
+
+-- Experience regions --
+Australia, New Zealand, Europe, Middle East, Asia
+
+-- Project Experience section copy (homepage + reused on /about) --
+Eyebrow: Experience & Technology
+Heading: Project Experience
+Body: GEOPORTE's specialist staff have decades of extensive combined AU/NZ and global experience on major and complex infrastructure projects. Our leaders had worked on various design and construction projects in the building, transport, telecom, energy, water, and ports and marine sectors in Europe, Middle East, Asia, New Zealand, and Australia.
+Stat: 100+ — Projects completed by our staff
+Stat: 20+ — Countries of work experience by our staff
+
+-- Team roster (src/data/mocks/team.ts) — used on homepage (About section panel) and /about/team --
+1. Qaiser Hayat — Director & Principal Geotechnical Engineer
+   Credentials: MSc Soil Mechanics and Engineering Seismology; BSc Civil Engineering (Hons); CPEng; NER; APEC Engineer; IntPE (Australia); CEng MICE (UK)
+   Experience: 25+ years
+   Bio: Chartered geotechnical engineer specialising in the design and management of civil and geotechnical projects across Australia, New Zealand, the UK, the Middle East and Asia — retaining walls, slope stabilisation, foundations and earthquake geotechnical engineering.
+
+2. Dr Mazin Alhamrany — Senior Geotechnical Engineer
+   Credentials: PhD Geotechnical Engineering (UK); MSc Geotechnical Engineering; BSc Civil Engineering; Chartered Civil Engineer; Member CROW (Netherlands)
+   Experience: 30+ years
+   Bio: Led challenging projects across the UK, Europe, the Middle East and Australia, including the Doha Metro, Riyadh Metro and Etihad Rail — expertise in advanced numerical modelling and complex geotechnical problem-solving.
+
+3. Dr Azam Khan — Structural Design Engineer
+   Credentials: PhD Structural Engineering (Imperial College London); MSc Civil Engineering (Imperial College UK); BSc Civil Engineering
+   Experience: 20+ years
+   Bio: Experienced across conceptual design, FEED, detailed design, EPC projects and structural integrity management, proficient in SACS, ETABS, STAAD, SAP2000 and ABAQUS.
+
+4. Dr Salwa Yassin — Senior Geotechnical Engineer
+   Credentials: PhD Geotechnical Engineering; MSc Geotechnical Engineering; BSc Civil Engineering; CEng MICE; CSCS
+   Experience: 30+ years
+   Bio: Led geotechnical specialist teams on mega projects worldwide, spanning buildings, energy, transport, ports and marine infrastructure, with research interests in sustainability and problematic soils.
+
+5. Sirous Amiri Agha — Engineering Geologist
+   Credentials: MSc Geology; BSc Geology; Project Management Diploma; RPGeo (Geotechnical and Engineering, Australia); Fellow GSL
+   Experience: 25+ years
+   Bio: Works across Australia, the Middle East and Southeast Asia, leading engineering geology and geotechnical advisory for dams, tunnels, roads, rail, renewables and mines.
+
+6. Zainab Bhatti — Architect & Project Manager
+   Credentials: Bachelor of Architecture; Diploma in Construction Project Management (New Zealand); Certified Member, NZ Institute of Architects
+   Bio: Blends architectural design expertise with project management capability across large-scale commercial, residential and smart city developments — managing complex stakeholder engagement and integrated design delivery.
+
+7. Dr Syed Ali — Geotechnical Engineer
+   Credentials: PhD Geotechnical Engineering; MSc Geo and Water Engineering; BSc Mining Engineering
+   Experience: 17+ years
+   Bio: Contributed to infrastructure across Australia, New Zealand and beyond through feasibility, detailed design and construction phases, proficient in GeoStudio, Plaxis, Midas GTS NX, FLAC 2D and the Rocscience suite.
+
+8. Sumbul Ahsan Khan — Business Operations Manager
+   Credentials: Bachelor of Commerce; Diploma in Business; CPA Associate
+   Experience: 4+ years
+   Bio: Background in auditing, financial services and business operations, specialising in quality frameworks, compliance and process improvement.
+
+9. Micah Papasin — Civil Engineer
+   Credentials: MSc Civil Engineering (Swinburne University); BSc Civil Engineering
+   Experience: 5+ years
+   Bio: Involved in structural design, geotechnical investigations and project management, including residential building design, site inspections and geotechnical report preparation.
+
+10. Rabbiya Aziz — Project Administration Coordinator
+    Credentials: Bachelor of Arts; Diploma in Business Management; Certificate in Business Administration and Computing
+    Bio: Results-driven professional experienced in corporate services, research management and administration — coordinating complex projects and HR processes.
+
+11. Ammar Alam — Civil Engineer
+    Credentials: MSc Civil Engineering; BSc Civil Engineering
+    Bio: Specialises in structural design of civil and building infrastructure, proficient in ETABS, SAP2000, SAFE, AutoCAD and Autodesk Revit.
+
+================================================================================
+PAGE: HOMEPAGE (/)
+Route: src/app/page.tsx -> src/views/home.tsx (HomeView)
+Meta: title "Geoporte" · description "Design Engineering Advisory — risk-based design and management of complex engineering projects across geotechnical, civil, structural and infrastructure disciplines." (site default, no page-specific override)
+================================================================================
+
+-- Hero section (HeroSection.tsx) — page's <h1> --
+Eyebrow: Civil · Geotechnical · Structural · Telecom
+H1: Design. Engineering. Advisory.
+Subtext: Risk-based design and management of complex engineering projects, fuelled by vast local and international experience. (brand.mission)
+CTA button: See Our Projects
+Scroll cue label: Scroll
+Project ticker (scrolling marquee, decorative): every project title from the Projects list (see PROJECTS section below), looped.
+
+-- About section (AboutSection.tsx / AboutHeading.tsx) --
+Eyebrow: About Geoporte
+Heading (3 lines): Complex ground. / Complex engineering. / Clear decisions.
+Body para 1: Geoporte leads in risk-based design and management of complex engineering projects. Our specialists draw creative, buildable solutions from vast local and international experience — an agile team with decades in the field, gained on projects around the world.
+Body para 2: We work as a One Team with our clients, pairing cutting-edge digital tools and modelling with rigorous senior review — across building, transport, water, ports, marine and energy infrastructure.
+Team/Values panel (TeamPanel.tsx):
+  "Our team" — typed role list: Civil Engineers, Geotechnical Engineers, Numerical Analysts, Engineering Geologists, Hydrogeologists, Foundation Design Specialists
+  "What drives us" — value chips: Teamwork, Honesty, Commitment, Engineering Excellence
+
+-- Geotechnical Plexus ("Digital Twin") section (GeotechnicalPlexusSection.tsx) --
+Eyebrow: Digital Twin · Ground Intelligence
+Heading: See beneath every site before you build on it
+Body: Every stratum, borehole and pile modelled together — the same ground data our engineers use to validate a foundation before the first shovel turns. Scroll to see the strata separate, then reassemble.
+CTA button: Explore Geotechnical Engineering
+
+-- Services section (ServicesSection.tsx) --
+Eyebrow: What we do
+Heading: Our Services
+(Grid of all 8 service cards — title + shortDescription + "Explore" link per card; see SERVICES section below for full per-service copy.)
+
+-- Project Experience section (ProjectExperienceSection.tsx) --
+(Shared copy — see "Project Experience section copy" under SHARED content above.)
+CTA button: Learn more →
+
+-- Stats section (StatsSection.tsx) --
+Stat: 25 — Landmark projects delivered (count of src/data/mocks/projects.ts entries)
+Stat: 7 — Countries of hands-on experience (derived from project list)
+
+-- Projects section (ProjectsSection.tsx) --
+Eyebrow: Selected work
+Heading: Landmark projects, across continents
+(Full categorized project grid — see PROJECTS section below.)
+
+-- Contact section (ContactSection.tsx) --
+Eyebrow: Get in touch
+Heading: Ready to engineer with confidence in complex ground?
+(Email, response time, phones, office list — see SHARED content above.)
+
+================================================================================
+PAGE: ABOUT (/about)
+Route: src/app/about/page.tsx -> src/views/about.tsx (AboutView)
+Meta: title "About Us | Geoporte" · description "Geoporte leads in risk-based design and management of complex engineering projects — an agile team with decades of local and international experience."
+================================================================================
+
+-- Hero / intro section --
+Eyebrow: About Geoporte
+H1 (3 lines, reused AboutHeading): Complex ground. / Complex engineering. / Clear decisions.
+Para 1: Risk-based design and management of complex engineering projects, fuelled by vast local and international experience. (brand.mission)
+Para 2: We work as a One Team with our clients, pairing cutting-edge digital tools and modelling with rigorous senior review — across building, transport, water, ports, marine and energy infrastructure.
+
+-- Team section --
+Eyebrow: Our people
+Heading: One team, decades of experience
+(Embeds the same TeamPanel widget as the homepage — team composition + culture values, see SHARED content.)
+CTA button: Meet Our Team →
+
+-- Offices section --
+Eyebrow: Where we work
+Heading: Offices across Australia and New Zealand
+(Full office list — see SHARED content above.)
+Label: Project experience
+Region chips: Australia, New Zealand, Europe, Middle East, Asia
+
+-- Closing CTA --
+Philosophy line: Complex ground. Complex engineering. Clear decisions.
+Subtext: Talk to us about your next project.
+CTA button: Contact Geoporte
+
+================================================================================
+PAGE: OUR TEAM (/about/team)
+Route: src/app/about/team/page.tsx -> src/views/about-team.tsx (AboutTeamView) -> TeamCascade.tsx
+Meta: title "Our Team | Geoporte" · description "Meet Geoporte's specialist engineers and geologists — decades of combined AU/NZ and global experience across civil, structural, geotechnical and telecom infrastructure."
+================================================================================
+
+Eyebrow: GEOPORTE · Our People
+H1: Our Team
+Subheading: The specialists behind every project
+Button: Meet the team
+(Full team roster with name, title, experience, bio, credentials, photo for each of the 11 members, shown one at a time in a scrolling cascade — see "Team roster" under SHARED content above for the complete bios/credentials.)
+
+================================================================================
+PAGE: SERVICES INDEX (/services)
+Route: src/app/services/page.tsx -> src/views/services.tsx (ServicesView)
+Meta: title "Our Services | Geoporte" · description "Eight engineering disciplines, one team — civil, geotechnical, structural, stormwater, project controls, advisory and telecom services."
+================================================================================
+
+Eyebrow: What we do
+H1: Our Services
+(Grid of all 8 service cards — title, shortDescription, "Explore" link. Full copy for each service is under SERVICES below.)
+
+================================================================================
+SERVICES — 8 service detail pages (/services/[slug])
+Route: src/app/services/[slug]/page.tsx -> src/views/services/service-detail.tsx
+Shared section labels on every service page: "Services" (hero eyebrow) · "Overview" / "What we deliver" · "In depth" / "Specialist offerings" · "How we work" / "Our process" · "Track record" / "Related projects" · "Get in touch" / "Ready to start your {Service} project?" (CTA heading, button: "Contact Us")
+Meta per page: title "{Service title} | Geoporte" · description = shortDescription
+================================================================================
+
+--------------------------------------------------------------------------------
+SERVICE 1/8 — slug: civil-engineering — "Civil Engineering"
+--------------------------------------------------------------------------------
+Short description: Designs focused on functionality, constructability, safety and economy.
+Overview: Geoporte's Civil Design team collaborates with clients, architects, contractors and government entities to deliver designs that emphasise functionality, constructability and well-planning — without compromising safety or economic efficiency. The team brings extensive experience across transport, water and building infrastructure projects.
+
+Capability group — Design & Planning:
+  Conceptual design — preliminary layouts and renderings
+  Detailed design — comprehensive drawings and specifications
+  3D modelling of structures and systems
+  Site planning and grading optimisation
+  Construction documentation packages
+
+Capability group — Civil Infrastructure:
+  Temporary works design
+  Earthworks and road formations
+  Roadworks and pavement design
+  Footpath and cycleway design
+  Underground stormwater systems
+  Cross drainage culverts and floodways
+  Waterway rehabilitation design
+  Dams, levees and retaining structures
+  Stormwater drainage and detention basins
+  Water and sewer reticulation
+  Utilities and wastewater design
+
+Capability group — Specialised Work:
+  Signage and line markings
+  Creek diversion design
+  Hardstand infrastructure pads
+  Sediment and erosion control
+  Hydraulic network modelling
+  Rail infrastructure design
+
+Stats: 15 Road projects · 8 Bridges · 3 Countries
+Process: Brief -> Site Investigation -> Concept Design -> Detailed Design -> Construction Support -> As-Built
+
+Sub-services (specialist offerings grid):
+  Road & Highway Design — Geometric design, pavement structure and intersection layouts for new and upgraded road corridors.
+  Bridge Engineering — Concept through detailed design of bridge structures, from simple culverts to multi-span crossings.
+  Pavement Design — Flexible and rigid pavement design compliant with Austroads and local road authority standards.
+  Traffic & Transport Planning — Traffic modelling, intersection analysis and transport network planning to support development approvals.
+  Civil Infrastructure — Water, sewer and utility reticulation design integrated with the broader civil works package.
+  Drainage Design — Stormwater drainage networks and detention systems sized to manage runoff at the source.
+
+--------------------------------------------------------------------------------
+SERVICE 2/8 — slug: design-and-drafting — "Design & Drafting"
+--------------------------------------------------------------------------------
+Short description: Comprehensive civil engineering design solutions using cutting-edge technology.
+Overview: High-quality design and drafting services that adhere to industry standards and best practice. The team pairs experienced civil engineers with CAD specialists, working in industry-leading software — AutoCAD, Civil 3D and Revit — to deliver precise, coordinated documentation as an extension of the client's own project team.
+
+Capability group — Services Offered:
+  Conceptual design — preliminary layouts, sketches and renderings
+  Detailed design — comprehensive drawings for site development, transportation, utilities and infrastructure
+  3D modelling — three-dimensional visualisations identifying potential design conflicts
+  Site planning and grading — layout optimisation and earthwork calculations
+  Construction documentation — construction drawings, quantity takeoffs and material specifications
+
+Capability group — How we work:
+  Industry-leading CAD software — AutoCAD, Civil 3D & Revit
+  Rigorous review processes for accuracy and compliance
+  Collaborative method — direct alignment with clients and stakeholders
+  A One Team approach — Geoporte as an extension of your project team
+
+Stats: 500 Drawings delivered · 8 Disciplines covered · 100% Digital workflow
+Process: Design Brief -> Concept Sketches -> CAD Development -> Review -> Final Drawings -> Revisions
+
+Sub-services:
+  2D CAD Drafting — Precise, coordinated 2D drawings produced in AutoCAD and Civil 3D to construction-ready standard.
+  3D BIM Modelling — Federated 3D models in Revit that catch clashes and coordination issues before they reach site.
+  As-Built Documentation — Accurate as-constructed drawings capturing what was actually built against the design intent.
+  Shop Drawings — Fabrication-level detail drawings for contractors and manufacturers to build directly from.
+  Coordination Drawings — Multi-discipline overlay drawings resolving clashes between structural, civil and services.
+  Specification Writing — Technical specifications that translate design intent into enforceable contract documentation.
+
+--------------------------------------------------------------------------------
+SERVICE 3/8 — slug: geotechnical-engineering — "Geotechnical Engineering"
+--------------------------------------------------------------------------------
+NOTE: This page's hero is a bespoke override, NOT the shared ServiceHero pattern (GeotechnicalAnalysisHero.tsx):
+  Eyebrow: Services
+  H1: Advanced 3D Geotechnical Analysis
+  Subtext: Model complex soil–structure interaction, excavation behaviour, foundations, tunnels and ground deformation using advanced three-dimensional finite element analysis.
+  CTA button: Explore Our Capabilities
+
+Short description: Full-service solutions for planning and design challenges beneath the ground.
+Overview: Geoporte's geotechnical practice is the deepest bench in the firm — full-service solutions across site investigation, ground behaviour, foundation design and slope stabilisation, applied to some of the region's most technically demanding infrastructure. This is the discipline the Geoporte digital twin was built to show: what lies beneath the project.
+
+Capability group — Ground engineering:
+  Slope Stability Assessment & Stabilisation Design
+  Retention Systems — sheet piled walls, diaphragm walls, bored pile walls, gravity retaining walls
+  Earthworks Design
+  Ground Improvement Design — dynamic compaction, vibrocompaction, vibro-replacement, surcharging
+  Ground Settlement (Static and Seismic)
+
+Capability group — Investigation & analysis:
+  Site Investigation Planning and Reporting — drilling, soil sampling, laboratory testing, test pitting
+  Numerical Modelling — state-of-the-art numerical analysis for complex geotechnical problems
+  Seismic Hazard Analyses and Earthquake Geotechnical Design
+  Desktop Studies and Geohazard Geotechnical Assessment
+  Forensic Geotechnical Engineering — investigating settlement, expansive soil and lateral movement failures
+
+Capability group — Infrastructure-specific design:
+  Proof Engineering Services of Geotechnical Design
+  Reclamation Works Design
+  Road Subgrade Assessment and Design
+  Temporary Works Design
+  Pipelines — impact assessment of loads on existing pipelines
+  Pavement Profile Design — Austroads Guide to Pavement Technology, VicRoads compliant
+
+"In more detail" — deeper 16-entry breakdown (only service with this section):
+  Proof Engineering Services of Geotechnical Design — Independent verification of geotechnical design against the governing standards before construction proceeds.
+  Slope Stability Assessment & Stabilization Design — Assessing natural and engineered slopes and designing stabilisation works where the factor of safety falls short.
+  Reclamation Works Design — Engineering design for land reclamation projects.
+  Road Subgrade Assessment and Design — Characterising subgrade conditions to inform pavement and formation design.
+  Temporary Works Design — Many construction sites need temporary works in order to facilitate permanent works.
+  Retention Systems — Design of sheet piled walls, diaphragm walls, bored pile walls and gravity retaining walls.
+  Earthworks Design — Sites may contain natural or man-made constraints to development — earthworks design resolves them.
+  Pipelines — Impact assessment of loads on existing pipelines from nearby works.
+  Ground Settlement (Static and Seismic) — Settlement is the vertical movement of the ground — assessed under both static and seismic loading.
+  Ground Improvement Design — Dynamic compaction, vibrocompaction, vibro-replacement and surcharging.
+  Seismic Hazard Analyses and Earthquake Geotechnical Design — Site-specific seismic hazard characterisation and earthquake-resistant geotechnical design.
+  Site Investigation Planning and Reporting — Drilling, soil sampling, laboratory testing and test pitting, planned and reported to support design.
+  Forensic Geotechnical Engineering — Investigating settlement of structures, expansive soil and lateral movement failures.
+  Numerical Modelling — State-of-the-art numerical analysis for complex geotechnical problems.
+  Pavement Profile Design — Compliant with the Austroads Guide to Pavement Technology and VicRoads standards.
+  Desktop Studies and Geohazard Geotechnical Assessment — Feasibility studies, site reconnaissance and geohazard evaluation ahead of investment.
+
+Stats: 200 Boreholes supervised · 50 Site investigations · 7 Countries
+Process: Desk Study -> Field Investigation -> Lab Testing -> Analysis -> Report -> Design Recommendations
+
+Sub-services (specialist offerings grid):
+  Site Investigations — Drilling, sampling and in-situ testing programs planned and supervised to characterise ground conditions.
+  Laboratory Testing — Soil and rock testing to determine the engineering properties driving foundation and earthworks design.
+  Foundation Design — Shallow and deep foundation design matched to the ground conditions and structural loads.
+  Slope Stability Analysis — Assessing natural and engineered slopes and designing stabilisation where the factor of safety falls short.
+  Ground Improvement — Dynamic compaction, vibro-replacement and surcharging design to strengthen weak or variable ground.
+  Retaining Wall Design — Sheet piled, diaphragm, bored pile and gravity retaining wall design for permanent and temporary works.
+
+--------------------------------------------------------------------------------
+SERVICE 4/8 — slug: structural-engineering — "Structural Engineering"
+--------------------------------------------------------------------------------
+Short description: Cost-effective solutions to the latest standards and codes.
+Overview: Customised, cost-effective structural engineering solutions for the civil infrastructure sector, combining local and international expertise to meet current standards without compromising delivery efficiency. Geoporte works a One Team approach — collaborating directly with clients to develop tailored structural solutions across site development, transportation, utilities and infrastructure.
+
+Capability group — Core capabilities:
+  Conceptual Design — preliminary layouts, sketches and renderings
+  Detailed Design — comprehensive drawings, plans and specifications
+  3D Modelling — detailed models enabling visualisation and clash detection
+  Site Planning and Grading — layout optimisation, earthwork calculations and drainage design
+  Construction Documentation — construction drawings, quantity takeoffs and material specifications
+
+Stats: 100 Structures designed · 30 Years combined experience · 0 Structural failures
+Process: Architectural Brief -> Structural Concept -> Analysis & Design -> Documentation -> Construction Support
+
+Sub-services:
+  Building Structural Design — Structural systems for new buildings, from concept framing through detailed documentation.
+  Industrial Structures — Structural design for industrial facilities, plant support structures and heavy equipment foundations.
+  Retaining Structures — Structural design of retaining walls and earth-retention systems coordinated with the geotechnical model.
+  Facade Engineering — Structural support systems for building facades, glazing and cladding.
+  Structural Assessments — Condition assessments and capacity checks of existing structures against current loading codes.
+  Peer Review — Independent structural design review providing assurance before construction proceeds.
+
+--------------------------------------------------------------------------------
+SERVICE 5/8 — slug: stormwater-and-flood-modelling — "Stormwater & Flood Modelling"
+--------------------------------------------------------------------------------
+Short description: Innovative risk management through technical expertise.
+Overview: Helping clients effectively manage stormwater and flood risk through innovative solutions, technical expertise and current modelling technology — hydrological, hydraulic and GIS-based approaches, backed by clear regulatory navigation and sophisticated data visualisation.
+
+Capability group — Core competencies:
+  Advanced modelling techniques — hydrological, hydraulic and GIS-based simulation of runoff, inundation and drainage
+  Risk assessment and mitigation — evaluating flooding impacts and resilience strategies
+  Customised solutions aligned to project goals, regulatory demands and budget
+  Regulatory compliance across multiple jurisdictions
+  Data analysis and visualisation of complex hydraulic datasets
+
+Capability group — Specific services:
+  Flood Hazard Mapping
+  Stormwater Management Plans
+  Hydraulic Modelling
+  Climate Change Adaptation
+  Emergency Response Planning
+
+Stats: 80 Flood studies · 5 Software platforms · 3 Countries
+Process: Catchment Analysis -> Hydrological Modelling -> Hydraulic Modelling -> Risk Assessment -> Design -> Reporting
+
+Sub-services:
+  Stormwater Management Plans — Catchment-wide stormwater strategies balancing flood risk, water quality and development yield.
+  Flood Risk Assessment — Flood extent, depth and hazard mapping to inform planning, design and emergency response.
+  Drainage Network Design — Underground stormwater network design sized against current design storm standards.
+  MUSIC Modelling — Water quality treatment train modelling using the MUSIC platform to meet stormwater quality targets.
+  TUFLOW/HEC-RAS Modelling — 2D/1D hydraulic modelling of catchments and waterways using industry-standard TUFLOW and HEC-RAS platforms.
+  Water Sensitive Urban Design — Integrated stormwater treatment and reuse design embedded into the urban landscape.
+
+--------------------------------------------------------------------------------
+SERVICE 6/8 — slug: project-control-services — "Project Control Services"
+--------------------------------------------------------------------------------
+Short description: Performance optimisation, risk mitigation, timely delivery.
+Overview: Integrated project controls across scheduling, cost management, risk assessment and quality control — optimising project performance, mitigating risk, and ensuring timely, cost-effective delivery through accurate forecasting and transparent stakeholder reporting.
+
+Capability group — Planning & scheduling:
+  Baseline schedule preparation (Primavera P6)
+  Regular schedule updates and dashboard/monthly reporting
+  Cost and resource loading
+  Extension of Time claims assessment
+
+Capability group — Cost management:
+  Cost Breakdown Structure development
+  Baseline cost preparation
+  Cashflow generation
+  Cost tracking at agreed intervals
+
+Capability group — Earned value management:
+  S-Curve generation
+  Schedule and Cost Performance Indices (SPI/CPI)
+
+Capability group — Additional offerings:
+  Risk identification and mitigation strategy development
+  Change control process implementation
+  Quality assurance and compliance oversight
+
+Stats: 50 Projects controlled · $2B+ Project value managed · 99% On-time delivery
+Process: Project Setup -> Baseline Schedule -> Monitoring -> Reporting -> Change Control -> Closeout
+
+Sub-services:
+  Project Scheduling — Baseline and progressively updated project schedules built in Primavera P6.
+  Cost Management — Cost breakdown structures, baseline budgets and ongoing cost tracking against approved scope.
+  Risk Management — Structured risk identification, assessment and mitigation planning across the project lifecycle.
+  Change Management — Formal change control processes keeping scope, cost and schedule impacts visible and approved.
+  Progress Reporting — Regular dashboard and narrative reporting keeping stakeholders aligned on project status.
+  Earned Value Analysis — S-curve generation and schedule/cost performance indices tracking delivery against baseline.
+
+--------------------------------------------------------------------------------
+SERVICE 7/8 — slug: advisory-services — "Advisory Services"
+--------------------------------------------------------------------------------
+Short description: A collaborative partnership approach to geotechnical challenges.
+Overview: Geoporte's value lies in highly experienced staff who understand geotechnical challenges, operating through an open, collaborative partnership approach — creating innovative, practical solutions that save clients time and money across every project phase.
+
+Capability group — Core advisory capabilities:
+  Project Planning & Feasibility — thorough viability assessments
+  Design & Engineering — roads, bridges, buildings, water systems and treatment facilities
+  Risk Management — identifying challenges and mitigation strategies
+  Transportation Planning — road, rail and transit connectivity
+  Regulatory Compliance — permitting requirements and standards
+  Construction Management — scheduling, budgeting, quality and safety oversight
+  Geotechnical & Foundation Engineering — soil mechanics and subsurface investigation
+  Asset Management — optimising infrastructure performance through maintenance strategy
+
+Stats: 7 Countries · 27 Landmark projects · 15 Years experience
+Process: Scope Definition -> Data Gathering -> Analysis -> Expert Review -> Report -> Presentation
+
+Sub-services:
+  Technical Due Diligence — Independent technical assessment of engineering risk ahead of acquisition or investment decisions.
+  Expert Witness — Independent expert opinion and reporting to support dispute resolution and litigation.
+  Peer Review — Independent review of design and analysis, providing assurance before construction proceeds.
+  Feasibility Studies — Early-stage viability assessment weighing technical, cost and programme considerations.
+  Risk Advisory — Identifying and advising on engineering and delivery risk across the project lifecycle.
+  Procurement Advisory — Guidance on procurement strategy and contractor selection for complex infrastructure delivery.
+
+--------------------------------------------------------------------------------
+SERVICE 8/8 — slug: telecom-services — "Telecom Services"
+--------------------------------------------------------------------------------
+Short description: Surveys, design, build and testing for mobile communications systems.
+Overview: Surveys, design, build and testing of mobile communications systems across in-building (DAS / Small Cells / Repeaters / Nextivity) and outdoor (Macro / PSN / Small Cells) networks — RF engineering delivered by certified professionals from site survey through commissioning.
+
+Capability group — Core competencies:
+  In-Building Solutions — RF engineering and DAS design, network surveys and installation
+  Network Optimisation — performance modifications based on throughput, call quality and failure diagnostics
+  RF Design Services — cellular, public safety and broadband wireless site analysis and design
+  Telecom Installation & Commissioning — cellular, microwave, fibre optic and satellite deployment
+
+Capability group — Services offered:
+  Conceptual Design
+  Detailed Design
+  3D Modelling
+  Site Planning and Grading
+  Construction Documentation
+
+Stats: 200 Sites surveyed · 5 Telecom providers · 3 Countries
+Process: Site Survey -> Structural Assessment -> Design -> Authority Approval -> Construction -> Testing & Commissioning
+
+Sub-services:
+  Tower Structural Assessment — Structural capacity assessment of existing towers ahead of new equipment loading.
+  Site Surveys — Detailed site and structural surveys supporting telecom design and approvals.
+  RF Planning Support — Engineering support for RF coverage planning across macro, small cell and in-building networks.
+  Construction Management — On-site construction oversight through installation, testing and commissioning.
+  As-Built Documentation — Accurate as-constructed records of installed telecom infrastructure.
+  Compliance Reporting — Documentation and reporting to meet carrier and regulatory compliance requirements.
+
+================================================================================
+PAGE: PROJECTS (/projects)
+Route: src/app/projects/page.tsx -> src/views/projects.tsx (ProjectsView) -> ProjectsShowreel + ProjectsCascade
+Meta: title "Projects | Geoporte" · description "Landmark projects across transport, built environment, and energy, resources & water infrastructure — spanning Australia, New Zealand, the UK and the Middle East."
+================================================================================
+
+-- Showreel (cinematic scroll lead-in) --
+Eyebrow: 27 projects · 7 countries
+Heading: Every landmark, in one field
+CTA link: Explore All Projects
+
+-- Cards Cascade (main deck) --
+Eyebrow: GEOPORTE · Selected Work
+H1: Our Projects
+Button: Explore projects
+
+-- Full project list (src/data/mocks/projects.ts), by category --
+
+TRANSPORT:
+  Healesville–Koo Wee Rup Road Upgrade — Victoria, Australia — Corridor grading, drainage and pavement design for a rural arterial upgrade, balancing constructability against a constrained floodplain crossing.
+  Melbourne Airport — Victoria, Australia — Civil design support across airside and landside infrastructure works at one of Australia's busiest aviation hubs.
+  Princes Highway East Rail Bridge — Victoria, Australia — Structural and civil design for a rail bridge replacement, sequenced to keep both road and rail corridors operating through construction.
+  Airport East Precinct — Sydney, NSW, Australia — Precinct-scale civil engineering for a transport-adjacent development, coordinating earthworks, drainage and utility corridors.
+  Te Ahu a Turanga Manawatū Highway — North Island, New Zealand — Geotechnical and civil input to a major new highway alignment through steep, slip-prone terrain in the Manawatū Gorge replacement route.
+  City Rail Link (CRL) — Auckland, New Zealand — Support on Auckland's largest transport infrastructure project — underground rail tunnels and stations through the CBD.
+  Etihad Rail — Abu Dhabi, UAE — Geotechnical and earthworks design along the UAE's national freight and passenger rail network.
+  Dubai Metro Extension — Dubai, UAE — Civil and geotechnical design supporting an extension of the Dubai Metro network into newly developed districts.
+  Dubai Water Canal — Dubai, UAE — Geotechnical assessment and marine-adjacent civil design along the Dubai Water Canal waterway corridor.
+  Hyderabad Metro Project — Hyderabad, India — Geotechnical investigation and design input for elevated and at-grade metro rail sections across the city.
+  Blackfriars Railway Bridge — London, United Kingdom — Structural assessment and design support for a heritage rail bridge crossing the Thames, balancing conservation with modern loading.
+  Network Rail Osborne Station — Kent, United Kingdom — Civil and structural design for station infrastructure upgrades within the Network Rail estate.
+  London Underground Maintenance Works — London, United Kingdom — Ongoing structural and geotechnical support for maintenance and renewal works across the Underground network.
+  Network Rail Silkstream Junction — England, United Kingdom — Track and earthworks design at a key rail junction, sequenced around live operational possessions.
+
+BUILT ENVIRONMENT:
+  Greensborough and Frankston Car Parks — Melbourne, Victoria, Australia — Structural design for multi-storey commuter car parks, optimised for cost-effective precast construction at two Melbourne rail stations.
+  Osborne Naval Shipbuilding Precinct — Adelaide, South Australia, Australia — Geotechnical and civil engineering for heavy-industrial shipbuilding infrastructure, including high-capacity hardstand and load-out facilities.
+  Etihad Museum — Dubai, UAE — Geotechnical input for a landmark cultural building, coordinating foundation design with an architecturally ambitious form.
+  Marsa Al Seef Khor — Dubai, UAE — Waterfront redevelopment engineering along Dubai Creek, addressing marine geotechnical conditions and heritage-district constraints.
+  Sohar Industrial Port Company (SIPC) — Sohar, UAE — Geotechnical and civil design for industrial port facilities, including ground improvement for heavy plant foundations.
+  Dammam Industrial City 3 — Dammam, Saudi Arabia — Infrastructure engineering for a large-scale industrial city development, covering earthworks, roads and utility corridors.
+  Sarb Artificial Islands — Abu Dhabi, UAE — Geotechnical assessment of reclaimed land for artificial island development, addressing settlement and ground improvement.
+  Yas Island Development — Abu Dhabi, UAE — Civil and geotechnical design across a mixed-use island development spanning leisure, hospitality and residential precincts.
+
+ENERGY, RESOURCES & WATER:
+  AGL Torrens Island Battery Facility — Adelaide, South Australia, Australia — Civil and structural design for grid-scale battery storage infrastructure, supporting South Australia's renewable energy transition.
+  Strategic Tunnel Enhancement Programme (STEP) — Abu Dhabi, UAE — Geotechnical engineering for a deep tunnel sewerage network upgrade beneath Abu Dhabi's urban core.
+  Pakistan Gasport Liquefied Natural Gas Berth — Karachi, Pakistan — Geotechnical and marine civil engineering for an LNG import berth, addressing challenging coastal ground conditions.
+  Das Island Accommodation Project — Das Island, Abu Dhabi, UAE — Civil and structural design for offshore accommodation infrastructure serving an active oil and gas processing island.
+  Hamriyah Free Zone Fuel Pipe Protection Works — Sharjah, UAE — Protective works design for fuel pipeline infrastructure within an active industrial free zone.
+
+(Note: the source file's own header comment claims "27 files for these 27 projects" but the actual array has 25 entries — 14 Transport + 8 Built Environment + 5 Energy, Resources & Water. Extracted as-is.)
+
+================================================================================
+PAGE: PUBLICATIONS (/publications)
+Route: src/app/publications/page.tsx -> src/views/publications.tsx (PublicationsView)
+Meta: title "Publications | Geoporte" · description "Technical papers, conference presentations and engineering insights from Geoporte's geotechnical, civil and structural specialists."
+================================================================================
+
+-- Intro section --
+Eyebrow: Insights
+H1: Technical publications & insights
+Body: Our engineers regularly publish technical papers and present at industry conferences on ground behaviour, foundation design and risk-based engineering — drawn from decades of work on complex infrastructure projects across Australia, New Zealand and beyond.
+
+-- Publications list --
+Eyebrow: Recent work
+Heading: Selected publications
+
+1. "2022 AGS Victorian Symposium: Digital Geotechnics"
+   Authors: Australian Geomechanics Society, Victorian Chapter
+   Venue: AGS Victoria Symposium, 26 October 2022
+
+2. "Challenges to Digital Transformation in Geotechnical Engineering"
+   Authors: Qaiser Hayat, Jack W Muir, Hamish E Nelson
+   Venue: 2022 AGS Victoria Symposium — Digital Geotechnics
+
+3. "Technical Assessment of New Developments' Impact on Historical and Recent Tunnels in Melbourne"
+   Authors: L. Yang, A.L. Bennett, Q. Hayat
+   Venue: Aurecon, Melbourne
+
+-- Topics section --
+Eyebrow: Areas of research
+Heading: Where our engineers publish
+(Lists all 8 services by title + shortDescription, linking to each service page.)
+
+-- Closing section --
+Statement: More publications are added as they're presented.
+Body: For copies of our recent work, or papers not yet listed here, reach out to enquiries@geoporte.com.au.
+
+================================================================================
+PAGE: CONTACT (/contact)
+Route: src/app/contact/page.tsx -> src/views/contact.tsx (ContactView)
+Meta: title "Contact Us | Geoporte" · description "Get in touch with Geoporte's engineering team — send a message or reach one of our Melbourne, Sydney, Perth or Auckland offices directly."
+================================================================================
+
+-- Contact form section --
+Eyebrow: Contact
+H1: Let's talk about your next project
+
+Form fields (ContactForm.tsx):
+  Name — placeholder "Your name"
+  Email — placeholder "you@company.com"
+  Phone (optional) — placeholder "+61 4XX XXX XXX"
+  Company (optional) — placeholder "Your company"
+  Message — placeholder "Tell us about your project"
+  Submit button: "Send message" (shows "Sending…" while submitting)
+
+-- Offices / get in touch section --
+Eyebrow: Get in touch
+Heading: Ready to engineer with confidence in complex ground?
+(Email, response time, phones, full office list — see SHARED content above.)
+
+================================================================================
+END OF EXTRACT
+================================================================================

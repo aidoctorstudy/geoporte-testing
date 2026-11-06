@@ -1,7 +1,14 @@
 /**
  * Geoporte's specialist staff — real team roster sourced from
  * geoporte.com.au/our-team. Photos downloaded to `public/assets/team/`.
+ *
+ * `teamMembers` (the export every consumer uses) is `baseTeamMembers` merged
+ * with any `/admin`-edited overrides in `content.json`, keyed by
+ * `slugify(baseTeamMembers[i].name)` — see `content-overrides.ts`. The key
+ * is always derived from the *original* hardcoded name, so editing a name
+ * through `/admin` can't orphan its own override.
  */
+import { siteContent, slugify } from "@/lib/content-overrides";
 
 export interface TeamMember {
   name: string;
@@ -15,7 +22,10 @@ export interface TeamMember {
   };
 }
 
-export const teamMembers: TeamMember[] = [
+/** Original, never-overridden data — `/admin` reads this (not
+ * `teamMembers` below) to compute each override's stable key and to show
+ * the real baseline value for comparison. */
+export const baseTeamMembers: TeamMember[] = [
   {
     name: "Qaiser Hayat",
     title: "Director & Principal Geotechnical Engineer",
@@ -144,3 +154,8 @@ export const teamMembers: TeamMember[] = [
     photo: { src: "/assets/team/ammar-alam.jpeg", alt: "Ammar Alam" },
   },
 ];
+
+export const teamMembers: TeamMember[] = baseTeamMembers.map((member) => ({
+  ...member,
+  ...siteContent.team?.[slugify(member.name)],
+}));

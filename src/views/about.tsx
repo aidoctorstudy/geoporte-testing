@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AboutHeading } from "@/views/home/AboutHeading";
 import { TeamPanel } from "@/views/home/TeamPanel";
+import { MiddleEastSection } from "@/views/about/MiddleEastSection";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { Magnetic } from "@/components/common/Magnetic";
 import { Inview } from "@/components/animation/springs/in-view";
@@ -93,7 +94,7 @@ export function AboutView() {
         <SectionHeading
           id="about-offices-heading"
           eyebrow="Where we work"
-          heading="Offices across Australia and New Zealand"
+          heading="Offices across Australia, New Zealand and the Middle East"
         />
         <Inview
           tag="ul"
@@ -137,6 +138,8 @@ export function AboutView() {
           ))}
         </ul>
       </section>
+
+      <MiddleEastSection />
 
       <Inview
         tag="section"

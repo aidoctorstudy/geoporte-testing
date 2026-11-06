@@ -1,6 +1,6 @@
 ---
 tags: [backend, stable]
-updated: 2026-05-22
+updated: 2026-11-06
 ---
 
 # Backend
@@ -31,6 +31,19 @@ They stay out of the starter deliberately: most projects built from it are
 marketing sites that never need a database, and an unused Payload install is a
 large dependency surface plus a migration story to maintain. The decision is
 recorded as ADR-0020.
+
+> [!note] `/admin` is a one-off password gate, not Supabase Auth
+> This project added a simple content editor at `/admin` — one hardcoded
+> `ADMIN_PASSWORD`, one session cookie, no accounts, no database — explicitly
+> requested as a lighter-weight alternative to real auth. See
+> [[decisions-log]] ADR-0112 for the full reasoning. Saving on Vercel (read-
+> only filesystem at runtime) works by committing straight to GitHub and
+> triggering a Deploy Hook rather than writing a local file — ADR-0113 — gated
+> behind `GITHUB_TOKEN`/`GITHUB_REPO`/`VERCEL_DEPLOY_HOOK`; without those it
+> still falls back to a local-file write for `next dev`. If this ever needs
+> real multi-user editing or instant (no-rebuild) updates, that's the signal
+> to swap `src/lib/content-overrides.ts`'s JSON import for Payload/Supabase
+> instead of extending the GitHub-commit approach further.
 
 Still open:
 

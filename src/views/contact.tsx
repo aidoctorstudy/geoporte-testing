@@ -10,7 +10,7 @@ export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "Contact Us | Geoporte",
     description:
-      "Get in touch with Geoporte's engineering team — send a message or reach one of our Melbourne, Sydney, Perth or Auckland offices directly.",
+      "Get in touch with Geoporte's engineering team — send a message or reach one of our Melbourne, Sydney, Perth, Auckland or Dubai offices directly.",
     url: "/contact",
   });
 }

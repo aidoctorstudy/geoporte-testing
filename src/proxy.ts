@@ -5,7 +5,8 @@ import type { NextRequest } from "next/server";
  * Site-wide maintenance mode: redirects every request to `/maintenance`
  * except the maintenance page itself and the paths a working page — and
  * search engines/crawlers hitting `robots.txt`/`sitemap.xml` — still need
- * to load while the rest of the site is down. See ADR-0109.
+ * to load while the rest of the site is down. See ADR-0109. Never applies
+ * on `localhost` — see `LOCAL_HOSTNAMES` below and ADR-0111.
  *
  * Lives at `src/proxy.ts`, not the repo root — `app/` lives under `src/`,
  * and Next.js requires `proxy.ts` at the same level as `app/`/`pages/`.
@@ -43,7 +44,18 @@ const isExempt = (pathname: string): boolean =>
   EXEMPT_PATHS.has(pathname) ||
   EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
+// Maintenance mode only applies to the real deployment — a local `next dev`/
+// `next start` always hits this hostname regardless of build mode, so
+// checking it (rather than NODE_ENV, which `next start` also sets to
+// "production") is what actually distinguishes "someone's machine" from
+// "the live site." Without this, every local page load redirects to
+// /maintenance too, which makes local development/testing of anything else
+// impossible while maintenance mode is on. See ADR-0109/ADR-0111.
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+
 export function proxy(request: NextRequest) {
+  if (LOCAL_HOSTNAMES.has(request.nextUrl.hostname)) return NextResponse.next();
+
   const { pathname } = request.nextUrl;
   if (isExempt(pathname)) return NextResponse.next();
 

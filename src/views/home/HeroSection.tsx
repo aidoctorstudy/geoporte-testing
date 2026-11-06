@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Magnetic } from "@/components/common/Magnetic";
 import { brand } from "@/lib/company";
+import { getHeroHeading } from "@/lib/content-overrides";
 import { HeroScene } from "@/components/scene/HeroScene";
 import { HeroHeading, HeroSubtext } from "./HeroHeading";
 import { ProjectTicker } from "./ProjectTicker";
@@ -40,7 +41,7 @@ export const HeroSection = () => {
         </p>
         <HeroHeading
           id="hero-heading"
-          text="Design. Engineering. Advisory."
+          text={getHeroHeading()}
           className="leading-display font-heading text-heading [text-shadow:0_2px_24px_rgba(0,0,0,.85)] text-5xl font-medium md:text-7xl"
         />
 

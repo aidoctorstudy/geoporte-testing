@@ -1,12 +1,13 @@
 ---
 tags: [architecture, stable]
-updated: 2026-05-21
+updated: 2026-11-06
 ---
 
 # Data Flow
 
-How state, scroll position, and animation data move through the app. There is no
-server data layer yet — all "data flow" here is **client-side UI state**.
+How state, scroll position, and animation data move through the app. Almost
+all of it is **client-side UI state** — the one exception is `/admin`'s
+content-override layer (see below), a small file-backed read/write path.
 
 ## Provider hierarchy (fixed order)
 
@@ -115,6 +116,34 @@ handlers. Full convention: [[api-architecture]].
 `ScrollController` watches `usePathname()`. If the path contains a `#hash`, it waits
 300 ms then calls `scrollTo(hash, true)` so smooth scroll lands on the target.
 
+## Content overrides (`/admin`)
+
+The one real server-side data flow in this project (see ADR-0112 for the
+full reasoning):
+
+```
+src/data/content.json  →  content-overrides.ts (plain JSON import)  →
+  services.ts / projects.ts / team.ts merge it into their exported arrays  →
+  every existing consumer (server or client) reads the merged result unchanged
+
+/admin (Server Component, reads the session cookie)  →  AdminEditor (client)  →
+  POST /api/admin/content  →  one of:
+    (a) GITHUB_TOKEN/GITHUB_REPO/VERCEL_DEPLOY_HOOK all set:
+        commit content.json to GitHub → POST the Deploy Hook → Vercel rebuilds (~2 min)
+    (b) any missing: fs.writeFile(content.json) locally →
+        next dev's file watcher Fast-Refreshes every importer
+```
+
+Because the import is static, a production build bakes `content.json`'s
+contents in at build time — that's *why* path (a) above has to exist at all:
+`/admin` can't change live content by writing a file on Vercel (read-only at
+runtime, and nothing there survives past the request anyway), only by
+getting a new commit built. See ADR-0113 for why "just hit a Deploy Hook"
+alone doesn't work. Keys are `slugify()`d from each project's/team member's
+*original* title/name (read from the new `baseProjects`/`baseTeamMembers`
+exports), never from the current, possibly already-overridden value — see
+ADR-0112.
+
 ## Related
 
-[[system-overview]] · [[smooth-scroll]] · [[animation-system]]
+[[system-overview]] · [[smooth-scroll]] · [[animation-system]] · [[backend/README]]

@@ -76,6 +76,12 @@ and redeploy — there's no env-var toggle. When adding a new root-level
 file's own exemption list too — forgetting is exactly the class of bug
 ADR-0108 already found once (a shadow `app/favicon.ico` nobody updated).
 
+**Never redirects on `localhost`/`127.0.0.1`/`::1`** (ADR-0111) — checked
+via `request.nextUrl.hostname`, not `NODE_ENV` (`next start` sets that to
+`"production"` too, so it can't tell "someone's machine" from "the live
+site"). This only exempts local dev/testing; the real deployment still
+redirects everything.
+
 ## Adding a route
 
 1. Create `src/app/<route>/page.tsx` — keep it ~3 lines, delegate to a view.

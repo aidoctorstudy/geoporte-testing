@@ -743,6 +743,28 @@ route) shows through, same transparent-background technique
 "/maintenance"` (same mechanism as their existing `isGlassBackgroundRoute`
 check) — see their own files.
 
+## MiddleEastSection — `src/views/about/MiddleEastSection.tsx`
+
+"Geoporte in the Middle East" — mounted in `AboutView` (`views/about.tsx`)
+after its "Where we work" section. See ADR-0110 in [[decisions-log]] for
+why this lives on About rather than the homepage, and why its 8-item
+"sectors we serve" list is its own thing rather than folded into
+`data/mocks/services.ts`.
+
+All copy comes from the `middleEast` export in `lib/company.ts` (tagline,
+subheading, description, `stats`, `sectors`, `whoWeWorkFor`) — same
+"content lives in `lib/company.ts`, not the component" convention as
+`brand`/`offices`/`contact`. The 4-stat row (`200+`/`200+`/`6`/`ISO`) is
+plain static markup matching `StatCounter`'s own type scale, not
+`StatCounter` itself — that component's spring count-up only accepts a
+numeric `value`, and two of these four stats aren't numbers.
+
+`lib/company.ts`'s `offices` array also gained a Dubai entry (`country:
+"United Arab Emirates"`, newly added to `OfficeLocation`'s union) — same
+array `Footer.tsx`, `/contact` (`views/contact.tsx`), and this page's own
+"Where we work" section already read from, so it appears in all three
+automatically.
+
 ## Related
 
 [[component-conventions]] · [[components/animation-springs]]

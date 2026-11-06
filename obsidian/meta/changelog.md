@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-10-13
+updated: 2026-11-06
 ---
 
 # Changelog
@@ -36,6 +36,152 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-11-06 (`/admin` now actually publishes to production — GitHub commit + Vercel Deploy Hook)
+
+Follow-up to the entry below, same day: the local-disk write worked in
+`next dev` but did nothing on Vercel (read-only filesystem at runtime). Full
+reasoning in [[decisions-log]] ADR-0113; short version:
+
+- `src/lib/content-publish.ts` — commits the updated `content.json` straight
+  to GitHub (`GET` for the current `sha`, then `PUT` to update) via a
+  fine-grained PAT (`GITHUB_TOKEN`, "Contents: write" on `GITHUB_REPO` only),
+  then `POST`s `VERCEL_DEPLOY_HOOK` to start the rebuild. A Deploy Hook alone
+  — the originally proposed mechanism — can't work: it rebuilds from the
+  repo's current HEAD, not from whatever's on a serverless instance's (read-
+  only) disk, so the GitHub commit had to come first.
+- `app/api/admin/content/route.ts` picks exactly one path: publish (all
+  three vars set) or ADR-0112's local write (any missing) — never both, no
+  silent fallback between them.
+- `AdminEditor` knows which mode it's in *before* the save request (a new
+  `publishConfigured` prop, read server-side), so the button reads "Saving
+  and publishing…" with a spinner from the click, and a persistent message
+  after success states the ~2 minute propagation delay honestly rather than
+  faking a progress bar with nothing real to track.
+- Verified with real `curl` requests: the local-fallback path still saves
+  correctly; a deliberately invalid token/repo against the publish path
+  fails cleanly (502, clear message) with `content.json` left untouched — no
+  silent fallback to a local write on a failed publish. The actual
+  GitHub-commit success path needs a real PAT to verify, which wasn't
+  available this turn — the client should do one real save after setting
+  the three env vars in Vercel and confirm the commit and build both land.
+
+`next build`/`npx tsc --noEmit`/`npx eslint src` all clean.
+
+## 2026-11-06 (Civil/Geotechnical content update from the Middle East capability statements; `/admin` simple content editor)
+
+Two unrelated asks landed in the same turn.
+
+**Content, sourced from the client's two capability-statement PDFs**
+(`Geoporte_Capability_Statement_2026_Middle_East_Sep2026`,
+`Geoporte_Middle_East_Executive_Capability_Statement_2026`, extracted with
+`pdftotext -layout` — `pdftoppm`/poppler for page-image rendering wasn't
+installed, text extraction worked fine):
+- Civil Engineering (`src/data/mocks/services.ts`): `overview` rewritten to
+  the PDF's actual description; a new "Project Capabilities" group added
+  with its 8-item bullet list (cross drainage, waterway rehabilitation
+  design *and* work as distinct items, dams/levees/retarding basins,
+  sediment control, waterways erosion control, trenchless drainage, stormwater
+  infrastructure).
+- Geotechnical Engineering: `capabilityGroups` replaced with the PDF's full
+  23-item services list, regrouped into "Scoping & Feasibility" / "Detailed
+  Design" / "Risk, Quality & Forensic Services" (the PDF's own structure is a
+  flat list under one heading with one nested sub-list; split for
+  scannability, content unchanged). Added a new "Trenchless Methods"
+  `subServices` entry (MTBM/HDD, cost-benefit/impact-assessment/tender/
+  construction-phase competencies, summarised into one paragraph to match
+  that field's existing one-paragraph-per-entry shape).
+
+**`/admin` — a password-gated, no-database content editor.** Full reasoning
+in [[decisions-log]] ADR-0112; short version: `src/data/content.json` holds
+text overrides for the hero heading, service descriptions, project titles/
+descriptions, and team names/bios, merged into `src/data/mocks/*.ts`'s
+existing exports via a plain JSON import (`src/lib/content-overrides.ts`) —
+safe in both server and client bundles, so none of the dozen-plus files that
+already import those arrays needed to change. `/admin` (`src/views/admin.tsx`
++ `src/views/admin/*`) is gated by a single `ADMIN_PASSWORD` env var (not
+literally hardcoded in source — see ADR-0112) via an HMAC session cookie, no
+accounts, no database. Saves go through `POST /api/admin/content`, which
+writes `content.json` to disk — works with `next dev`'s file-watching (Fast
+Refresh picks up the change), **does not work once deployed to Vercel**
+(read-only filesystem at runtime) without a rebuild — flagged to the client,
+not solved, since a database was explicitly out of scope this turn.
+
+Caught during build verification, not requested but necessary: `/admin`
+initially built as a **static** page (`○` in the build output) despite
+reading the session cookie — confirmed by finding a real prerendered
+`admin.html` on disk, not just trusting the build summary. Fixed with
+`export const dynamic = "force-dynamic"` directly in `app/admin/page.tsx`
+(route segment config can't be re-exported from a view module). Re-verified
+with a real `curl` login → cookie → authenticated-GET → save round trip
+after the fix, not just a clean rebuild.
+
+`next build`/`npx eslint src` clean; `.claude/scripts/verify.sh` unchanged
+from before this turn (same pre-existing FAIL/WARNs). `robots.ts` now
+disallows `/admin`; its own `generateMetadata` sets `robots: { index: false,
+follow: false }` too, belt-and-suspenders.
+
+## 2026-10-25 (`src/proxy.ts` maintenance redirect no longer fires on localhost)
+
+Report: maintenance mode (ADR-0109) was also redirecting local dev/testing
+— every `localhost` page load bounced to `/maintenance`, same as the real
+deployment. Full reasoning in [[decisions-log]] ADR-0111; short version
+here.
+
+- `proxy()` now returns `NextResponse.next()` immediately when
+  `request.nextUrl.hostname` is `localhost`/`127.0.0.1`/`::1`, before the
+  existing exemption-path check. Checked via the request's own hostname,
+  not `NODE_ENV` — `next start` (a local production build) also sets that
+  to `"production"`, so it can't distinguish a local machine from the real
+  site the way the hostname can.
+- Production is unaffected: the live deployment is never reached via a
+  `localhost` hostname, so this only widens what's reachable locally.
+  Verified both ways — `next build` + `next start`, confirmed
+  `localhost:3000/` and `127.0.0.1:3000/about` both return `200` instead of
+  a `307` to `/maintenance`.
+
+## 2026-10-25 (Middle East presence added — About page section, Dubai office, 4 KSA projects)
+
+Added "Geoporte in the Middle East" (About page), a Dubai office, and four
+Saudi Arabia project entries, sourced from a Middle East capability
+statement. Full reasoning in [[decisions-log]] ADR-0110; short version
+here.
+
+- `src/views/about/MiddleEastSection.tsx` (new) — tagline/subheading/
+  description, a static 4-stat row (`200+`/`200+`/`6`/`ISO` — not
+  `StatCounter`, which animates toward an integer and two of these values
+  aren't integers), an 8-item "sectors we serve" list, and a 4-item "who we
+  work for" list. Content lives in a new `middleEast` export in
+  `lib/company.ts`, not hardcoded in the component. Mounted in
+  `views/about.tsx` after the existing "Where we work" section, whose own
+  heading ("Offices across Australia and New Zealand") is now accurate
+  again ("...and the Middle East").
+- The request's "8 Middle East sectors" were **not** merged into
+  `data/mocks/services.ts` — those are market verticals (rail and metro,
+  tunnelling, etc.), not the engineering disciplines that array drives
+  (civil, geotechnical, …), each with its own `/services/[slug]` detail
+  page. Folding sectors into that data model would've been a type/content
+  mismatch, not an update. They live in the new section instead.
+- `lib/company.ts`: `OfficeLocation.country` gained `"United Arab Emirates"`;
+  `offices` gained a Dubai entry (no street address supplied, so
+  `Geoporte Middle East L.L.C-FZ` sits in that field). Propagates
+  automatically to `Footer.tsx`, `/contact`, and the About "Where we work"
+  section — all three already mapped over the same array. `/contact`'s own
+  metadata description (hardcoded "Melbourne, Sydney, Perth or Auckland")
+  updated to include Dubai.
+- `data/mocks/projects.ts` gained four Saudi Arabia entries (27 → 31),
+  reusing four of the existing 27 photos (no new photography supplied,
+  `Project.image` has no fallback path) — flagged in the file's own header
+  comment for later replacement. Propagates to `/projects`
+  (`ProjectsCascade`/`ProjectsShowreel`, both already derive their layout
+  from `projects.length`) and the homepage's `ProjectsSection`/
+  `StatsSection` counters automatically, same single-source-of-truth
+  mechanism.
+- Verified on localhost only, per the request (not deployed): temporarily
+  moved `src/proxy.ts` aside (site-wide maintenance mode, added earlier
+  today, would otherwise redirect every test page), confirmed all four
+  surfaces live via browser — About, Contact, Footer, `/projects` — then
+  restored it with no diff before finishing.
 
 ## 2026-10-25 (Site-wide maintenance mode — `/maintenance` page + `src/proxy.ts` redirect)
 

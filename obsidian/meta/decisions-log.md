@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-10-13
+updated: 2026-11-06
 ---
 
 # Decisions Log (ADRs)
@@ -16,6 +16,296 @@ fine; write a new ADR that says so rather than editing the old one.
 Template: [[templates/adr-note]].
 
 ---
+
+## ADR-0113 — `/admin` publishes to production via a GitHub commit + Vercel Deploy Hook, not just a redeploy trigger
+
+**Status:** Accepted · 2026-11-06 · **Closes the production gap ADR-0112 flagged.**
+
+**Context.** ADR-0112 shipped `/admin` writing `content.json` to local disk —
+works with `next dev`'s file watching, does nothing useful once deployed,
+since Vercel's filesystem is read-only at runtime. Explicit follow-up
+request: "fix this properly," with a specific proposed mechanism — a Vercel
+Deploy Hook the save route calls after writing, triggering a ~2-minute
+rebuild.
+
+**The proposed mechanism, as literally described, doesn't close the gap on
+its own.** A Vercel Deploy Hook triggers a rebuild **from the repo's current
+HEAD on the configured branch** — it does not pick up whatever is sitting on
+the currently-running serverless instance's disk (which, again, is read-only
+there anyway, so the write before the hook call would have thrown first).
+For a rebuild to actually serve new content, the new content has to already
+be *in the git repo* before the hook fires. So "write the file, then hit the
+hook" needed a step the brief's four-point plan didn't name: **commit the
+updated `content.json` to GitHub first**, via its REST API, then hit the
+Deploy Hook. Implemented both rather than asking before proceeding — the gap
+was mechanical (the hook alone can't work, full stop) rather than a judgment
+call with more than one reasonable answer, and the fix follows directly from
+the stated goal ("client edits text → Save → Vercel auto-rebuilds").
+
+**Decision.** `src/lib/content-publish.ts`:
+1. `GET /repos/{GITHUB_REPO}/contents/src/data/content.json?ref={branch}` for
+   the file's current `sha` (required by GitHub's update API, and doubles as
+   a concurrent-edit check).
+2. `PUT` the same endpoint with the new base64 content + that `sha` — one
+   commit, message `"content: update via /admin"`.
+3. `POST {VERCEL_DEPLOY_HOOK}` — responds once the build is *queued*, not
+   once it finishes, so this call is fast; the ~2 minute wait is what happens
+   after the request already returned successfully, not something the
+   request blocks on.
+
+`GITHUB_TOKEN` (fine-grained PAT, "Contents: write" scoped to this one repo —
+deliberately narrower than a classic PAT's full `repo` scope), `GITHUB_REPO`,
+and `VERCEL_DEPLOY_HOOK` gate this path (`isPublishConfigured()`); all three
+missing falls back to ADR-0112's local-disk write untouched, so `next dev`
+keeps working exactly as before with zero config. `GITHUB_BRANCH` is
+separately optional, defaulting to `master`. The content route
+(`app/api/admin/content/route.ts`) picks exactly one of the two paths — never
+both, never a silent fallback from publish-attempted to local-write, since a
+silent fallback on a half-failed publish would hide a broken commit behind an
+apparently-successful save.
+
+**Error handling, surfaced to the admin, not swallowed:** a bad token or
+renamed repo surfaces as a 502 naming which call failed; a concurrent edit
+(the `sha` GitHub receives no longer matches HEAD) surfaces as a 409 telling
+the admin to reload and retry, not a generic "something went wrong" — the
+`AdminEditor` UI already had an error slot from ADR-0112, reused as-is.
+Verified with real HTTP requests against a deliberately invalid token/repo —
+confirmed the failure is caught and reported (not a crash), and confirmed
+`content.json` is left untouched on a failed publish attempt (no silent
+fallback to the local write). Could not verify the success path end-to-end
+(writing to the real repo needs a real PAT, which wasn't provided) — the
+client should do one real save after setting the three env vars in Vercel
+and confirm the commit lands and the build fires.
+
+**UI**: `AdminEditor` now takes `publishConfigured` as a prop (read server-
+side in `admin.tsx` via `isPublishConfigured()`, *before* any save request is
+made) rather than inferring the mode from the save response after the fact
+— so the button can say "Saving and publishing…" with a spinner from the
+moment it's clicked, not just after the response comes back. On success, a
+persistent message states the ~2 minute delay honestly rather than
+simulating a progress bar for a duration this app has no way to actually
+track (no Vercel deployment-status polling was added — out of scope, not
+requested).
+
+**What this still doesn't solve:** two admins saving near-simultaneously
+race on the GitHub commit (second one gets a 409, has to retry) — acceptable
+for a single-client tool with no concurrent-editor story, not acceptable if
+this ever grows multiple real users. If that happens, this is exactly the
+point ADR-0112 already named for switching to Payload/Supabase instead of
+extending the GitHub-commit approach further.
+
+## ADR-0112 — `/admin` content editor: a JSON-import override layer keyed by stable slugs, not a CMS
+
+**Status:** Accepted · 2026-11-06
+
+**Context.** Explicit client-facing request: let the client edit hero
+heading, service descriptions, project titles/descriptions, and team
+names/bios themselves, without touching code or an AI session — "NO database
+needed — just edit the JSON file through a simple UI form," saved to
+`src/data/content.json`, with changes expected to "hot-reload." Paired with a
+content task (Civil Engineering's description/bullet list and Geotechnical
+Engineering's full services list + a new "Trenchless Methods" subsection,
+both sourced from the client's capability-statement PDFs) that's unrelated in
+content but landed in the same turn — see [[changelog]] for both.
+
+**Why not `fs.readFileSync` everywhere (the obvious-looking approach).**
+`services`/`projects`/`teamMembers` (`src/data/mocks/*.ts`) are imported by
+over a dozen files, several of them Client Components (`Nav.tsx`,
+`ServiceCard.tsx`, `ProjectCard.tsx`, `TeamMemberCard.tsx`, …). `fs` doesn't
+exist in the browser; putting a disk read inside any of those three files, or
+in a helper they import, would break every Client Component consumer's bundle.
+Threading a merged copy through props instead would have meant touching
+every one of those dozen-plus files just to carry the override down — a huge,
+risky diff for a "simple" feature.
+
+**Decision — merge at the mock-data layer via a plain JSON import.**
+`src/lib/content-overrides.ts` does `import rawContent from
+"@/data/content.json"` — an ordinary static JSON import, safe in both server
+and client bundles because it's inert data, no Node APIs. Each mock file
+renames its literal array to `base*` and re-exports the public name as
+`base*.map((item) => ({ ...item, ...override }))`, computed once at module
+scope. Every existing consumer of `services`/`projects`/`teamMembers` keeps
+importing the same names and gets the override for free — **zero changes**
+to the dozen-plus consumer files. The homepage hero heading (the one genuinely
+hardcoded string, in `HeroSection.tsx`) reads the same way via
+`getHeroHeading()`.
+
+**Stable keys, not array position.** `services` already has `slug`; `projects`/
+`teamMembers` don't, so each override is keyed by `slugify()` of the item's
+*original* title/name — always read from the newly-exported `baseProjects`/
+`baseTeamMembers` arrays, never from the already-merged, possibly-already-
+overridden ones. This means renaming a project or person through `/admin`
+can never orphan its own override by changing the key out from under it, and
+it means nothing breaks if a developer later reorders the array in code
+(array-index keying would have silently mismatched on any future reorder —
+rejected for exactly that reason, even though it would have needed zero new
+exports).
+
+**Why hot-reload works in dev but not in production — stated, not hidden.**
+A static JSON import is inlined at *build* time. In `next dev`, Turbopack
+watches every file in the module graph, JSON included, so a disk write to
+`content.json` (whether a human edits it or `/admin`'s save route does)
+triggers Fast Refresh and the new text appears without a restart — this is
+what "hot-reload" in the brief actually gets, and it's sufficient for a
+`next dev`-driven workflow. Once built and deployed, Vercel's filesystem is
+read-only at runtime and nothing re-reads this file — `/admin` would need a
+rebuild+redeploy to take effect. Not solved here: the brief was explicit
+about no database, and the client was told not to deploy this turn. If
+`/admin` needs to work live in production later, swap `content-overrides.ts`'s
+JSON import for Payload/Supabase (the starter's own documented upgrade path,
+`obsidian/backend/README.md`) rather than trying to make file-based storage
+work on a read-only filesystem.
+
+**`/admin` auth is a password, not Supabase Auth — on purpose, for now.**
+`obsidian/backend/README.md`'s own "not in the starter" table names Supabase
+Auth as this project's answer whenever real user accounts are needed. This
+isn't that: one client, one password, no accounts, explicitly requested as
+"simple hardcoded password for now." `ADMIN_PASSWORD` (server-only env var,
+not literally hardcoded in source — AGENTS.md hard rule #9 and this project's
+own secret-handling convention both rule that out even when the brief's
+wording suggested it) gates a single session cookie whose value is an HMAC of
+a fixed label keyed by the password (`src/lib/admin-auth.ts`) — not the
+password itself, and nothing is stored server-side to check it against, so
+there's still no database involved. Rotating `ADMIN_PASSWORD` invalidates
+every existing session automatically, which is the correct behaviour for a
+single shared password with no per-user revocation story.
+
+**`/admin` must be `force-dynamic`.** It reads the session cookie and must
+never be prerendered — a cached response would show every visitor whatever
+the *build-time* render produced (the logged-out form) regardless of their
+own cookie. The first build silently produced a static `admin.html` without
+erroring (confirmed by inspecting `.next/server/app/admin.html` directly, not
+by trusting the build output's `○`/`ƒ` column alone) — this project isn't on
+Next 16's Cache Components model (`cacheComponents` is unset in
+`next.config.ts`), so `cookies()` should auto-opt a route into dynamic
+rendering under the previous/default model, but it didn't here. Root-caused
+and fixed with an explicit `export const dynamic = "force-dynamic"` directly
+in `src/app/admin/page.tsx` — route segment config must live in the actual
+`page.tsx`, not a re-exported view module, same constraint `service-
+detail.tsx`'s own comment documents for `dynamicParams`. Verified for real
+after the fix: a full login → cookie → authenticated-GET → save → 401-when-
+logged-out round trip via `curl`, not just a clean build. **If a future Next
+upgrade enables Cache Components project-wide, re-verify this route
+specifically** — its dynamic-rendering story changes under that model (see
+the bundled `node_modules/next/dist/docs/01-app/01-getting-started/
+08-caching.md`), and `force-dynamic` combined with Cache Components has its
+own documented semantics worth re-checking rather than assuming still applies.
+
+**Blank-field handling.** The save route (`app/api/admin/content/route.ts`)
+strips any field that's blank/whitespace-only before writing, and drops an
+id's entry entirely once every field under it is blank. Without this, clearing
+a textarea back to empty would persist as an override of `""`, which the
+`{...base, ...override}` spread merge would apply literally — rendering as
+empty text on the live site instead of falling back to the original copy.
+
+**What `/admin` can't do, deliberately**: add/remove/reorder projects, team
+members, or services; edit images; edit anything outside the four fields
+named in the brief. Text only, matching "simple."
+
+## ADR-0111 — Maintenance-mode redirect exempts `localhost` by hostname, not `NODE_ENV`
+
+**Status:** Accepted · 2026-10-25
+
+**Context.** Report: with ADR-0109's maintenance mode active, local
+development was unusable — every page on `localhost` redirected to
+`/maintenance`, same as the production deployment. The previous turn's
+own verification had already hit this (temporarily moving `src/proxy.ts`
+aside to test the Middle East content, ADR-0110) rather than fixing it,
+since it wasn't in scope for that request.
+
+**Decision.** `proxy()` checks `request.nextUrl.hostname` against
+`localhost`/`127.0.0.1`/`::1` first and returns `NextResponse.next()`
+immediately if it matches, before the existing exemption-path logic.
+Deliberately **not** gated on `process.env.NODE_ENV !== "production"` —
+`next start` (verification throughout this project's own workflow runs a
+local production build, not `next dev`) also sets `NODE_ENV` to
+`"production"`, so that check can't tell "someone's own machine" from "the
+real deployment" the way the request's actual hostname can.
+
+**Consequence.** Production behaviour is unchanged — the live site is
+never reached via a `localhost`/`127.0.0.1` hostname, so this only widens
+what's reachable during local development, never what the real deployment
+redirects. No more moving `src/proxy.ts` aside to test anything else while
+maintenance mode is on.
+
+## ADR-0110 — Middle East content: About page over homepage, sectors kept out of `services.ts`, shared office/project data used for propagation
+
+**Status:** Accepted · 2026-10-25
+
+**Context.** Request: add "Geoporte in the Middle East" content from a
+capability statement — a section ("the About page or homepage," left to
+judgement), 8 Middle East sectors folded into "the Services section," 4
+Saudi Arabia project cards into "the Projects section," and a Dubai office
+into "the Contact section."
+
+**Placement: About, not Home.** The new section's content — tagline,
+descriptive copy, stats, "who we work for" — reads as company-credibility
+information, the same register as the About page's existing "Where we
+work" (office locations) and "Project experience" (region tags) sections,
+not the homepage's conversion-funnel sections (hero → services → stats →
+projects → contact CTA). Mounted directly after "Where we work," which
+already carries the closest existing content (physical office presence) —
+extending that section's own narrative internationally rather than
+competing with it elsewhere on the page.
+
+**Sectors: a new list, not a `services.ts` merge.** The 8 items ("Rail and
+metro," "Water, wastewater and drainage," …) are market verticals a
+capability statement groups work by; `data/mocks/services.ts`'s 8 items
+(Civil Engineering, Geotechnical Engineering, …) are engineering
+disciplines, each wired to its own `/services/[slug]` page with a bespoke
+3D hero scene, capability groups, process steps and stats
+(`ServiceSceneTheme`, `ServiceCapabilityGroup`, etc.). Merging two
+unrelated 8-item lists into one data shape because they happen to both be
+length-8 would have been a content/type mismatch, not a genuine update —
+the sectors list lives in the new Middle East section's own `middleEast`
+export instead ([[components/common]]).
+
+**Stats: static text, not `StatCounter`.** `StatCounter.tsx` animates a
+spring toward an integer `value` prop; two of the four given stats aren't
+integers ("200+", "ISO"). Rather than coercing them into that shape (or
+touching `StatCounter` itself to accept strings, widening a component
+every other caller relies on being numeric), the new section renders a
+plain static 4-column grid matching `StatCounter`'s own typographic scale
+(`text-5xl`/`text-6xl` number, `text-label` caption) without its count-up
+behaviour — these are the capability statement's own published figures,
+not something to animate "counting up" implies being freshly computed.
+
+**Office + project data: added to the existing shared sources, not new
+page-specific content.** `lib/company.ts`'s `offices` array already feeds
+`Footer.tsx`, `/contact`, and the About "Where we work" section — adding
+Dubai there (plus widening `OfficeLocation.country`'s union type) surfaces
+it everywhere office info already appears, which is what "add to the
+Contact section" means in a codebase with one canonical office list, not
+three independent edits. Same reasoning for the four Saudi Arabia projects
+landing in `data/mocks/projects.ts`: `ProjectsCascade`/`ProjectsShowreel`
+(`/projects`) and the homepage's `ProjectsSection`/`StatsSection` counters
+all already derive from that one array's length and contents — appending
+there, rather than inventing homepage-only project-card markup, keeps
+project data single-sourced the way it already was for the other 27
+entries (11 of which — Etihad Rail, Dubai Metro, Dammam Industrial City 3,
+etc. — were already Middle East projects before this change; the region
+was already well represented in this file, just not these four).
+
+**Images: reused, not invented.** `Project.image` is required with no
+fallback-gradient path in `ProjectCard.tsx`, and no new photography was
+supplied for the four new projects. Reused four of the existing 27 photos
+(zero were unused — 27 files, 27 original projects, exact 1:1) rather than
+blocking the content on photography that doesn't exist yet. This doesn't
+violate the established convention: ADR-0073 already established that
+these filenames carry no real project-to-photo correspondence (generic
+site/software-screenshot names), so reuse is consistent with, not a
+departure from, how every existing photo was already assigned. Flagged in
+the file's own header comment for whoever adds real photography later.
+
+**Verification under an active, unrelated maintenance mode.** `src/proxy.ts`
+(added hours earlier the same day, ADR-0109) redirects every route to
+`/maintenance` — including every page this change touches — which would
+have made browser verification impossible. Moved it aside
+(`proxy.ts.testing-bak`) for the local `next build`/`next start` session
+only, confirmed all four surfaces (About, Contact, Footer, `/projects`)
+render correctly, then restored the original file (`git diff` against it
+came back empty) before finishing. Per the request, nothing was deployed —
+this stayed strictly a localhost verification step.
 
 ## ADR-0109 — Site-wide maintenance mode: `/maintenance` page + `proxy.ts` redirect, particle logo reused centered
 
