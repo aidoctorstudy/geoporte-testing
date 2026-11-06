@@ -37,6 +37,25 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-11-06 (Maintenance mode turned off — the site is live again)
+
+Request: stop redirecting every visitor to `/maintenance` now that the
+Civil/Geotechnical content update and `/admin` are both shipped. Followed the
+exact procedure ADR-0109/the 2026-10-25 entry already documented for this:
+deleted `src/proxy.ts`. No env toggle, no other file touched — every route
+now serves normally.
+
+Left in place, deliberately: the `/maintenance` page itself
+(`src/app/maintenance/page.tsx` → `views/maintenance.tsx`) and its
+`--background-maintenance` token. It's `noindex`ed, not linked from anywhere,
+and not in `sitemap.ts` — an orphaned-but-harmless page, not a bug — kept so
+a future maintenance window doesn't mean rebuilding it from scratch. Say the
+word if you'd rather it were deleted outright.
+
+`next build`/`tsc --noEmit`/`eslint` all clean — the build output's
+`ƒ Proxy (Middleware)` line is gone, confirming the redirect is actually
+out, not just unreachable.
+
 ## 2026-11-06 (Fixed: every Vercel build failing — `.nvmrc` pinned to a Node version Vercel doesn't support)
 
 `.nvmrc` pinned `24.16.0`. Vercel's build image doesn't offer Node 24 as a
