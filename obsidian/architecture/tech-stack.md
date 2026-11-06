@@ -960,8 +960,10 @@ your environment; `npm install` / `npm run <script>` work identically otherwise.
 ## Runtime
 
 **Node ≥ 20.19.0**, declared in `package.json` `engines` and pinned for local dev
-by `.nvmrc` (24.16.0). Next 16 itself only needs ≥ 20.9, but the ESLint 9
-toolchain pulls `eslint-visitor-keys@5`, which requires
+by `.nvmrc` (`20` — latest 20.x patch; was `24.16.0` until it turned out Vercel's
+build image doesn't support Node 24 as a selectable runtime, failing every
+build — see [[changelog]], 2026-11-06). Next 16 itself only needs ≥ 20.9, but
+the ESLint 9 toolchain pulls `eslint-visitor-keys@5`, which requires
 `^20.19.0 || ^22.13.0 || >=24` — on Node 20.17 `yarn install` **fails outright**,
 which is why the floor is declared rather than left implicit.
 

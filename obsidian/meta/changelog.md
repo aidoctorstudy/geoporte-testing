@@ -37,6 +37,17 @@ there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
 
+## 2026-11-06 (Fixed: every Vercel build failing — `.nvmrc` pinned to a Node version Vercel doesn't support)
+
+`.nvmrc` pinned `24.16.0`. Vercel's build image doesn't offer Node 24 as a
+selectable runtime (18.x/20.x/22.x only as of this writing), so every
+deployment was failing before `npm install` even finished. Changed `.nvmrc`
+to `20` (resolves to the latest 20.x patch, which is both what
+`package.json`'s `engines.node` (`>=20.19.0`) requires and what Vercel
+actually supports). `package.json`'s `engines` field was never the problem —
+only `.nvmrc`, which is what Vercel actually reads to pick the build runtime.
+See [[tech-stack]] → Runtime for the full version-floor reasoning.
+
 ## 2026-11-06 (`/admin` now actually publishes to production — GitHub commit + Vercel Deploy Hook)
 
 Follow-up to the entry below, same day: the local-disk write worked in
