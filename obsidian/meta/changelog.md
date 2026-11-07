@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Changelog
@@ -36,6 +36,48 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-11-07 (`/admin` Photos tab — replace project/team/service/publication photos, same GitHub-publish pipeline as text)
+
+Full reasoning in [[decisions-log]] ADR-0114; short version:
+
+- Scanned the codebase for every image reference first (`public/assets/*/`
+  has ~10 subdirectories). Flagged two categories as unsafe for a naive
+  upload-and-overwrite before building anything — the logo (needs
+  background-removal processing, not a plain file swap) and the 5 WebGL/
+  video-scene asset folders (textures/poster frames, not literal photos) —
+  and the client confirmed excluding both. Shipped: **Projects** (27 files/
+  31 entries), **Team** (12 files/11 members + homepage group photo),
+  **Services** (8), **Publications** (3) — 50 images.
+- `src/lib/image-manifest.ts` computes the list from the live data arrays
+  (never hand-maintained, can't drift) — required exporting `SERVICE_IMAGES`
+  from `ServiceOverview.tsx` (was a local const).
+- New `/admin` "Photos" tab (`AdminPhotos.tsx`), with a new `AdminTabs.tsx`
+  wrapper owning the shared header/tab-switching — `AdminEditor.tsx` (text)
+  was already the largest file in the admin surface, so Photos is a sibling
+  tab, not another section bolted onto it.
+- `POST /api/admin/photos` — auth-gated, validates the target path against
+  the manifest with **exact string equality** (closes path traversal by
+  construction: a `../`-laden path just never matches a literal whitelist
+  entry), sniffs real magic bytes rather than trusting the browser's
+  declared MIME type or the filename extension, caps at 4MB (under Vercel's
+  request-body limit). Publishes via the same GitHub-commit-then-Deploy-Hook
+  mechanism as text content (ADR-0113), now factored into a shared
+  `src/lib/github-publish.ts` since both need the identical GET-sha/PUT/
+  trigger-hook sequence — `content-publish.ts` is now a thin wrapper around
+  it. Same local-disk-write fallback when publishing isn't configured.
+- Verified with real requests, not just a clean build: a local-mode upload
+  genuinely overwrote the target file on disk (confirmed via `file`/`git
+  diff`, then restored); two path-traversal attempts rejected; a renamed
+  non-image rejected by byte-sniffing; a publish attempt with invalid
+  GitHub credentials failed cleanly with the target file untouched.
+- One testing note worth keeping: Git Bash's MSYS2 path-mangling rewrote a
+  `curl -F "path=/assets/..."` into a Windows path before it even reached
+  the server, which looked exactly like a server-side bug until traced —
+  fixed in the test commands with `MSYS_NO_PATHCONV=1`, not a code change.
+
+`next build`/`tsc --noEmit`/`eslint src`/`verify.sh` all clean (same
+pre-existing FAIL/WARNs as before, nothing new).
 
 ## 2026-11-06 (Maintenance mode turned off — the site is live again)
 

@@ -41,7 +41,8 @@ export interface AdminEditorProps {
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 /**
- * The actual editor behind `/admin`'s password gate. One form, one "Save all
+ * The "Content" tab of `/admin` (see `AdminTabs.tsx`, which owns the page
+ * header/log-out and the tab switcher itself). One form, one "Save all
  * changes" button posting the whole content object to `/api/admin/content`
  * — no per-field saves, no autosave, matching the brief's "simple" framing.
  * Pre-filled with the *current effective* text (base content plus any prior
@@ -94,30 +95,9 @@ export const AdminEditor = ({ heroHeading, services, projects, team, publishConf
     }
   };
 
-  const handleLogout = async () => {
-    await apiFetch("/api/admin/logout", { method: "POST" });
-    router.refresh();
-  };
-
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16 md:px-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-foreground text-2xl font-medium">Content editor</h1>
-          <p className="text-foreground-muted mt-2 text-sm leading-relaxed">
-            Edit text here, then save — changes go straight to the live pages.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-foreground-muted hover:text-foreground border-line shrink-0 rounded-lg border px-4 py-2 text-sm transition-colors duration-[var(--duration-fast)] ease-entrance"
-        >
-          Log out
-        </button>
-      </div>
-
-      <form onSubmit={handleSave} className="mt-10 flex flex-col gap-10">
+    <>
+      <form onSubmit={handleSave} className="flex flex-col gap-10">
         <section>
           <h2 className="text-label text-xs uppercase tracking-[0.12em]">Homepage hero</h2>
           <label htmlFor="hero-heading" className="text-foreground-muted mt-3 mb-2 block text-sm">
@@ -337,6 +317,6 @@ export const AdminEditor = ({ heroHeading, services, projects, team, publishConf
           )}
         </div>
       </form>
-    </main>
+    </>
   );
 };

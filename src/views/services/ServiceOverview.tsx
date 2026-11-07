@@ -5,8 +5,11 @@ import type { Service } from "@/data/mocks/services";
 
 /** Real per-service photo downloaded from geoporte.com.au — see
  * obsidian/meta/decisions-log.md for why these are treated as a duotone
- * background layer here rather than used as literal hero images. */
-const SERVICE_IMAGES: Record<string, string> = {
+ * background layer here rather than used as literal hero images. Exported
+ * (not just a local const) so `/admin`'s image manifest (`src/lib/
+ * image-manifest.ts`) can enumerate these paths without a parallel,
+ * driftable copy — see ADR-0114. */
+export const SERVICE_IMAGES: Record<string, string> = {
   "civil-engineering": "/assets/services/civil-engineering.jpeg",
   "design-and-drafting": "/assets/services/design-and-drafting.jpg",
   "geotechnical-engineering": "/assets/services/geotechnical-engineering.png",

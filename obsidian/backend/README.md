@@ -1,6 +1,6 @@
 ---
 tags: [backend, stable]
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Backend
@@ -40,7 +40,10 @@ recorded as ADR-0020.
 > only filesystem at runtime) works by committing straight to GitHub and
 > triggering a Deploy Hook rather than writing a local file — ADR-0113 — gated
 > behind `GITHUB_TOKEN`/`GITHUB_REPO`/`VERCEL_DEPLOY_HOOK`; without those it
-> still falls back to a local-file write for `next dev`. If this ever needs
+> still falls back to a local-file write for `next dev`. A "Photos" tab
+> (ADR-0114) replaces project/team/service/publication photos the same way —
+> same publish trio, path-whitelisted so the upload can only ever overwrite
+> one of 50 known image files, never an arbitrary repo path. If this ever needs
 > real multi-user editing or instant (no-rebuild) updates, that's the signal
 > to swap `src/lib/content-overrides.ts`'s JSON import for Payload/Supabase
 > instead of extending the GitHub-commit approach further.

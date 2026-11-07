@@ -1,6 +1,6 @@
 ---
 tags: [meta, decision]
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Decisions Log (ADRs)
@@ -16,6 +16,116 @@ fine; write a new ADR that says so rather than editing the old one.
 Template: [[templates/adr-note]].
 
 ---
+
+## ADR-0114 — `/admin` Photos tab: path-whitelisted binary uploads, scoped to 4 of the ~10 image categories on the site
+
+**Status:** Accepted · 2026-11-07 · **Reuses ADR-0113's commit/redeploy mechanism for binary files.**
+
+**Context.** Explicit follow-up request: let the client replace any image on
+the site from `/admin` — upload a file, preview old vs. new, confirm,
+publish. Scanned the actual codebase first rather than assuming: ~10
+`public/assets/*/` subdirectories exist, not all of them "photos" in the
+sense a non-technical client would recognize or safely want to swap.
+
+**Scope, chosen with the user rather than assumed.** Flagged two categories
+as unsafe for a plain upload-and-overwrite before building anything, and the
+user confirmed excluding both:
+- The logo (`public/assets/logo/geoporte-logo.png`) is background-removed
+  from a source JPG via `scripts/process-logo.mjs` — a raw replace would
+  ship a logo with a solid background box instead of a transparent cutout.
+- The WebGL/video-scene assets (`bird/`, `golden-parthenon/`, `planet/`,
+  `purple-planet/`, `siloutte/`) are textures and video poster frames, not
+  literal photos — wrong resolution/aspect there can visibly break a 3D
+  scene, not just look slightly off.
+
+In scope: **Projects** (27 real photo files, reused across 31 project
+entries), **Team** (11 members + the homepage group photo = 12 files),
+**Services** (8 hero images), **Publications** (3 covers) — 50 images total.
+
+**The manifest is computed, not hand-maintained** (`src/lib/image-
+manifest.ts`) — it reads `projects`/`teamMembers`/`services`/`publications`/
+`experienceTeamPhoto` directly and groups by file path (several projects
+share one photo; the manifest entry for that path lists every project using
+it), so it can never drift from what the site actually renders. Required
+exporting `SERVICE_IMAGES` from `ServiceOverview.tsx` (previously a local
+const) — the one place per-service hero images live; not worth relocating
+into `services.ts` just for this, so the manifest imports it from where it
+already lived.
+
+**Security: the upload path takes a `path`, not a name — and that's the
+whole attack surface.** `POST /api/admin/photos` accepts a target path and a
+file, then (if publishing is configured) commits the file to that exact
+path in the repo. Without a hard constraint on which paths are acceptable,
+an authenticated-but-malicious request could overwrite *any* repo file —
+`src/env.ts`, the admin auth code itself, anything — not just an image.
+Closed by checking the submitted path against `getImageManifest()`'s own
+list with **exact string equality** — not pattern-matching, not prefix-
+checking, not traversal-sequence stripping. A `../`-laden path simply never
+equals any literal manifest entry, so it's rejected the same way an
+unrelated path would be, with no separate traversal-detection logic needed
+(verified directly: a submitted `/assets/../../src/env.ts` and
+`/assets/team/../../../.env` both came back `unknown_path`, same as any
+other path not in the list).
+
+**File-type validation reads bytes, not the browser's claim.** `file.type`
+on a `File` from `FormData` is attacker-controlled (trivially spoofed by
+whoever's making the request, browser or not) and a filename extension is
+just a string — neither is trustworthy. `detectImageType()` sniffs the
+actual magic bytes (JPEG `FF D8 FF`, PNG's 8-byte signature, WEBP's
+`RIFF….WEBP` container) and rejects anything that doesn't match one of the
+three accepted formats. Verified: a plain text file renamed to `fake.png`
+with `Content-Type: image/png` was correctly rejected as `invalid_file_type`.
+
+**Size cap at 4MB**, enforced both client-side (immediate feedback, no
+failed network round trip) and server-side (defense in depth) — chosen to
+sit safely under Vercel's ~4.5MB request-body limit for serverless
+functions, so an oversized upload fails with this route's own clear message
+rather than an opaque platform 413.
+
+**Shared commit/redeploy mechanism, generalized.** `content-publish.ts`
+(ADR-0113) and this feature both need "commit a file to GitHub, then hit the
+Deploy Hook" — the only difference is *what* (JSON text vs. image bytes) and
+*where* (always `src/data/content.json` vs. a path chosen from the image
+manifest). Factored the GET-sha/PUT/trigger-hook logic out into
+`src/lib/github-publish.ts#commitAndRedeploy(repoPath, base64Content,
+message)`; `content-publish.ts` is now a two-line wrapper around it. No new
+env vars — reuses `GITHUB_TOKEN`/`GITHUB_REPO`/`GITHUB_BRANCH`/
+`VERCEL_DEPLOY_HOOK` from ADR-0113 for both text and photos. Same local-
+disk-write fallback when publishing isn't configured, same `published`
+flag threaded to the UI for the "uploading and publishing…" vs. "saved
+locally" messaging.
+
+**UI**: a new `/admin` tab, not a new `<details>` section bolted onto the
+existing text form (`AdminEditor.tsx` was already the largest file in the
+admin surface) — `AdminTabs.tsx` now owns the shared header/log-out and tab
+switching, `AdminEditor` is the "Content" tab unchanged in behaviour,
+`AdminPhotos.tsx` is the new "Photos" tab. Each photo publishes
+independently on its own "Confirm replace" (no "save all" batching the way
+text fields have — there's no useful meaning to staging several photo
+replacements and publishing them together). Side-by-side old/new preview
+uses `URL.createObjectURL()` on the picked file, rendered via a plain
+`<img>` (an `eslint-disable` is warranted and present — `next/image` can't
+optimize a `blob:` object URL, same justified exception
+`VideoBackground.tsx`'s poster fallback already set a precedent for).
+
+**Verified with real HTTP requests, not just a clean build** (same bar as
+ADR-0113): a genuine local-mode upload actually overwrote the target file
+on disk (confirmed via `file`/`git diff --stat` showing the real JPEG
+replaced by the 1×1 test PNG, then restored via `git checkout --`); two
+path-traversal attempts both rejected; a spoofed-extension non-image
+rejected by magic-byte sniffing; a publish-mode attempt with deliberately
+invalid GitHub credentials failed cleanly (502, clear message) with the
+target file left untouched. The real GitHub-commit success path still
+needs a real PAT to verify end-to-end, same caveat as ADR-0113.
+
+**One real debugging note, for whoever hits this next**: testing this
+locally via `curl` on Windows/Git Bash produced a confusing false negative
+at first — MSYS2's automatic POSIX-path-to-Windows-path conversion rewrote
+`-F "path=/assets/projects/2222.jpeg"` into
+`C:/Program Files/Git/assets/projects/2222.jpeg` before curl ever sent it,
+making a correctly-working server look broken. Fixed by prefixing the test
+commands with `MSYS_NO_PATHCONV=1`. Not a code bug; recorded here so it
+doesn't cost someone else the same hour.
 
 ## ADR-0113 — `/admin` publishes to production via a GitHub commit + Vercel Deploy Hook, not just a redeploy trigger
 

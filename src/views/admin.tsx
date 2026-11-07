@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { isAdminSession } from "@/lib/admin-auth";
 import { getHeroHeading, slugify } from "@/lib/content-overrides";
 import { isPublishConfigured } from "@/lib/content-publish";
+import { getImageManifest } from "@/lib/image-manifest";
 import { services } from "@/data/mocks/services";
 import { baseProjects, projects } from "@/data/mocks/projects";
 import { baseTeamMembers, teamMembers } from "@/data/mocks/team";
 import { AdminLoginForm } from "./admin/AdminLoginForm";
-import { AdminEditor } from "./admin/AdminEditor";
+import { AdminTabs } from "./admin/AdminTabs";
 
 /** A private utility page, not a real page of the site — skips the shared
  * `generateMetadata` helper entirely (no OG/Twitter/JSON-LD needed) and
@@ -18,18 +19,20 @@ export function generateMetadata(): Metadata {
 
 /**
  * `/admin` — password-gated simple content editor (no CMS, no database;
- * see `src/lib/content-overrides.ts`). A Server Component so the password
- * check and the current content read both happen server-side; the two
- * possible results below are the only client leaves.
+ * see `src/lib/content-overrides.ts` for text, `src/lib/image-manifest.ts`
+ * for photos). A Server Component so the password check and the current
+ * content read both happen server-side; the two possible results below are
+ * the only client leaves.
  */
 export const AdminView = async () => {
   const authenticated = await isAdminSession();
   if (!authenticated) return <AdminLoginForm />;
 
   return (
-    <AdminEditor
+    <AdminTabs
       heroHeading={getHeroHeading()}
       publishConfigured={isPublishConfigured()}
+      images={getImageManifest()}
       services={services.map((service) => ({
         slug: service.slug,
         title: service.title,

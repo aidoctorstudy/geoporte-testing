@@ -1,6 +1,6 @@
 ---
 tags: [architecture, stable]
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # Data Flow
@@ -143,6 +143,26 @@ alone doesn't work. Keys are `slugify()`d from each project's/team member's
 *original* title/name (read from the new `baseProjects`/`baseTeamMembers`
 exports), never from the current, possibly already-overridden value — see
 ADR-0112.
+
+### Photo replacement (`/admin`'s Photos tab)
+
+Simpler than text — there's no merge/override layer, since a replaced image
+keeps the exact same path (ADR-0114):
+
+```
+src/lib/image-manifest.ts (computed from projects.ts/team.ts/services.ts/
+  publications.ts/experience.ts — 50 real photos, never a hand-maintained list)
+  → AdminPhotos (client) picks a file → POST /api/admin/photos →
+    path checked against the manifest (exact match only — this is the
+    entire path-traversal defense) → magic-byte file-type check → one of:
+      (a) publish trio set: commitAndRedeploy("public" + path, …) (shared
+          with the text path above, src/lib/github-publish.ts) → Vercel rebuilds
+      (b) any missing: fs.writeFile locally
+```
+
+Because the file path never changes, every existing `<Image src="/assets/
+...">` reference across the site just serves the new bytes once the commit
+lands — no code anywhere needs to know a photo was replaced.
 
 ## Related
 
