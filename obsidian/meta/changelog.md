@@ -1,6 +1,6 @@
 ---
 tags: [meta, changelog]
-updated: 2026-11-07
+updated: 2026-11-08
 ---
 
 # Changelog
@@ -36,6 +36,16 @@ The home view (`src/views/home.tsx`, route `/`) ships empty on purpose — start
 there ([[new-page]]).
 
 <!-- Log this project's changes below, newest first, under a `## YYYY-MM-DD` heading. -->
+
+## 2026-11-08 — maintenance mode re-enabled
+
+Site-wide maintenance mode (ADR-0109) was turned back on at the client's
+request, restoring `src/proxy.ts` verbatim from before the 2026-11-07
+removal (`git show 0899e76^:src/proxy.ts`) rather than rewriting it — the
+exempt-paths list (favicons, manifest, robots/sitemap, `/admin`, `/api/**`,
+`/assets/**`) and the `localhost`-only bypass (ADR-0111) are easy to get
+subtly wrong from memory. Toggling this again is just restoring or deleting
+that one file — see [[decisions-log]] ADR-0109 for the full procedure.
 
 ## 2026-11-07 (`/admin` Photos tab — replace project/team/service/publication photos, same GitHub-publish pipeline as text)
 
