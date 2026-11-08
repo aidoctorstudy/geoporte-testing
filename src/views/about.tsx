@@ -32,7 +32,7 @@ export function AboutView() {
         className="glass-panel relative z-10 mx-auto mt-24 max-w-6xl px-6 py-16 md:mt-32 md:px-8 md:py-24"
       >
         <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
-          About Geoporte
+          Geoporte Middle East
         </p>
         <AboutHeading
           id="about-heading"
@@ -59,7 +59,7 @@ export function AboutView() {
             delayIn={160}
             className="text-foreground-muted text-base leading-relaxed md:text-lg"
           >
-            We work as a One Team with our clients, pairing cutting-edge digital tools and modelling with rigorous senior review — across building, transport, water, ports, marine and energy infrastructure.
+            Geoporte Middle East L.L.C-FZ is based at Meydan Grandstand in Dubai. It is part of an international group with technical teams in Melbourne, Sydney, Perth and Auckland, and registered entities in Australia, New Zealand, the United Kingdom, Canada and the UAE. That network gives Gulf clients access to specialist modelling capacity and peer review across time zones, while the commission is led by engineers who know the region.
           </Inview>
         </div>
       </section>
