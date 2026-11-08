@@ -8,7 +8,7 @@ import { generateMetadata as buildMetadata } from "@/utils/seo/generate-page-met
 export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "Our Services | Geoporte",
-    description: "Eight engineering disciplines, one team — civil, geotechnical, structural, stormwater, project controls, advisory and telecom services.",
+    description: "Senior-led geotechnical, tunnelling, civil and structural engineering for rail, water, ports, roads and buildings across the Gulf.",
     url: "/services",
   });
 }

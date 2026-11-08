@@ -126,9 +126,27 @@ export const ProjectModal = () => {
               </div>
             </dl>
 
+            <span
+              className={[
+                "inline-block rounded-full px-3 py-1 text-[11px] tracking-[0.12em] uppercase font-medium",
+                project.label === "Geoporte commission"
+                  ? "bg-accent text-white"
+                  : "border-line border text-label",
+              ].join(" ")}
+            >
+              {project.label}
+            </span>
+
             <p className="text-foreground-muted text-sm leading-relaxed">
               {project.description}
             </p>
+            {project.label === "Team experience" && (
+              <p className="text-label border-line rounded-lg border bg-surface/60 px-4 py-3 text-xs leading-relaxed">
+                This project was delivered by our senior specialists in previous roles with
+                international consultancies. It illustrates the depth of experience our
+                people bring to Geoporte commissions.
+              </p>
+            )}
           </div>
         </animated.div>
       </animated.div>

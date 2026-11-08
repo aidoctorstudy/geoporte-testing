@@ -1,6 +1,6 @@
 /**
  * Real Geoporte-associated technical publications, sourced from
- * geoporte.com.au/publications (three cover images, no accompanying
+ * geoporte.ae/insights (three cover images, no accompanying
  * metadata on the live site itself — title/authors/venue below are read
  * directly off each cover image, not invented).
  */

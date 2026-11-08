@@ -22,7 +22,7 @@ export const ContactSection = ({ headingTag = "h2" }: ContactSectionProps = {}) 
           id="contact-heading"
           tag={headingTag}
           eyebrow="Get in touch"
-          heading="Ready to engineer with confidence in complex ground?"
+          heading="Ready to build on sound ground in the Gulf?"
         />
 
         <Inview

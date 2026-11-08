@@ -20,7 +20,7 @@ export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}
         id="projects-heading"
         tag={headingTag}
         eyebrow="Selected work"
-        heading="Landmark projects, across continents"
+        heading="Geoporte commissions and team experience"
       />
 
       <TierProjectsGrid categories={projectCategories} projects={projects} />

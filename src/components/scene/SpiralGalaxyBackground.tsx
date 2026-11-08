@@ -9,7 +9,9 @@ import { createSpiralGalaxyHeroScene } from "./build-spiral-galaxy-scene";
 
 // The Telecom Services service page's own fixed full-page background —
 // same shape as `AureoleBackground.tsx`/`GoldenParthenonBackground.tsx`/etc.
-const SPIRAL_GALAXY_BACKGROUND_ROUTE = "/services/telecom-services";
+// Telecom Services was removed for the ME practice — this scene is currently unmapped.
+// It will only render if a matching route is added to GLASS_BACKGROUND_ROUTES.
+const SPIRAL_GALAXY_BACKGROUND_ROUTE = "/services/__unmapped-spiral-galaxy";
 
 /**
  * Mounted once at the app root, alongside every other route-scoped fixed

@@ -1,8 +1,11 @@
 /**
- * Homepage "Project Experience" section content — the stats and copy come
- * from geoporte.com.au's own Project Experience section (whose live counters
- * render unpopulated "0+" placeholders; the values here are the site's real
- * marketing figures, same treatment as `projects.ts`).
+ * Homepage "Project Experience" section content.
+ *
+ * Updated for geoporte.ae per Geoporte ME Website Content and Build Brief,
+ * Rev 0, 2 November 2026, Section 6.1 (Stats strip and "how we work").
+ *
+ * middleEast stats from company.ts: "25+ Years Gulf Experience",
+ * "7 Countries Active", "ISO 9001·14001·45001", "8 Senior Specialists".
  */
 
 export interface ExperienceStat {
@@ -13,20 +16,20 @@ export interface ExperienceStat {
 }
 
 export const experienceStats: ExperienceStat[] = [
-  { value: 100, suffix: "+", label: "Projects completed by our staff", variant: "purple" },
-  { value: 20, suffix: "+", label: "Countries of work experience by our staff", variant: "amber" },
+  { value: 25, suffix: "+", label: "Years of Gulf experience", variant: "purple" },
+  { value: 7, suffix: "", label: "Countries currently active in the region", variant: "amber" },
 ];
 
 export const experienceCopy = {
-  eyebrow: "Experience & Technology",
-  heading: "Project Experience",
-  body: "GEOPORTE's specialist staff have decades of extensive combined AU/NZ and global experience on major and complex infrastructure projects. Our leaders had worked on various design and construction projects in the building, transport, telecom, energy, water, and ports and marine sectors in Europe, Middle East, Asia, New Zealand, and Australia.",
+  eyebrow: "Gulf Ground, Understood",
+  heading: "Experience behind every commission",
+  body: "Our senior specialists have designed some of the region's largest underground, transport and marine systems — metro lines, deep sewer tunnels, offshore islands, ports and causeways across the GCC. These projects were delivered in previous roles with international consultancies. The same engineers now lead Geoporte's work in the Middle East.",
 };
 
-/** Real staff site-visit photo, sourced from geoporte.com.au. */
+/** Site photo — replace with ME-specific photo when available. */
 export const experienceTeamPhoto = {
   src: "/assets/team/geoporte-team.jpg",
-  alt: "Geoporte staff on a site visit, wearing high-visibility safety vests",
+  alt: "Geoporte senior engineers reviewing ground investigation results on site",
   width: 600,
   height: 400,
 };

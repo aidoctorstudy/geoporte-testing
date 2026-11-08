@@ -13,9 +13,9 @@ interface LineSpec {
 const LINE_STAGGER_MS = 200;
 
 const LINES: LineSpec[] = [
-  { text: "Complex ground.", from: { opacity: 0, x: -40 }, to: { opacity: 1, x: 0 } },
-  { text: "Complex engineering.", from: { opacity: 0, x: 40 }, to: { opacity: 1, x: 0 } },
-  { text: "Clear decisions.", from: { opacity: 0, y: 24 }, to: { opacity: 1, y: 0 } },
+  { text: "Regional knowledge,", from: { opacity: 0, x: -40 }, to: { opacity: 1, x: 0 } },
+  { text: "senior-led", from: { opacity: 0, x: 40 }, to: { opacity: 1, x: 0 } },
+  { text: "delivery.", from: { opacity: 0, y: 24 }, to: { opacity: 1, y: 0 } },
 ];
 
 const AboutHeadingLine = ({

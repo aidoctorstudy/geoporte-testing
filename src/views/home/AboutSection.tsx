@@ -19,7 +19,7 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
       <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.2fr_1fr]">
         <div>
           <p className="text-label mb-4 text-xs tracking-[0.3em] uppercase">
-            About Geoporte
+            Geoporte in the Middle East
           </p>
           <AboutHeading
             id="about-heading"
@@ -35,17 +35,14 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
             className="mt-8 flex max-w-xl flex-col gap-5"
           >
             <p className="text-foreground-muted text-base leading-relaxed md:text-lg">
-              Geoporte leads in risk-based design and management of complex
-              engineering projects. Our specialists draw creative, buildable
-              solutions from vast local and international experience — an
-              agile team with decades in the field, gained on projects around
-              the world.
+              Geoporte is a specialist ground engineering consultancy for the Gulf. We provide
+              geotechnical, tunnelling, civil and structural design — led by senior engineers
+              with decades of experience on the region&#39;s most demanding infrastructure.
             </p>
             <p className="text-foreground-muted text-base leading-relaxed md:text-lg">
-              We work as a One Team with our clients, pairing cutting-edge
-              digital tools and modelling with rigorous senior review — across
-              building, transport, water, ports, marine and energy
-              infrastructure.
+              Every commission is led by a principal engineer. We pair rigorous senior judgement
+              with advanced numerical modelling and digital tools — across rail, water,
+              tunnelling, roads and bridges, ports and marine, and buildings.
             </p>
           </Inview>
         </div>

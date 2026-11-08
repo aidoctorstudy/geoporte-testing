@@ -13,7 +13,7 @@ import { createEinsteinRosenLatticeHeroScene } from "./build-einstein-rosen-latt
 // choice, so the wormhole takes the globe's (and Solaris's/Aether Flux's)
 // place here rather than joining them — see `glass-background-routes.ts`,
 // which every other exclusive component on this route reads from.
-const EINSTEIN_ROSEN_LATTICE_BACKGROUND_ROUTE = "/services/structural-engineering";
+const EINSTEIN_ROSEN_LATTICE_BACKGROUND_ROUTE = "/services/tunnelling-underground";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

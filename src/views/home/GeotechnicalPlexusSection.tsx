@@ -73,7 +73,7 @@ export const GeotechnicalPlexusSection = () => {
           >
             <Magnetic>
               <Link
-                href="/services/geotechnical-engineering"
+                href="/services/geotechnical-design"
                 className="bg-accent-engineering hover:bg-accent-engineering/90 transition-colors duration-[var(--duration-fast)] ease-entrance inline-flex items-center rounded-full px-8 py-4 text-sm font-medium tracking-[0.08em] text-white uppercase"
               >
                 Explore Geotechnical Engineering

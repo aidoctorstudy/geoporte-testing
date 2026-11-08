@@ -1,12 +1,16 @@
 /**
- * Geoporte's eight service lines — real content sourced from geoporte.com.au,
- * expanded for the detail pages. `sceneTheme` names the tailored 3D scene
- * concept each service page's hero should run (see `components/scene/`).
+ * Geoporte service lines for www.geoporte.ae.
  *
- * `services` (the export every consumer uses) is `baseServices` merged with
- * any `/admin`-edited overrides in `content.json`, keyed by `slug` — see
- * `content-overrides.ts`. `slug` itself is never overridable, so the key
- * never drifts.
+ * Source: Geoporte ME Website Content and Build Brief, Rev 0,
+ * 2 November 2026, Sections 7.0–7.10.
+ *
+ * Nine services replace the AU/NZ service set. Telecom Services,
+ * Design & Drafting and Project Control Services are removed.
+ *
+ * `services` (the export every consumer uses) is `baseServices` merged
+ * with any /admin-edited overrides in `content.json`, keyed by `slug` —
+ * see `content-overrides.ts`. `slug` itself is never overridable, so the
+ * key never drifts.
  */
 import { siteContent } from "@/lib/content-overrides";
 
@@ -22,10 +26,9 @@ export interface ServiceSubService {
 
 export interface ServiceStat {
   value: number;
-  /** Appended after the number, e.g. "+" or "%". Defaults to "+" (matches
-   * `StatCounter`'s own default) when omitted. */
+  /** Appended after the number, e.g. "+" or "%". Defaults to "+" when omitted. */
   suffix?: string;
-  /** Prepended before the number, e.g. "$" for "$2B+ project value managed". */
+  /** Prepended before the number, e.g. "$". */
   prefix?: string;
   label: string;
 }
@@ -40,36 +43,15 @@ export type ServiceSceneTheme =
   | "advisory-lifecycle-network"
   | "telecom-signal-network";
 
-// Themes whose scene mounts as a fixed, page-wide background instead of a
-// section-scoped hero (see `AetherFluxBackground.tsx`/`SolarisBackground.tsx`/
-// `EinsteinRosenLatticeBackground.tsx`/`GoldenParthenonBackground.tsx`/
-// `NegentropyBackground.tsx`/`ProjectControlBackground.tsx`/
-// `AureoleBackground.tsx`/`SpiralGalaxyBackground.tsx`) — dense/bright
-// enough (or, for `schedule-network-graph`, backed by a video rather than a
-// WebGL scene at all) that plain text-on-gradient loses contrast, so
-// `ServiceHero.tsx` swaps in a frosted glass band and every content section
-// on that page (`service-detail.tsx`) swaps its opaque background for the
-// `.glass-panel` treatment. One shared Set so the two files can't drift.
-//
-// Geotechnical Engineering keeps `solaris` here (full-page fixed
-// background, unchanged) — but its *hero section* no longer goes through
-// `ServiceHero.tsx`'s glass branch. `service-detail.tsx` special-cases this
-// slug to render the bespoke `GeotechnicalAnalysisHero.tsx` instead, which
-// mounts a second, bounded 3D scene (`build-geotechnical-fea-scene.ts`, a
-// PLAXIS-inspired FE model) inside the hero on top of the Solaris
-// background — both visible together, per explicit user direction. See
-// ADR-0061.
 export const GLASS_SCENE_THEMES: ReadonlySet<ServiceSceneTheme> = new Set([
-  "solaris",
   "aether-flux",
   "einstein-rosen-lattice",
-  "golden-parthenon",
   "negentropy",
   "schedule-network-graph",
-  "advisory-lifecycle-network",
-  "telecom-signal-network",
 ]);
-export const isGlassSceneTheme = (theme: ServiceSceneTheme): boolean => GLASS_SCENE_THEMES.has(theme);
+
+export const isGlassSceneTheme = (theme: ServiceSceneTheme): boolean =>
+  GLASS_SCENE_THEMES.has(theme);
 
 export interface Service {
   slug: string;
@@ -80,760 +62,413 @@ export interface Service {
   sceneSummary: string;
   capabilityGroups: ServiceCapabilityGroup[];
   subServices?: ServiceSubService[];
-  /** The 3 headline stats shown on the detail page's overview section. */
   stats: ServiceStat[];
-  /** The 5-6 step "how we work" process timeline, in order. */
   processSteps: string[];
-  /** Exactly 6 cards for the detail page's sub-services grid — distinct from
-   * (and a shorter, page-facing complement to) `subServices`/`capabilityGroups`
-   * above, which stay as the deeper, previously-sourced content folded into
-   * the overview section instead. */
   subServiceGrid: ServiceSubService[];
 }
 
 const baseServices: Service[] = [
   {
-    slug: "civil-engineering",
-    title: "Civil Engineering",
+    slug: "ground-investigation",
+    title: "Ground investigation and geohazard assessment",
     shortDescription:
-      "Designs focused on functionality, constructability, safety and economy.",
+      "Scope, supervise and interpret investigations that answer the design questions that matter.",
     overview:
-      "Geoporte's Civil Engineering team works together with clients, architects, contractors and government entities to deliver designs that focus on functionality, constructability and detailed planning — without compromising safety or sustainability. The team brings vast expertise and a comprehensive range of experience across transport, water, mining and building infrastructure projects, delivering high-quality, cost-effective outputs for projects ranging from straightforward through to complex and challenging.",
-    sceneTheme: "golden-parthenon",
-    sceneSummary:
-      "A classical temple at golden hour — sun-warmed stone colonnade against a dusk sky, drifting dust motes catching the light, the sun itself following the cursor across the horizon as it sweeps.",
-    capabilityGroups: [
-      {
-        heading: "Project Capabilities",
-        items: [
-          "Cross drainage culverts and floodways",
-          "Waterway rehabilitation design",
-          "Waterway rehabilitation work",
-          "Dams, levees and retarding basins",
-          "Sediment control",
-          "Waterways erosion control",
-          "Design of trenchless drainage solutions",
-          "Design of stormwater infrastructure",
-        ],
-      },
-      {
-        heading: "Design & Planning",
-        items: [
-          "Conceptual design — preliminary layouts and renderings",
-          "Detailed design — comprehensive drawings and specifications",
-          "3D modelling of structures and systems",
-          "Site planning and grading optimisation",
-          "Construction documentation packages",
-        ],
-      },
-      {
-        heading: "Civil Infrastructure",
-        items: [
-          "Temporary works design",
-          "Earthworks and road formations",
-          "Roadworks and pavement design",
-          "Footpath and cycleway design",
-          "Underground stormwater systems",
-          "Cross drainage culverts and floodways",
-          "Waterway rehabilitation design",
-          "Dams, levees and retaining structures",
-          "Stormwater drainage and detention basins",
-          "Water and sewer reticulation",
-          "Utilities and wastewater design",
-        ],
-      },
-      {
-        heading: "Specialised Work",
-        items: [
-          "Signage and line markings",
-          "Creek diversion design",
-          "Hardstand infrastructure pads",
-          "Sediment and erosion control",
-          "Hydraulic network modelling",
-          "Rail infrastructure design",
-        ],
-      },
-    ],
-    stats: [
-      { value: 15, label: "Road projects" },
-      { value: 8, label: "Bridges" },
-      { value: 3, suffix: "", label: "Countries" },
-    ],
-    processSteps: [
-      "Brief",
-      "Site Investigation",
-      "Concept Design",
-      "Detailed Design",
-      "Construction Support",
-      "As-Built",
-    ],
-    subServiceGrid: [
-      {
-        title: "Road & Highway Design",
-        description:
-          "Geometric design, pavement structure and intersection layouts for new and upgraded road corridors.",
-      },
-      {
-        title: "Bridge Engineering",
-        description:
-          "Concept through detailed design of bridge structures, from simple culverts to multi-span crossings.",
-      },
-      {
-        title: "Pavement Design",
-        description:
-          "Flexible and rigid pavement design compliant with Austroads and local road authority standards.",
-      },
-      {
-        title: "Traffic & Transport Planning",
-        description:
-          "Traffic modelling, intersection analysis and transport network planning to support development approvals.",
-      },
-      {
-        title: "Civil Infrastructure",
-        description:
-          "Water, sewer and utility reticulation design integrated with the broader civil works package.",
-      },
-      {
-        title: "Drainage Design",
-        description:
-          "Stormwater drainage networks and detention systems sized to manage runoff at the source.",
-      },
-    ],
-  },
-  {
-    slug: "design-and-drafting",
-    title: "Design & Drafting",
-    shortDescription:
-      "Comprehensive civil engineering design solutions using cutting-edge technology.",
-    overview:
-      "High-quality design and drafting services that adhere to industry standards and best practice. The team pairs experienced civil engineers with CAD specialists, working in industry-leading software — AutoCAD, Civil 3D and Revit — to deliver precise, coordinated documentation as an extension of the client's own project team.",
-    sceneTheme: "aether-flux",
-    sceneSummary:
-      "A slowly turning cube of brushed-platinum drafting rods, each one orienting itself along a swirling flow field — the cursor parts them into a soft pocket and curls them into a vortex, a click sends an expanding ring that lengthens and ignites the rods it passes.",
-    capabilityGroups: [
-      {
-        heading: "Services Offered",
-        items: [
-          "Conceptual design — preliminary layouts, sketches and renderings",
-          "Detailed design — comprehensive drawings for site development, transportation, utilities and infrastructure",
-          "3D modelling — three-dimensional visualisations identifying potential design conflicts",
-          "Site planning and grading — layout optimisation and earthwork calculations",
-          "Construction documentation — construction drawings, quantity takeoffs and material specifications",
-        ],
-      },
-      {
-        heading: "How we work",
-        items: [
-          "Industry-leading CAD software — AutoCAD, Civil 3D & Revit",
-          "Rigorous review processes for accuracy and compliance",
-          "Collaborative method — direct alignment with clients and stakeholders",
-          "A One Team approach — Geoporte as an extension of your project team",
-        ],
-      },
-    ],
-    stats: [
-      { value: 500, label: "Drawings delivered" },
-      { value: 8, suffix: "", label: "Disciplines covered" },
-      { value: 100, suffix: "%", label: "Digital workflow" },
-    ],
-    processSteps: [
-      "Design Brief",
-      "Concept Sketches",
-      "CAD Development",
-      "Review",
-      "Final Drawings",
-      "Revisions",
-    ],
-    subServiceGrid: [
-      {
-        title: "2D CAD Drafting",
-        description:
-          "Precise, coordinated 2D drawings produced in AutoCAD and Civil 3D to construction-ready standard.",
-      },
-      {
-        title: "3D BIM Modelling",
-        description:
-          "Federated 3D models in Revit that catch clashes and coordination issues before they reach site.",
-      },
-      {
-        title: "As-Built Documentation",
-        description:
-          "Accurate as-constructed drawings capturing what was actually built against the design intent.",
-      },
-      {
-        title: "Shop Drawings",
-        description:
-          "Fabrication-level detail drawings for contractors and manufacturers to build directly from.",
-      },
-      {
-        title: "Coordination Drawings",
-        description:
-          "Multi-discipline overlay drawings resolving clashes between structural, civil and services.",
-      },
-      {
-        title: "Specification Writing",
-        description:
-          "Technical specifications that translate design intent into enforceable contract documentation.",
-      },
-    ],
-  },
-  {
-    slug: "geotechnical-engineering",
-    title: "Geotechnical Engineering",
-    shortDescription:
-      "Full-service solutions for planning and design challenges beneath the ground.",
-    overview:
-      "Geoporte's geotechnical practice is the deepest bench in the firm — full-service solutions across site investigation, ground behaviour, foundation design and slope stabilisation, applied to some of the region's most technically demanding infrastructure. This is the discipline the Geoporte digital twin was built to show: what lies beneath the project.",
+      "Most cost and programme overruns on Gulf projects trace back to the ground. We scope investigations around the design questions that matter, then turn the results into a defensible ground model and design parameters. Gulf ground changes quickly: sabkha and shallow saline groundwater, calcareous sands and reclaimed fills, cemented caprock over weaker layers, karstic limestone with cavities, and collapsible or expansive soils. Aggressive groundwater affects concrete and steel durability and must be tested and reported.",
     sceneTheme: "solaris",
-    sceneSummary:
-      "A breathing navy-to-azure particle sun as the page's full-page background, with a bounded finite-element geotechnical model layered on top of it inside the hero: six geological strata cut away around a deep excavation with retaining walls, a piled foundation and a tunnel bore, a graded FE mesh denser around every structural element, toggleable deformation and analysis-result contours, a 6-stage construction sequence, and a clamped orbit camera.",
+    sceneSummary: "Subsurface ground model — boreholes, strata and groundwater across the Gulf profile.",
     capabilityGroups: [
       {
-        heading: "Scoping & Feasibility",
+        heading: "What we deliver",
         items: [
-          "Scoping and execution of geotechnical investigations",
-          "Feasibility and planning studies with concept design trade-offs",
-          "Soil and rock drilling, sampling and testing",
-          "Geotechnical and geological interpretation",
+          "Desk studies, site reconnaissance and geohazard mapping: sabkha, karst and cavities, collapsible and expansive soils, wadi and flood exposure",
+          "Investigation scoping and specification: borehole spacing and depth, in-situ testing (SPT, CPT, pressuremeter, plate load, geophysics) and laboratory schedules matched to the structure and the risk",
+          "Supervision and logging, contractor coordination and quality checks",
+          "Factual and interpretive reports, ground models and characteristic design parameters",
+          "Geotechnical baseline reports for tunnelling and major earthworks contracts",
         ],
       },
       {
-        heading: "Detailed Design",
+        heading: "Gulf considerations",
         items: [
-          "Retaining structures — water, building and transport infrastructure",
-          "Slope stability assessment and remediation",
-          "Landslide identification and mitigation measures",
-          "Earthworks and landfill",
-          "Foundation design — shallow and deep",
-          "Ground improvement",
-          "Seismic hazard assessment and design",
-          "Dams and levees integrity assessment and design",
-          "Waterway bank stability assessments",
-          "Road formation and related earthworks",
-          "Pavement design",
-          "Renewables geotechnics",
-          "Mining geotechnics",
-          "Ports and marine geotechnical engineering",
+          "Sabkha and shallow saline groundwater",
+          "Calcareous sands and reclaimed fills: CPT correlations must be adjusted",
+          "Cemented caprock over weaker layers",
+          "Karstic limestone with cavities",
+          "Collapsible and expansive soils in arid terrain",
+          "Aggressive groundwater: concrete and steel durability testing",
         ],
-      },
-      {
-        heading: "Risk, Quality & Forensic Services",
-        items: [
-          "Construction quality assessments",
-          "Geotechnical risk assessment and management",
-          "Forensic investigation of geotechnical failures",
-          "Impact assessment of new construction on existing infrastructure",
-          "Operational monitoring and management",
-        ],
-      },
-    ],
-    subServices: [
-      {
-        title: "Trenchless Methods",
-        description:
-          "Geoporte's specialists are recognised industry leaders with decades of experience in trenchless methods — large-diameter tunnel crossings, microtunnelling (MTBM) and horizontal directional drilling (HDD) — for transportation and water infrastructure. Core competencies span multi-criteria cost-benefit analysis of trenchless vs. open-cut methods, ground movement and structural-integrity impact assessment via high-precision Plaxis 2D/3D modelling, MTBM/HDD reference designs and performance specifications to Australian standards, tender and contractor support, and design office/site presence through construction, delivering safe, reliable and cost-efficient trenchless solutions that minimise risk and disruption.",
-      },
-      {
-        title: "Proof Engineering Services of Geotechnical Design",
-        description:
-          "Independent verification of geotechnical design against the governing standards before construction proceeds.",
-      },
-      {
-        title: "Slope Stability Assessment & Stabilization Design",
-        description:
-          "Assessing natural and engineered slopes and designing stabilisation works where the factor of safety falls short.",
-      },
-      {
-        title: "Reclamation Works Design",
-        description: "Engineering design for land reclamation projects.",
-      },
-      {
-        title: "Road Subgrade Assessment and Design",
-        description:
-          "Characterising subgrade conditions to inform pavement and formation design.",
-      },
-      {
-        title: "Temporary Works Design",
-        description:
-          "Many construction sites need temporary works in order to facilitate permanent works.",
-      },
-      {
-        title: "Retention Systems",
-        description:
-          "Design of sheet piled walls, diaphragm walls, bored pile walls and gravity retaining walls.",
-      },
-      {
-        title: "Earthworks Design",
-        description:
-          "Sites may contain natural or man-made constraints to development — earthworks design resolves them.",
-      },
-      {
-        title: "Pipelines",
-        description:
-          "Impact assessment of loads on existing pipelines from nearby works.",
-      },
-      {
-        title: "Ground Settlement (Static and Seismic)",
-        description:
-          "Settlement is the vertical movement of the ground — assessed under both static and seismic loading.",
-      },
-      {
-        title: "Ground Improvement Design",
-        description:
-          "Dynamic compaction, vibrocompaction, vibro-replacement and surcharging.",
-      },
-      {
-        title: "Seismic Hazard Analyses and Earthquake Geotechnical Design",
-        description:
-          "Site-specific seismic hazard characterisation and earthquake-resistant geotechnical design.",
-      },
-      {
-        title: "Site Investigation Planning and Reporting",
-        description:
-          "Drilling, soil sampling, laboratory testing and test pitting, planned and reported to support design.",
-      },
-      {
-        title: "Forensic Geotechnical Engineering",
-        description:
-          "Investigating settlement of structures, expansive soil and lateral movement failures.",
-      },
-      {
-        title: "Numerical Modelling",
-        description:
-          "State-of-the-art numerical analysis for complex geotechnical problems.",
-      },
-      {
-        title: "Pavement Profile Design",
-        description:
-          "Compliant with the Austroads Guide to Pavement Technology and VicRoads standards.",
-      },
-      {
-        title: "Desktop Studies and Geohazard Geotechnical Assessment",
-        description:
-          "Feasibility studies, site reconnaissance and geohazard evaluation ahead of investment.",
       },
     ],
     stats: [
-      { value: 200, label: "Boreholes supervised" },
-      { value: 50, label: "Site investigations" },
-      { value: 7, suffix: "", label: "Countries" },
+      { value: 25, suffix: "+", label: "Years Gulf investigation experience" },
+      { value: 7, suffix: "+", label: "Countries active" },
+      { value: 8, suffix: "", label: "Senior specialists" },
     ],
     processSteps: [
-      "Desk Study",
-      "Field Investigation",
-      "Lab Testing",
-      "Analysis",
-      "Report",
-      "Design Recommendations",
+      "Desk study and geohazard mapping",
+      "Scope and specification",
+      "Supervision and QA",
+      "Factual reporting",
+      "Interpretive report and ground model",
+      "Design parameters",
     ],
     subServiceGrid: [
+      { title: "Desk studies", description: "Review of available data, mapping and geohazard screening before mobilisation." },
+      { title: "Geohazard mapping", description: "Sabkha, karst, collapsible soils and wadi flood risk mapped against the alignment or footprint." },
+      { title: "Investigation scoping", description: "Borehole layout, in-situ testing schedule and laboratory programme matched to the structure and risk." },
+      { title: "Site supervision", description: "Logging, contractor coordination and quality checks during fieldwork." },
+      { title: "Factual reporting", description: "Factual borehole logs, test results and groundwater observations." },
+      { title: "Ground models", description: "Interpretive report, design parameter selection and geotechnical baseline reports." },
+    ],
+  },
+  {
+    slug: "geotechnical-design",
+    title: "Geotechnical design: foundations, retaining structures, earthworks and slopes",
+    shortDescription:
+      "Concept, tender and detailed design matched to Gulf ground conditions and regional authority requirements.",
+    overview:
+      "Concept, tender and detailed geotechnical design for buildings, transport, marine and utility infrastructure, matched to the ground conditions, the structural loads and the way the contractor will build it. We design to SBC 303 in the Kingdom, QCS and QHDM in Qatar, and Dubai Municipality and Abu Dhabi authority requirements in the UAE, alongside Eurocode 7, BS and AASHTO. Durability in saline groundwater, settlement of carbonate fills and seismic design of reclaimed land are routine considerations, not afterthoughts.",
+    sceneTheme: "golden-parthenon",
+    sceneSummary: "Foundation geometry and soil-structure interaction beneath a typical Gulf tower.",
+    capabilityGroups: [
       {
-        title: "Site Investigations",
-        description:
-          "Drilling, sampling and in-situ testing programs planned and supervised to characterise ground conditions.",
+        heading: "What we deliver",
+        items: [
+          "Shallow foundations, piled foundations and piled rafts, including pile springs and settlement for the structural model",
+          "Deep basements and excavation support: secant and contiguous pile walls, diaphragm walls, anchors and struts, dewatering",
+          "Retaining structures: blockwork and gravity walls, sheet pile walls, reinforced soil and MSE walls",
+          "Earthworks design, cut and fill optimisation, embankments on soft ground, working platforms",
+          "Rock slope and cutting design: rock mass characterisation, rockfall assessment, bolting, mesh and drainage",
+          "Seismic site response and liquefaction assessment",
+          "Pavement subgrade assessment and design parameters for heavy-duty and highway pavements",
+        ],
       },
+    ],
+    stats: [
+      { value: 25, suffix: "+", label: "Years Gulf design experience" },
+      { value: 90, suffix: "+", label: "Structures designed and checked" },
+      { value: 7, suffix: "+", label: "GCC countries" },
+    ],
+    processSteps: [
+      "Brief and ground model review",
+      "Concept design and options",
+      "Tender design and specification",
+      "Detailed design and calculations",
+      "Drawing issue and authority submission",
+      "Construction support",
+    ],
+    subServiceGrid: [
+      { title: "Piled rafts and deep foundations", description: "Pile spring derivation and settlement analysis for the structural model." },
+      { title: "Basement excavation support", description: "Secant and diaphragm wall design, anchors, struts and dewatering." },
+      { title: "Retaining and MSE walls", description: "Gravity, blockwork, sheet pile and mechanically stabilised earth wall design." },
+      { title: "Earthworks", description: "Cut and fill, embankments on soft ground and working platform design." },
+      { title: "Rock slopes", description: "Rock mass characterisation, rockfall risk and stabilisation design." },
+      { title: "Seismic design", description: "Site response, liquefaction assessment and seismic design parameters." },
+    ],
+  },
+  {
+    slug: "tunnelling-underground",
+    title: "Tunnelling and underground structures",
+    shortDescription:
+      "TBM and microtunnel design, shafts, dewatering and impact assessment from the Gulf's metro corridors to utility crossings.",
+    overview:
+      "Our senior specialists have designed some of the region's largest underground systems, from metro tunnels and stations to the deepest sewer shafts in the Gulf. We bring the same discipline to shafts, microtunnels and pipe jacking for utilities and stormwater. Tunnels in the Gulf pass through variable limestone, weathered rock and soil, often below shallow saline groundwater and close to dense utility corridors. Impact on live assets is usually the governing design case.",
+    sceneTheme: "einstein-rosen-lattice",
+    sceneSummary: "TBM drive and shaft cross-section through Gulf limestone and weathered rock.",
+    capabilityGroups: [
       {
-        title: "Laboratory Testing",
-        description:
-          "Soil and rock testing to determine the engineering properties driving foundation and earthworks design.",
+        heading: "What we deliver",
+        items: [
+          "Tunnelling method selection and multi-criteria analysis (TBM, microtunnelling, pipe jacking, HDD, open cut)",
+          "Shaft design: secant pile, diaphragm wall and caisson shafts, base stability and uplift",
+          "Ground movement assessment: settlement troughs for a range of volume loss cases and building and utility damage assessment",
+          "Dewatering strategy and groundwater control",
+          "Performance specifications for secant piles, dewatering, pipe jacking and monitoring",
+          "Tender support and construction phase advice to tunnelling contractors",
+        ],
       },
+    ],
+    stats: [
+      { value: 100, suffix: "+", label: "km of tunnel designed" },
+      { value: 12, suffix: "", label: "Years heading a Gulf tunnels team" },
+      { value: 5, suffix: "+", label: "Deep metro programmes" },
+    ],
+    processSteps: [
+      "Ground model and geohazard review",
+      "Method selection and feasibility",
+      "Tender design and performance spec",
+      "Detailed shaft and lining design",
+      "Construction phase advice",
+      "Monitoring interpretation",
+    ],
+    subServiceGrid: [
+      { title: "TBM drive design", description: "Ground model, TBM selection, face pressure and tail void grouting specifications." },
+      { title: "Shaft design", description: "Secant pile, diaphragm wall and caisson shaft design for depths up to 100 m." },
+      { title: "Microtunnelling", description: "Pipe jacking, HDD and microtunnel design for utility and stormwater crossings." },
+      { title: "Ground movement", description: "Settlement trough prediction, building damage assessment and utility impact." },
+      { title: "Dewatering", description: "Groundwater control strategy, well design and drawdown impact assessment." },
+      { title: "Performance specifications", description: "Specifications for secant piles, dewatering, pipe jacking and monitoring." },
+    ],
+  },
+  {
+    slug: "numerical-modelling",
+    title: "Numerical modelling and soil-structure interaction",
+    shortDescription:
+      "Advanced PLAXIS 2D and 3D modelling applied with practical construction judgement.",
+    overview:
+      "Advanced analysis is only as good as the ground model behind it. We build independent ground models from first principles, calibrate them against site behaviour, and use finite element analysis where it changes the decision. Riyadh's mixed limestone, weathered rock and soil profiles, and reworked carbonate fills along the coast, punish generic parameters. Our models are checked against observed behaviour before they are relied on for design or for protecting a live asset.",
+    sceneTheme: "aether-flux",
+    sceneSummary: "Finite element mesh of a staged excavation in variable Gulf stratigraphy.",
+    capabilityGroups: [
       {
-        title: "Foundation Design",
-        description:
-          "Shallow and deep foundation design matched to the ground conditions and structural loads.",
+        heading: "What we deliver",
+        items: [
+          "PLAXIS 2D and 3D staged construction modelling of excavations, shafts, tunnels, embankments and slopes",
+          "Piled raft and pile group soil-structure interaction, upper and lower bound pile springs for the structural model",
+          "Seismic and dynamic analysis, site response and liquefaction",
+          "Back-analysis of measured movements to calibrate parameters",
+          "Software proficiency: PLAXIS, GeoStudio, FLAC, UDEC, Midas GTS NX, ABAQUS, LPile, DeepSoil and the Rocscience suite",
+        ],
       },
+    ],
+    stats: [
+      { value: 200, suffix: "+", label: "PLAXIS models completed" },
+      { value: 3, suffix: "D", label: "Staged construction models" },
+      { value: 20, suffix: "+", label: "Published numerical methods papers" },
+    ],
+    processSteps: [
+      "Ground model from first principles",
+      "Constitutive model selection",
+      "Calibration against site data",
+      "Staged analysis",
+      "Sensitivity studies",
+      "Report and design recommendations",
+    ],
+    subServiceGrid: [
+      { title: "Excavation and shaft modelling", description: "Staged PLAXIS models of deep excavations including dewatering and prop removal." },
+      { title: "Tunnel and TBM modelling", description: "Ground loss, greenfield settlement and building damage from TBM drives." },
+      { title: "Piled raft analysis", description: "3D soil-structure interaction and pile spring derivation for the structural team." },
+      { title: "Seismic and dynamic analysis", description: "Site response, liquefaction and dynamic amplification for seismic design." },
+      { title: "Back-analysis", description: "Calibration of parameters against measured displacements and loads." },
+      { title: "Slope and embankment", description: "Stability, deformation and seepage analysis for embankments and rock slopes." },
+    ],
+  },
+  {
+    slug: "ground-improvement-reclamation",
+    title: "Ground improvement and reclamation",
+    shortDescription:
+      "Reclamation, quay walls and ground improvement over calcareous fills — a core strength of our leadership.",
+    overview:
+      "Reclamation, quay walls and ground improvement over calcareous fills are core strengths of our leadership, applied to offshore islands, urban waterways and container terminals. Calcareous sands crush and creep, and their CPT response differs from silica sands, so correlations must be adjusted. Verification criteria need to reflect this or acceptance testing will be disputed.",
+    sceneTheme: "negentropy",
+    sceneSummary: "Reclamation fill placement, vibro-compaction probes and quay wall cross-section.",
+    capabilityGroups: [
       {
-        title: "Slope Stability Analysis",
-        description:
-          "Assessing natural and engineered slopes and designing stabilisation where the factor of safety falls short.",
+        heading: "What we deliver",
+        items: [
+          "Reclamation design: fill selection, dredged fill placement, settlement and liquefaction assessment",
+          "Ground improvement design: vibro-compaction, vibro-replacement (stone columns), dynamic compaction and rapid impact compaction, surcharging with or without prefabricated vertical drains, deep soil mixing, grouting",
+          "Performance-based specifications and acceptance criteria for specialist contractors",
+          "Pre and post-improvement testing, interpretation and compliance verification",
+          "Marine structures foundations: quay walls, revetments, breakwaters and slope protection; dredging investigation and design input",
+        ],
       },
+    ],
+    stats: [
+      { value: 6, suffix: "+", label: "Major reclamation and port projects" },
+      { value: 50, suffix: "+", label: "km² of reclamation designed" },
+      { value: 25, suffix: "+", label: "Years Gulf marine experience" },
+    ],
+    processSteps: [
+      "Ground investigation and fill characterisation",
+      "Method selection and feasibility",
+      "Design and performance specification",
+      "Trial testing and calibration",
+      "Full-scale improvement and monitoring",
+      "Verification and compliance reporting",
+    ],
+    subServiceGrid: [
+      { title: "Reclamation design", description: "Fill selection, placement sequence, settlement and liquefaction assessment." },
+      { title: "Vibro-compaction", description: "Design and specification for vibro-compaction and vibro-replacement in calcareous sands." },
+      { title: "Dynamic and impact compaction", description: "Dynamic compaction and rapid impact compaction design." },
+      { title: "Vertical drains and surcharge", description: "PVD layout, surcharge design and time-settlement prediction for soft ground." },
+      { title: "Quay walls and marine structures", description: "Foundation design for quay walls, revetments and breakwaters." },
+      { title: "Verification testing", description: "Acceptance criteria and compliance testing for specialist contractors." },
+    ],
+  },
+  {
+    slug: "independent-checking",
+    title: "Independent checking, peer review and value engineering",
+    shortDescription:
+      "Category III checking, peer review and value engineering — an independent ground model and calculations, not just comments.",
+    overview:
+      "Independent design checking, peer review and value engineering for developers, checking engineers, lead consultants and EPC contractors. We bring an independent ground model and calculations, not just comments on someone else's. Checking is common on Gulf towers, reclamation and infrastructure. Our checks are written for the checking engineer, the authority and the contractor to act on, with clear accept, revise or verify outcomes.",
+    sceneTheme: "advisory-lifecycle-network",
+    sceneSummary: "Design review workflow: independent model, check certificate and comment register.",
+    capabilityGroups: [
       {
-        title: "Ground Improvement",
-        description:
-          "Dynamic compaction, vibro-replacement and surcharging design to strengthen weak or variable ground.",
+        heading: "What we deliver",
+        items: [
+          "Category III and third-party checking of geotechnical and temporary works designs",
+          "Peer review of EPC and contractor geotechnical designs (piles, rafts, walls, slopes, tunnels)",
+          "Review of designs submitted for authority approval",
+          "Value engineering: alternative foundation and retaining solutions with cost and programme comparison",
+          "Design basis review for major utility and water infrastructure",
+        ],
       },
+    ],
+    stats: [
+      { value: 30, suffix: "+", label: "Years Category III checking experience" },
+      { value: 50, suffix: "+", label: "Design packages independently checked" },
+      { value: 7, suffix: "+", label: "GCC countries" },
+    ],
+    processSteps: [
+      "Brief review and independent ground model",
+      "Independent calculations",
+      "Comparison with submitted design",
+      "Comment register",
+      "Designer's response review",
+      "Check certificate",
+    ],
+    subServiceGrid: [
+      { title: "Category III checking", description: "Independent ground model and calculations to check and certify geotechnical designs." },
+      { title: "Peer review", description: "Technical peer review of EPC and contractor design packages." },
+      { title: "Authority submission review", description: "Review and comment on designs prior to authority submission." },
+      { title: "Value engineering", description: "Alternative foundation or retaining solutions with cost and programme comparison." },
+      { title: "Design basis review", description: "Independent review of design basis and ground model for major infrastructure." },
+      { title: "Temporary works review", description: "Independent review of contractor temporary works designs." },
+    ],
+  },
+  {
+    slug: "forensic-investigation",
+    title: "Failure and forensic investigation",
+    shortDescription:
+      "Find out why assets have moved, cracked or leaked before spending money on a fix.",
+    overview:
+      "Settlement, cracking, leaking pipe joints, moving excavations and underperforming piles all have a cause that can be found. When assets misbehave we establish the cause before anyone spends money on a fix. Crushed carbonate fills, wetting collapse of desert soils and saline groundwater attack are frequent causes of long-term movement and distress in the Gulf region.",
+    sceneTheme: "schedule-network-graph",
+    sceneSummary: "Forensic timeline: event sequence, back-analysis and root cause.",
+    capabilityGroups: [
       {
-        title: "Retaining Wall Design",
-        description:
-          "Sheet piled, diaphragm, bored pile and gravity retaining wall design for permanent and temporary works.",
+        heading: "What we deliver",
+        items: [
+          "Review of design, construction and monitoring records",
+          "Back-analysis of observed behaviour and targeted further testing",
+          "Root cause assessment and settlement prediction for remaining service life",
+          "Remediation options appraisal and remediation design in proportion to the risk",
+          // [CONFIRM] Expert witness services in UAE/KSA — to be confirmed before publishing
+          "Expert reports written to stand up to third-party, contractual and authority scrutiny",
+        ],
       },
+    ],
+    stats: [
+      { value: 25, suffix: "+", label: "Years forensic investigation experience" },
+      { value: 50, suffix: "+", label: "Forensic investigations completed" },
+      { value: 7, suffix: "+", label: "GCC countries" },
+    ],
+    processSteps: [
+      "Records review and site visit",
+      "Back-analysis of observed behaviour",
+      "Further testing and investigation",
+      "Root cause assessment",
+      "Remediation options appraisal",
+      "Expert report",
+    ],
+    subServiceGrid: [
+      { title: "Records review", description: "Review of design, construction and monitoring records against observed behaviour." },
+      { title: "Back-analysis", description: "Numerical and analytical back-analysis to calibrate parameters against measured movement." },
+      { title: "Root cause assessment", description: "Structured assessment of cause, mechanism and sequence of distress." },
+      { title: "Targeted further testing", description: "Scoped investigation to fill gaps in the records and test hypotheses." },
+      { title: "Remediation design", description: "Remediation options appraisal and proportionate remediation design." },
+      { title: "Expert reporting", description: "Reports written to stand up to third-party, contractual and authority scrutiny." },
     ],
   },
   {
     slug: "structural-engineering",
-    title: "Structural Engineering",
+    title: "Structural engineering",
     shortDescription:
-      "Cost-effective solutions to the latest standards and codes.",
+      "Structural design, assessment, strengthening and rehabilitation — coordinated with the ground model.",
     overview:
-      "Customised, cost-effective structural engineering solutions for the civil infrastructure sector, combining local and international expertise to meet current standards without compromising delivery efficiency. Geoporte works a One Team approach — collaborating directly with clients to develop tailored structural solutions across site development, transportation, utilities and infrastructure.",
-    sceneTheme: "einstein-rosen-lattice",
-    sceneSummary:
-      "A platinum lattice wormhole funnelling down to a glowing throat — warm gold at the mouth, cold sapphire at the flaring rim, its meridian wireframe breathing and drifting as the structure slowly spins.",
+      "Structural design, assessment, strengthening and rehabilitation, delivered by Technical Directors with experience across marine and water-retaining structures, offshore oil and gas facilities, bridges and high-rise buildings. Working alongside our geotechnical team means foundations and structure are designed as one system. Durability in aggressive marine and saline environments, heritage buildings that have been modified over decades, and soil-structure interaction on piled rafts are common themes in the region.",
+    sceneTheme: "golden-parthenon",
+    sceneSummary: "Structural frame and foundation interaction — reinforced concrete tower on a piled raft.",
     capabilityGroups: [
       {
-        heading: "Core capabilities",
+        heading: "What we deliver",
         items: [
-          "Conceptual Design — preliminary layouts, sketches and renderings",
-          "Detailed Design — comprehensive drawings, plans and specifications",
-          "3D Modelling — detailed models enabling visualisation and clash detection",
-          "Site Planning and Grading — layout optimisation, earthwork calculations and drainage design",
-          "Construction Documentation — construction drawings, quantity takeoffs and material specifications",
+          "Structural design of reinforced concrete, prestressed concrete and steel structures",
+          "Marine and water-retaining structures",
+          "Bridges and infrastructure structures",
+          "Condition assessment, capacity checks, strengthening and rehabilitation of existing structures",
+          "Finite element analysis and structural optimisation (ETABS, SAP2000, SAFE, STAAD, SACS, ABAQUS)",
+          "Forensic structural investigations and independent structural review",
         ],
       },
     ],
     stats: [
-      { value: 100, label: "Structures designed" },
-      { value: 30, label: "Years combined experience" },
-      { value: 0, suffix: "", label: "Structural failures" },
+      { value: 20, suffix: "+", label: "Years structural experience" },
+      { value: 90, suffix: "+", label: "Projects delivered" },
+      { value: 50, suffix: "+", label: "Peer-reviewed publications" },
     ],
     processSteps: [
-      "Architectural Brief",
-      "Structural Concept",
-      "Analysis & Design",
-      "Documentation",
-      "Construction Support",
+      "Concept design",
+      "FEED and detailed engineering",
+      "Procurement and specification",
+      "Construction phase support",
+      "Structural integrity management",
+      "Rehabilitation and strengthening",
     ],
     subServiceGrid: [
-      {
-        title: "Building Structural Design",
-        description:
-          "Structural systems for new buildings, from concept framing through detailed documentation.",
-      },
-      {
-        title: "Industrial Structures",
-        description:
-          "Structural design for industrial facilities, plant support structures and heavy equipment foundations.",
-      },
-      {
-        title: "Retaining Structures",
-        description:
-          "Structural design of retaining walls and earth-retention systems coordinated with the geotechnical model.",
-      },
-      {
-        title: "Facade Engineering",
-        description:
-          "Structural support systems for building facades, glazing and cladding.",
-      },
-      {
-        title: "Structural Assessments",
-        description:
-          "Condition assessments and capacity checks of existing structures against current loading codes.",
-      },
-      {
-        title: "Peer Review",
-        description:
-          "Independent structural design review providing assurance before construction proceeds.",
-      },
+      { title: "Reinforced and prestressed concrete", description: "Design to American (ACI), British (BS), European (Eurocode), Saudi (SBC) and UAE (Local) codes." },
+      { title: "Marine and water-retaining structures", description: "Quay walls, jetties, tanks and reservoirs designed for durability." },
+      { title: "Bridges and infrastructure", description: "Highway bridges, interchanges and marine bridges." },
+      { title: "Existing structure assessment", description: "Capacity checks, condition assessment and rehabilitation design." },
+      { title: "Structural FEA", description: "ETABS, SAP2000, SAFE, STAAD, SACS and ABAQUS modelling." },
+      { title: "Independent structural review", description: "Peer review and check of structural design packages." },
     ],
   },
   {
-    slug: "stormwater-and-flood-modelling",
-    title: "Stormwater & Flood Modelling",
-    shortDescription: "Innovative risk management through technical expertise.",
+    slug: "construction-support",
+    title: "Construction phase support and monitoring",
+    shortDescription:
+      "Stay involved through construction to check that the ground behaves as predicted and act quickly when it does not.",
     overview:
-      "Helping clients effectively manage stormwater and flood risk through innovative solutions, technical expertise and current modelling technology — hydrological, hydraulic and GIS-based approaches, backed by clear regulatory navigation and sophisticated data visualisation.",
-    sceneTheme: "negentropy",
-    sceneSummary:
-      "A drifting field of luminous particles — a spiral web resolving into strands of light, an orbiting molecule cage, a swirling green storm, a counter-spinning hourglass galaxy — flown through with the scroll as a single cursor-reactive composition.",
-    capabilityGroups: [
-      {
-        heading: "Core competencies",
-        items: [
-          "Advanced modelling techniques — hydrological, hydraulic and GIS-based simulation of runoff, inundation and drainage",
-          "Risk assessment and mitigation — evaluating flooding impacts and resilience strategies",
-          "Customised solutions aligned to project goals, regulatory demands and budget",
-          "Regulatory compliance across multiple jurisdictions",
-          "Data analysis and visualisation of complex hydraulic datasets",
-        ],
-      },
-      {
-        heading: "Specific services",
-        items: [
-          "Flood Hazard Mapping",
-          "Stormwater Management Plans",
-          "Hydraulic Modelling",
-          "Climate Change Adaptation",
-          "Emergency Response Planning",
-        ],
-      },
-    ],
-    stats: [
-      { value: 80, label: "Flood studies" },
-      { value: 5, suffix: "", label: "Software platforms" },
-      { value: 3, suffix: "", label: "Countries" },
-    ],
-    processSteps: [
-      "Catchment Analysis",
-      "Hydrological Modelling",
-      "Hydraulic Modelling",
-      "Risk Assessment",
-      "Design",
-      "Reporting",
-    ],
-    subServiceGrid: [
-      {
-        title: "Stormwater Management Plans",
-        description:
-          "Catchment-wide stormwater strategies balancing flood risk, water quality and development yield.",
-      },
-      {
-        title: "Flood Risk Assessment",
-        description:
-          "Flood extent, depth and hazard mapping to inform planning, design and emergency response.",
-      },
-      {
-        title: "Drainage Network Design",
-        description:
-          "Underground stormwater network design sized against current design storm standards.",
-      },
-      {
-        title: "MUSIC Modelling",
-        description:
-          "Water quality treatment train modelling using the MUSIC platform to meet stormwater quality targets.",
-      },
-      {
-        title: "TUFLOW/HEC-RAS Modelling",
-        description:
-          "2D/1D hydraulic modelling of catchments and waterways using industry-standard TUFLOW and HEC-RAS platforms.",
-      },
-      {
-        title: "Water Sensitive Urban Design",
-        description:
-          "Integrated stormwater treatment and reuse design embedded into the urban landscape.",
-      },
-    ],
-  },
-  {
-    slug: "project-control-services",
-    title: "Project Control Services",
-    shortDescription: "Performance optimisation, risk mitigation, timely delivery.",
-    overview:
-      "Integrated project controls across scheduling, cost management, risk assessment and quality control — optimising project performance, mitigating risk, and ensuring timely, cost-effective delivery through accurate forecasting and transparent stakeholder reporting.",
-    sceneTheme: "schedule-network-graph",
-    sceneSummary:
-      "A looping silhouette video backdrop (GetLayers' \"Siloutte\"), muted and full-bleed behind every section, rather than the WebGL Gantt-bar field the theme name still refers to.",
-    capabilityGroups: [
-      {
-        heading: "Planning & scheduling",
-        items: [
-          "Baseline schedule preparation (Primavera P6)",
-          "Regular schedule updates and dashboard/monthly reporting",
-          "Cost and resource loading",
-          "Extension of Time claims assessment",
-        ],
-      },
-      {
-        heading: "Cost management",
-        items: [
-          "Cost Breakdown Structure development",
-          "Baseline cost preparation",
-          "Cashflow generation",
-          "Cost tracking at agreed intervals",
-        ],
-      },
-      {
-        heading: "Earned value management",
-        items: ["S-Curve generation", "Schedule and Cost Performance Indices (SPI/CPI)"],
-      },
-      {
-        heading: "Additional offerings",
-        items: [
-          "Risk identification and mitigation strategy development",
-          "Change control process implementation",
-          "Quality assurance and compliance oversight",
-        ],
-      },
-    ],
-    stats: [
-      { value: 50, label: "Projects controlled" },
-      { value: 2, prefix: "$", suffix: "B+", label: "Project value managed" },
-      { value: 99, suffix: "%", label: "On-time delivery" },
-    ],
-    processSteps: [
-      "Project Setup",
-      "Baseline Schedule",
-      "Monitoring",
-      "Reporting",
-      "Change Control",
-      "Closeout",
-    ],
-    subServiceGrid: [
-      {
-        title: "Project Scheduling",
-        description:
-          "Baseline and progressively updated project schedules built in Primavera P6.",
-      },
-      {
-        title: "Cost Management",
-        description:
-          "Cost breakdown structures, baseline budgets and ongoing cost tracking against approved scope.",
-      },
-      {
-        title: "Risk Management",
-        description:
-          "Structured risk identification, assessment and mitigation planning across the project lifecycle.",
-      },
-      {
-        title: "Change Management",
-        description:
-          "Formal change control processes keeping scope, cost and schedule impacts visible and approved.",
-      },
-      {
-        title: "Progress Reporting",
-        description:
-          "Regular dashboard and narrative reporting keeping stakeholders aligned on project status.",
-      },
-      {
-        title: "Earned Value Analysis",
-        description:
-          "S-curve generation and schedule/cost performance indices tracking delivery against baseline.",
-      },
-    ],
-  },
-  {
-    slug: "advisory-services",
-    title: "Advisory Services",
-    shortDescription: "A collaborative partnership approach to geotechnical challenges.",
-    overview:
-      "Geoporte's value lies in highly experienced staff who understand geotechnical challenges, operating through an open, collaborative partnership approach — creating innovative, practical solutions that save clients time and money across every project phase.",
+      "Design assumptions are tested during construction. We stay involved through construction to check that the ground behaves as predicted and to act quickly when it does not. Many Gulf projects are built next to live metro tunnels, bridges, utilities and heritage buildings. Monitoring with agreed triggers is how those assets are protected.",
     sceneTheme: "advisory-lifecycle-network",
-    sceneSummary:
-      "A golden particle corona — tens of thousands of motes erupting from a dark hollow core along sixteen irregular spokes, drifting outward and dissipating, the cursor dragging a directional solar flare across the field and every click spawning another shockwave ring.",
+    sceneSummary: "Monitoring network: sensors, trigger levels and response actions during construction.",
     capabilityGroups: [
       {
-        heading: "Core advisory capabilities",
+        heading: "What we deliver",
         items: [
-          "Project Planning & Feasibility — thorough viability assessments",
-          "Design & Engineering — roads, bridges, buildings, water systems and treatment facilities",
-          "Risk Management — identifying challenges and mitigation strategies",
-          "Transportation Planning — road, rail and transit connectivity",
-          "Regulatory Compliance — permitting requirements and standards",
-          "Construction Management — scheduling, budgeting, quality and safety oversight",
-          "Geotechnical & Foundation Engineering — soil mechanics and subsurface investigation",
-          "Asset Management — optimising infrastructure performance through maintenance strategy",
+          "Temporary works and working platform design",
+          "Piling supervision, pile test specification and interpretation (static, bi-directional, dynamic, integrity)",
+          "Instrumentation and monitoring plans with trigger levels and response actions",
+          "Interpretation of monitoring data and back-analysis",
+          "Inspection of excavations and foundations; design office and site presence for quality assurance",
         ],
       },
     ],
     stats: [
-      { value: 7, suffix: "", label: "Countries" },
-      { value: 27, label: "Landmark projects" },
-      { value: 15, label: "Years experience" },
+      { value: 25, suffix: "+", label: "Years construction phase experience" },
+      { value: 100, suffix: "+", label: "Monitoring programmes managed" },
+      { value: 7, suffix: "+", label: "GCC countries" },
     ],
     processSteps: [
-      "Scope Definition",
-      "Data Gathering",
-      "Analysis",
-      "Expert Review",
-      "Report",
-      "Presentation",
+      "Pre-construction baseline survey",
+      "Instrumentation installation and monitoring plan",
+      "Trigger levels and response actions agreed",
+      "Live monitoring and data interpretation",
+      "Back-analysis and design updates",
+      "Post-construction review",
     ],
     subServiceGrid: [
-      {
-        title: "Technical Due Diligence",
-        description:
-          "Independent technical assessment of engineering risk ahead of acquisition or investment decisions.",
-      },
-      {
-        title: "Expert Witness",
-        description:
-          "Independent expert opinion and reporting to support dispute resolution and litigation.",
-      },
-      {
-        title: "Peer Review",
-        description:
-          "Independent review of design and analysis, providing assurance before construction proceeds.",
-      },
-      {
-        title: "Feasibility Studies",
-        description:
-          "Early-stage viability assessment weighing technical, cost and programme considerations.",
-      },
-      {
-        title: "Risk Advisory",
-        description:
-          "Identifying and advising on engineering and delivery risk across the project lifecycle.",
-      },
-      {
-        title: "Procurement Advisory",
-        description:
-          "Guidance on procurement strategy and contractor selection for complex infrastructure delivery.",
-      },
-    ],
-  },
-  {
-    slug: "telecom-services",
-    title: "Telecom Services",
-    shortDescription: "Surveys, design, build and testing for mobile communications systems.",
-    overview:
-      "Surveys, design, build and testing of mobile communications systems across in-building (DAS / Small Cells / Repeaters / Nextivity) and outdoor (Macro / PSN / Small Cells) networks — RF engineering delivered by certified professionals from site survey through commissioning.",
-    sceneTheme: "telecom-signal-network",
-    sceneSummary:
-      "A slowly turning two-arm spiral galaxy — molten-gold core fading into deep-violet dust — diving toward its centre as you scroll, the disc tipping edge-on, drifting atmosphere motes and a cursor-driven void parting the dust.",
-    capabilityGroups: [
-      {
-        heading: "Core competencies",
-        items: [
-          "In-Building Solutions — RF engineering and DAS design, network surveys and installation",
-          "Network Optimisation — performance modifications based on throughput, call quality and failure diagnostics",
-          "RF Design Services — cellular, public safety and broadband wireless site analysis and design",
-          "Telecom Installation & Commissioning — cellular, microwave, fibre optic and satellite deployment",
-        ],
-      },
-      {
-        heading: "Services offered",
-        items: [
-          "Conceptual Design",
-          "Detailed Design",
-          "3D Modelling",
-          "Site Planning and Grading",
-          "Construction Documentation",
-        ],
-      },
-    ],
-    stats: [
-      { value: 200, label: "Sites surveyed" },
-      { value: 5, suffix: "", label: "Telecom providers" },
-      { value: 3, suffix: "", label: "Countries" },
-    ],
-    processSteps: [
-      "Site Survey",
-      "Structural Assessment",
-      "Design",
-      "Authority Approval",
-      "Construction",
-      "Testing & Commissioning",
-    ],
-    subServiceGrid: [
-      {
-        title: "Tower Structural Assessment",
-        description:
-          "Structural capacity assessment of existing towers ahead of new equipment loading.",
-      },
-      {
-        title: "Site Surveys",
-        description:
-          "Detailed site and structural surveys supporting telecom design and approvals.",
-      },
-      {
-        title: "RF Planning Support",
-        description:
-          "Engineering support for RF coverage planning across macro, small cell and in-building networks.",
-      },
-      {
-        title: "Construction Management",
-        description:
-          "On-site construction oversight through installation, testing and commissioning.",
-      },
-      {
-        title: "As-Built Documentation",
-        description:
-          "Accurate as-constructed records of installed telecom infrastructure.",
-      },
-      {
-        title: "Compliance Reporting",
-        description:
-          "Documentation and reporting to meet carrier and regulatory compliance requirements.",
-      },
+      { title: "Temporary works design", description: "Working platform, shoring and temporary structure design." },
+      { title: "Pile testing", description: "Static, bi-directional, dynamic and integrity test specification and interpretation." },
+      { title: "Monitoring plans", description: "Instrumentation layout, trigger levels and response actions for live asset protection." },
+      { title: "Data interpretation", description: "Real-time monitoring data review and back-analysis during construction." },
+      { title: "Site inspection", description: "Excavation and foundation inspections during construction." },
+      { title: "Quality assurance", description: "Design office and site presence through critical construction phases." },
     ],
   },
 ];

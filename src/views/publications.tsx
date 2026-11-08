@@ -43,7 +43,7 @@ export function PublicationsView() {
           to={{ opacity: 1, y: 0 }}
           className="text-foreground-muted mt-8 max-w-2xl text-base leading-relaxed md:text-lg"
         >
-          Our engineers regularly publish technical papers and present at industry conferences on ground behaviour, foundation design and risk-based engineering — drawn from decades of work on complex infrastructure projects across Australia, New Zealand and beyond.
+          Our engineers publish technical papers and present at industry conferences on ground behaviour, foundation design and risk-based engineering — drawn from decades of work on complex infrastructure projects across the Gulf and internationally.
         </Inview>
       </section>
 

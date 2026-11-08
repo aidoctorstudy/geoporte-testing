@@ -7,7 +7,7 @@ export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "Our Team | Geoporte",
     description:
-      "Meet Geoporte's specialist engineers and geologists — decades of combined AU/NZ and global experience across civil, structural, geotechnical and telecom infrastructure.",
+      "Meet the senior specialists who lead and deliver every Geoporte commission — decades of combined Gulf and international experience across geotechnical, tunnelling, structural and marine engineering.",
     url: "/about/team",
   });
 }

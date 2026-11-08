@@ -33,13 +33,13 @@ export interface ServiceCardProps {
 // doesn't mean copy-pasting this special case again. See ADR-0036, ADR-0042,
 // ADR-0044, ADR-0045, ADR-0047, ADR-0048, ADR-0051, ADR-0054.
 const DEDICATED_CARD_SCENES: Record<string, (container: HTMLElement) => HeroSceneHandle> = {
-  "geotechnical-engineering": createSolarisCardScene,
-  "design-and-drafting": createAetherFluxCardScene,
+  "ground-investigation": createSolarisCardScene,
+  "numerical-modelling": createAetherFluxCardScene,
   "structural-engineering": createEinsteinRosenLatticeCardScene,
-  "civil-engineering": createGoldenParthenonCardScene,
-  "stormwater-and-flood-modelling": createNegentropySpiralCardScene,
-  "advisory-services": createAureoleCardScene,
-  "telecom-services": createSpiralGalaxyCardScene,
+  "geotechnical-design": createGoldenParthenonCardScene,
+  "ground-improvement-reclamation": createNegentropySpiralCardScene,
+  "independent-checking": createAureoleCardScene,
+  "tunnelling-underground": createEinsteinRosenLatticeCardScene,
 };
 
 // Mobile/tablet (`< MOBILE_WEBGL_SKIP_WIDTH`) never mounts any of the
@@ -65,13 +65,13 @@ const DEDICATED_CARD_SCENES: Record<string, (container: HTMLElement) => HeroScen
 const MOBILE_WEBGL_SKIP_WIDTH = 1024;
 
 const DEDICATED_CARD_GRADIENTS: Record<string, string> = {
-  "geotechnical-engineering": "var(--raw-gradient-fallback-solaris)",
-  "design-and-drafting": "var(--raw-gradient-fallback-aether-flux)",
+  "ground-investigation": "var(--raw-gradient-fallback-solaris)",
+  "numerical-modelling": "var(--raw-gradient-fallback-aether-flux)",
   "structural-engineering": "var(--raw-gradient-fallback-wormhole)",
-  "civil-engineering": "var(--raw-gradient-fallback-golden-parthenon)",
-  "stormwater-and-flood-modelling": "var(--raw-gradient-fallback-negentropy)",
-  "advisory-services": "var(--raw-gradient-fallback-aureole)",
-  "telecom-services": "var(--raw-gradient-fallback-spiral-galaxy)",
+  "geotechnical-design": "var(--raw-gradient-fallback-golden-parthenon)",
+  "ground-improvement-reclamation": "var(--raw-gradient-fallback-negentropy)",
+  "independent-checking": "var(--raw-gradient-fallback-aureole)",
+  "tunnelling-underground": "var(--raw-gradient-fallback-wormhole)",
 };
 
 // The one card with a full-bleed background *video* instead of a WebGL
@@ -80,11 +80,8 @@ const DEDICATED_CARD_GRADIENTS: Record<string, string> = {
 // re-encodes of the same Siloutte video used on the Project Control
 // Services page background. See ADR-0050.
 const DEDICATED_CARD_VIDEOS: Record<string, { mp4: string; webm: string; poster: string }> = {
-  "project-control-services": {
-    mp4: "/assets/siloutte/siloutte-card.mp4",
-    webm: "/assets/siloutte/siloutte-card.webm",
-    poster: "/assets/siloutte/siloutte-card.jpg",
-  },
+  // "forensic-investigation" could use a video background if one is supplied;
+  // no Siloutte-equivalent video exists for the ME services at launch.
 };
 
 export const ServiceCard = ({ service }: ServiceCardProps) => {

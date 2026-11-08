@@ -6,6 +6,7 @@ import { ProjectExperienceSection } from "./home/ProjectExperienceSection";
 import { ProjectsSection } from "./home/ProjectsSection";
 import { ServicesSection } from "./home/ServicesSection";
 import { StatsSection } from "./home/StatsSection";
+import { HowWeWorkSection } from "./home/HowWeWorkSection";
 
 /**
  * Home view — a Server Component. `RootLayout` owns the page's single <main>
@@ -18,6 +19,7 @@ export const HomeView = () => {
       <AboutSection />
       <GeotechnicalPlexusSection />
       <ServicesSection />
+      <HowWeWorkSection />
       <ProjectExperienceSection />
       <StatsSection />
       <ProjectsSection />

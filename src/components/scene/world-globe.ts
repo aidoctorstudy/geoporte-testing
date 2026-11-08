@@ -13,12 +13,12 @@ import { HERO_SCENE_COLORS as COLOR } from "./hero-scene-colors";
  * so the Advisory Services hero scene's globe can share the exact same
  * country list and projection rather than drifting from its own copy. */
 export const PROJECT_LOCATIONS: Array<{ country: string; lat: number; lon: number }> = [
-  { country: "Australia", lat: -35.3, lon: 149.1 },
-  { country: "New Zealand", lat: -41.29, lon: 174.78 },
   { country: "UAE", lat: 24.45, lon: 54.38 },
-  { country: "India", lat: 28.61, lon: 77.21 },
-  { country: "United Kingdom", lat: 51.51, lon: -0.13 },
   { country: "Saudi Arabia", lat: 24.71, lon: 46.68 },
+  { country: "Qatar", lat: 25.29, lon: 51.53 },
+  { country: "Oman", lat: 23.59, lon: 58.41 },
+  { country: "Bahrain", lat: 26.21, lon: 50.59 },
+  { country: "Kuwait", lat: 29.37, lon: 47.98 },
   { country: "Pakistan", lat: 24.86, lon: 67.01 },
 ];
 

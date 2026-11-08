@@ -4,7 +4,7 @@ import { StatsGlobe } from "./StatsGlobe";
 
 /**
  * Numbers are derived from the real project list in `data/mocks/projects.ts`
- * (sourced from geoporte.com.au/projects) rather than invented — the live
+ * (sourced from geoporte.ae/projects) rather than invented — the live
  * site's own counters render "0+" placeholders with no populated values.
  */
 export const StatsSection = () => {

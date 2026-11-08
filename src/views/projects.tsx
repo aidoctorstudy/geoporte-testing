@@ -8,7 +8,7 @@ export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "Projects | Geoporte",
     description:
-      "Landmark projects across transport, built environment, and energy, resources & water infrastructure — spanning Australia, New Zealand, the UK and the Middle East.",
+      "Ground engineering projects across the Gulf — rail, water, tunnelling, roads and bridges, ports and marine, and buildings. Each shows Geoporte commissions or our senior team's prior work.",
     url: "/projects",
   });
 }

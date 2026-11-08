@@ -13,7 +13,7 @@ export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "About Us | Geoporte",
     description:
-      "Geoporte leads in risk-based design and management of complex engineering projects — an agile team with decades of local and international experience.",
+      "Geoporte Middle East — specialist ground engineering consultancy in Dubai. Senior geotechnical, tunnelling, civil and structural engineers serving the Gulf.",
     url: "/about",
   });
 }
@@ -94,7 +94,7 @@ export function AboutView() {
         <SectionHeading
           id="about-offices-heading"
           eyebrow="Where we work"
-          heading="Offices across Australia, New Zealand and the Middle East"
+          heading="A Gulf practice with an international engineering network"
         />
         <Inview
           tag="ul"

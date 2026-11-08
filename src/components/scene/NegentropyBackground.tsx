@@ -14,7 +14,7 @@ import { createNegentropyHeroScene } from "./build-negentropy-scene";
 // choice, so Negentropy takes the globe's (and the other four scenes')
 // place here rather than joining them — see `glass-background-routes.ts`,
 // which every other exclusive component on this route reads from.
-const NEGENTROPY_BACKGROUND_ROUTE = "/services/stormwater-and-flood-modelling";
+const NEGENTROPY_BACKGROUND_ROUTE = "/services/ground-improvement-reclamation";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

@@ -3,21 +3,26 @@ import { SectionHeading } from "@/components/common/SectionHeading";
 import { ServiceStats } from "./ServiceStats";
 import type { Service } from "@/data/mocks/services";
 
-/** Real per-service photo downloaded from geoporte.com.au — see
+/** Real per-service photo downloaded from geoporte.ae — see
  * obsidian/meta/decisions-log.md for why these are treated as a duotone
  * background layer here rather than used as literal hero images. Exported
  * (not just a local const) so `/admin`'s image manifest (`src/lib/
  * image-manifest.ts`) can enumerate these paths without a parallel,
  * driftable copy — see ADR-0114. */
+/** ME service overview photos. Fallback gracefully when a photo isn't yet
+ * available — the section renders without the band image. */
 export const SERVICE_IMAGES: Record<string, string> = {
-  "civil-engineering": "/assets/services/civil-engineering.jpeg",
-  "design-and-drafting": "/assets/services/design-and-drafting.jpg",
-  "geotechnical-engineering": "/assets/services/geotechnical-engineering.png",
-  "structural-engineering": "/assets/services/structural-engineering.jpeg",
-  "stormwater-and-flood-modelling": "/assets/services/stormwater-and-flood-modelling.jpg",
-  "project-control-services": "/assets/services/project-control-services.jpg",
-  "advisory-services": "/assets/services/advisory-services.jpeg",
-  "telecom-services": "/assets/services/telecom-services.jpg",
+  // Using existing project/team photos as placeholder until ME-specific
+  // service photography is supplied. Update paths when real photos arrive.
+  "ground-investigation": "/assets/projects/GI-1.jpg",
+  "geotechnical-design": "/assets/projects/Plaxis-3D-C.png",
+  "tunnelling-underground": "/assets/projects/MicroTBM-1.png",
+  "numerical-modelling": "/assets/projects/Plaxis-3D-A.png",
+  "ground-improvement-reclamation": "/assets/projects/Yarraman-1.jpg",
+  "independent-checking": "/assets/projects/Plaxis-3D-D.png",
+  "forensic-investigation": "/assets/projects/Advisory-Photo.jpg",
+  "structural-engineering": "/assets/projects/Senior-1.jpg",
+  "construction-support": "/assets/projects/Cover-1.jpg",
 };
 
 export interface ServiceOverviewProps {

@@ -17,14 +17,15 @@
 import type { CSSProperties } from "react";
 
 const KNOWN_SLUGS = [
-  "civil-engineering",
-  "design-and-drafting",
-  "geotechnical-engineering",
+  "ground-investigation",
+  "geotechnical-design",
+  "tunnelling-underground",
+  "numerical-modelling",
+  "ground-improvement-reclamation",
+  "independent-checking",
+  "forensic-investigation",
   "structural-engineering",
-  "stormwater-and-flood-modelling",
-  "project-control-services",
-  "advisory-services",
-  "telecom-services",
+  "construction-support",
 ] as const;
 
 export const getServiceAccentStyle = (slug: string): CSSProperties => {

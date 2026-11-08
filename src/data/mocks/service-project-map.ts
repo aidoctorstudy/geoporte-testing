@@ -1,40 +1,58 @@
 /**
  * Curated service → project-category relevance map, used by the service
- * detail page's Related Projects section to filter `projects` (`@/data/mocks/
-projects`) down to a handful of representative real projects.
+ * detail page's Related Projects section to filter `projects` down to a
+ * handful of representative real projects.
  *
- * `Project` has no direct service/discipline linkage — only a 3-value
- * `category` and a loose free-text `sector` that doesn't reliably match any
- * of the 8 service slugs. Rather than add a `relatedServiceSlugs` field to
- * all 26 projects (a bigger, riskier data change than this needs), each
- * service is hand-mapped to the 1-3 project categories it's actually
- * relevant to; the section filters and caps at 6 cards. See ADR in
- * obsidian/meta/decisions-log.md.
+ * Maps each of the 9 ME service slugs to the ProjectCategory values that
+ * best represent it. The section filters and caps at 6 cards.
+ *
+ * Source: Geoporte ME Website Content and Build Brief, Rev 0,
+ * 2 November 2026, Section 7 (Related projects noted per service).
  */
 import type { ProjectCategory } from "./projects";
 
 export const SERVICE_PROJECT_CATEGORIES: Record<string, ProjectCategory[]> = {
-  "civil-engineering": ["Transport"],
-  "design-and-drafting": ["Transport", "Built Environment"],
-  "geotechnical-engineering": [
-    "Transport",
-    "Built Environment",
-    "Energy, Resources & Water",
+  "ground-investigation": [
+    "Rail and Metro",
+    "Water, Wastewater and Drainage",
+    "Roads and Bridges",
   ],
-  "structural-engineering": ["Built Environment"],
-  "stormwater-and-flood-modelling": [
-    "Energy, Resources & Water",
-    "Built Environment",
+  "geotechnical-design": [
+    "Buildings and Developments",
+    "Roads and Bridges",
+    "Energy and Utilities",
   ],
-  "project-control-services": [
-    "Transport",
-    "Built Environment",
-    "Energy, Resources & Water",
+  "tunnelling-underground": [
+    "Rail and Metro",
+    "Water, Wastewater and Drainage",
+    "Tunnelling and Underground",
   ],
-  "advisory-services": [
-    "Transport",
-    "Built Environment",
-    "Energy, Resources & Water",
+  "numerical-modelling": [
+    "Buildings and Developments",
+    "Water, Wastewater and Drainage",
+    "Tunnelling and Underground",
   ],
-  "telecom-services": ["Energy, Resources & Water"],
+  "ground-improvement-reclamation": [
+    "Ports, Marine and Reclamation",
+  ],
+  "independent-checking": [
+    "Buildings and Developments",
+    "Ports, Marine and Reclamation",
+    "Roads and Bridges",
+  ],
+  "forensic-investigation": [
+    "Water, Wastewater and Drainage",
+    "Buildings and Developments",
+    "Investigation and Forensics",
+  ],
+  "structural-engineering": [
+    "Buildings and Developments",
+    "Energy and Utilities",
+    "Roads and Bridges",
+  ],
+  "construction-support": [
+    "Rail and Metro",
+    "Buildings and Developments",
+    "Water, Wastewater and Drainage",
+  ],
 };

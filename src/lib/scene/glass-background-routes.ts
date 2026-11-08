@@ -29,14 +29,15 @@
  * hero section only — both visible together, not one replacing the other.
  */
 export const GLASS_BACKGROUND_ROUTES: ReadonlySet<string> = new Set([
-  "/services/geotechnical-engineering",
-  "/services/design-and-drafting",
-  "/services/structural-engineering",
-  "/services/civil-engineering",
-  "/services/stormwater-and-flood-modelling",
-  "/services/project-control-services",
-  "/services/advisory-services",
-  "/services/telecom-services",
+  // Service pages whose sceneTheme is in GLASS_SCENE_THEMES (see services.ts):
+  "/services/ground-investigation",           // solaris
+  "/services/numerical-modelling",            // aether-flux
+  "/services/tunnelling-underground",         // einstein-rosen-lattice
+  "/services/ground-improvement-reclamation", // negentropy
+  "/services/forensic-investigation",         // schedule-network-graph
+  "/services/independent-checking",           // advisory-lifecycle-network
+  "/services/construction-support",           // advisory-lifecycle-network
+  // Pages with their own fixed backgrounds:
   "/projects",
   "/publications",
   "/about",

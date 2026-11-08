@@ -63,7 +63,7 @@ export async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
   // mechanism as glassReadabilityStyle above, just a second, page-specific
   // variant of it. See the "-clear"/"-strong" tokens in globals.css.
   const stormwaterGlassStyle: CSSProperties =
-    service.slug === "stormwater-and-flood-modelling"
+    service.slug === "ground-improvement-reclamation"
       ? ({
           "--glass-fill": "var(--raw-color-glass-fill-clear)",
           "--glass-border": "var(--raw-color-glass-border-clear)",
@@ -92,7 +92,7 @@ export async function ServiceDetailPage({ params }: ServiceDetailPageProps) {
           support — rather than the shared glass-band pattern every other
           page (including this one's own Solaris background) uses. See
           ADR-0061. */}
-      {service.slug === "geotechnical-engineering" ? (
+      {service.slug === "ground-investigation" ? (
         <GeotechnicalAnalysisHero />
       ) : (
         <ServiceHero service={service} />

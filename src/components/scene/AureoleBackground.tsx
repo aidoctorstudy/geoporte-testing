@@ -13,7 +13,7 @@ import { createAureoleHeroScene } from "./build-aureole-scene";
 // not a choice, so this takes the globe's (and the other scenes') place
 // here rather than joining them — see `glass-background-routes.ts`, which
 // every other exclusive component on this route reads from.
-const AUREOLE_BACKGROUND_ROUTE = "/services/advisory-services";
+const AUREOLE_BACKGROUND_ROUTE = "/services/independent-checking";
 
 /**
  * Mounted once at the app root, alongside every other route-scoped fixed

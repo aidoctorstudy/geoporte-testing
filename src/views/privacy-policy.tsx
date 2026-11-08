@@ -7,7 +7,7 @@ import { contact } from "@/lib/company";
 export function generateMetadata(): Metadata {
   return buildMetadata({
     title: "Privacy Policy | Geoporte",
-    description: "How geoporte.com.au uses cookies and handles contact-form submissions.",
+    description: "How geoporte.ae uses cookies and handles contact-form submissions.",
     url: "/privacy-policy",
   });
 }
@@ -39,7 +39,7 @@ export function PrivacyPolicyView() {
         className="text-foreground-muted mt-10 flex max-w-2xl flex-col gap-6 text-base leading-relaxed"
       >
         <p>
-          This page describes how geoporte.com.au uses cookies and handles
+          This page describes how geoporte.ae uses cookies and handles
           the information you submit through our contact form.
         </p>
 

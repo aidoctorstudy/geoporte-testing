@@ -9,12 +9,12 @@ import { publicEnv } from "@/env";
 export const siteConfig = {
   name: "Geoporte",
   description:
-    "Design Engineering Advisory — risk-based design and management of complex engineering projects across geotechnical, civil, structural and infrastructure disciplines.",
+    "Senior-led geotechnical, tunnelling, civil and structural engineering for rail, water, ports, roads and buildings across the UAE, Saudi Arabia and Qatar.",
   /**
    * Public origin, no trailing slash. Drives canonical URLs, OG tags, the
    * sitemap, and JSON-LD. Set `NEXT_PUBLIC_SITE_URL` in production.
    */
-  url: publicEnv.NEXT_PUBLIC_SITE_URL ?? "https://geoporte-testing.vercel.app",
+  url: publicEnv.NEXT_PUBLIC_SITE_URL ?? "https://geoporte.ae",
   /** Default Open Graph / Twitter share image (path under `public/`). */
   ogImage: "/open-graph.png",
   twitterHandle: "@geoporte",

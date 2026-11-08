@@ -17,7 +17,7 @@ import { createSolarisHeroScene } from "./build-solaris-scene";
 // background, with the new bounded PLAXIS-inspired FEA scene
 // (`GeotechnicalAnalysisHero.tsx`/`GeotechnicalFeaScene.tsx`) rendering on
 // top of it inside the hero section only, not replacing it.
-const SOLARIS_BACKGROUND_ROUTE = "/services/geotechnical-engineering";
+const SOLARIS_BACKGROUND_ROUTE = "/services/ground-investigation";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

@@ -12,7 +12,8 @@ import { createGoldenParthenonHeroScene } from "./build-golden-parthenon-scene";
 // `EinsteinRosenLatticeBackground.tsx`. Replaces `HalcyonNightBackground`
 // (retired — see ADR-0047) on this exact route; every other exclusive
 // component on this route still reads from `glass-background-routes.ts`.
-const GOLDEN_PARTHENON_BACKGROUND_ROUTE = "/services/civil-engineering";
+// Civil Engineering service was removed for the ME practice — GoldenParthenon hero is currently unmapped.
+const GOLDEN_PARTHENON_BACKGROUND_ROUTE = "/services/__unmapped-golden-parthenon";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

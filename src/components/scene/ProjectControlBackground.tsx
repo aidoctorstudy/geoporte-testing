@@ -13,7 +13,7 @@ import { VideoBackground } from "@/components/common/VideoBackground";
 // the WebGL scenes') place here rather than joining them — see
 // `glass-background-routes.ts`, which every other exclusive component on
 // this route reads from.
-const PROJECT_CONTROL_BACKGROUND_ROUTE = "/services/project-control-services";
+const PROJECT_CONTROL_BACKGROUND_ROUTE = "/services/forensic-investigation";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

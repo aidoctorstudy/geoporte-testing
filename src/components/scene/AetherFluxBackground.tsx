@@ -13,7 +13,7 @@ import { createAetherFluxHeroScene } from "./build-aether-flux-scene";
 // Flux takes the globe's (and Solaris's) place here rather than joining them
 // — see `glass-background-routes.ts`, which every other exclusive component
 // on this route reads from.
-const AETHER_FLUX_BACKGROUND_ROUTE = "/services/design-and-drafting";
+const AETHER_FLUX_BACKGROUND_ROUTE = "/services/numerical-modelling";
 
 /**
  * Mounted once at the app root, alongside `PlanetBackground`/

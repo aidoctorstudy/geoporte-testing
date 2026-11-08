@@ -3,7 +3,7 @@
  * reusing the exact lat/lon projection and country list the Stats section's
  * `world-globe.ts` mini scene already uses (Geoporte's seven real project
  * countries), with a glowing pin at each, curved hub-and-spoke arcs radiating
- * from Australia to every other country with a moving dot travelling each
+ * from Dubai (UAE) to every other country with a moving dot travelling each
  * path, and a soft atmosphere rim glow via a larger back-facing translucent
  * sphere (the cheap depth-ordering trick — no shader needed). Cursor
  * movement adds a rotation offset on top of the globe's own ambient spin;

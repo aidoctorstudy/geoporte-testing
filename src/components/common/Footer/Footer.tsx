@@ -154,7 +154,7 @@ export const Footer = () => {
 
         <div className="text-foreground-muted flex flex-col gap-2 pt-8 text-xs md:flex-row md:items-center md:justify-between">
           <p>
-            © {year} {brand.wordmark}. All rights reserved.
+            © {year} Geoporte Middle East L.L.C-FZ. All rights reserved.
           </p>
           <p>{brand.philosophy}</p>
         </div>

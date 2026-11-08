@@ -8,7 +8,7 @@ export interface GeoporteLogoProps {
 }
 
 /**
- * The real Geoporte emblem — pulled from the live geoporte.com.au brand
+ * The real Geoporte emblem — pulled from the live geoporte.ae brand
  * mark (`public/assets/logo/geoporte-logo-source.jpg`, the only source
  * that exists; the live site has no SVG/transparent asset) and
  * background-removed via `scripts/process-logo.mjs` (luminance-threshold

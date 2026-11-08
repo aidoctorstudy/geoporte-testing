@@ -45,6 +45,16 @@ export const ProjectCard = ({ project, priority = false }: ProjectCardProps) => 
           <h3 className="text-foreground mt-2 text-lg font-medium">
             {project.title}
           </h3>
+          <span
+            className={[
+              "mt-3 inline-block rounded-full px-2.5 py-0.5 text-[10px] tracking-[0.12em] uppercase font-medium",
+              project.label === "Geoporte commission"
+                ? "bg-accent text-white"
+                : "border-line border text-label",
+            ].join(" ")}
+          >
+            {project.label}
+          </span>
         </div>
         <p className="text-foreground-muted mt-6 text-sm">
           {project.location}, {project.country}

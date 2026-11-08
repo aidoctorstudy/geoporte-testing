@@ -134,7 +134,26 @@
      never leaving the blue family. Consumed via src/lib/scene/service-accent.ts,
      which scopes --accent/--glow (Tier 2) to a wrapper per page — see
      obsidian/meta/decisions-log.md for why Tier 2, not a new Tier 2 role. */
-  --raw-color-service-civil-engineering-accent: #1f6ae0;
+  /* ME service accent colours — 9 services, brief Section 7 */
+  --raw-color-service-ground-investigation-accent: #1f8ec2;
+  --raw-color-service-ground-investigation-glow: #6fd4f0;
+  --raw-color-service-geotechnical-design-accent: #1f6ae0;
+  --raw-color-service-geotechnical-design-glow: #70bcff;
+  --raw-color-service-tunnelling-underground-accent: #2f52c0;
+  --raw-color-service-tunnelling-underground-glow: #7f9af0;
+  --raw-color-service-numerical-modelling-accent: #3f5fe0;
+  --raw-color-service-numerical-modelling-glow: #8fa4ff;
+  --raw-color-service-ground-improvement-reclamation-accent: #0f8fd0;
+  --raw-color-service-ground-improvement-reclamation-glow: #5fe0ff;
+  --raw-color-service-independent-checking-accent: #1a5cc8;
+  --raw-color-service-independent-checking-glow: #66a8f0;
+  --raw-color-service-forensic-investigation-accent: #5a5fe0;
+  --raw-color-service-forensic-investigation-glow: #a0a8ff;
+  --raw-color-service-structural-engineering-accent: #2f52c0;
+  --raw-color-service-structural-engineering-glow: #7f9af0;
+  --raw-color-service-construction-support-accent: #0ea0e0;
+  --raw-color-service-construction-support-glow: #4ff0ff;
+    --raw-color-service-civil-engineering-accent: #1f6ae0;
   --raw-color-service-civil-engineering-glow: #70bcff;
   --raw-color-service-design-and-drafting-accent: #3f5fe0;
   --raw-color-service-design-and-drafting-glow: #8fa4ff;

@@ -1,72 +1,78 @@
 /**
  * Geoporte company content — offices, contact channels, culture.
  *
- * Real site content (not placeholder data), so it lives alongside `site.ts`
- * rather than under `data/mocks/`. Sourced from geoporte.com.au.
+ * Updated for www.geoporte.ae (Middle East site).
+ * Source: Geoporte ME Website Content and Build Brief, Rev 0, 2 November 2026.
  */
 
 export const brand = {
   wordmark: "GEOPORTE",
-  tagline: "Design Engineering Advisory",
-  mission:
-    "Risk-based design and management of complex engineering projects, fuelled by vast local and international experience.",
+  tagline: "Global Expertise, Local Commitment",
+  positioningLine: "Specialist ground engineering for the Gulf",
+  descriptor: "Geotechnical, civil and structural engineering for rail, water, tunnelling, roads and bridges, ports and marine, and buildings across the Gulf",
   philosophy: "Complex ground. Complex engineering. Clear decisions.",
+  mission:
+    "Risk-based design and management of complex engineering projects, built on senior engineering judgement and decades of Gulf and international experience.",
 } as const;
 
 export interface OfficeLocation {
   city: string;
-  country: "Australia" | "New Zealand" | "United Arab Emirates";
+  country: "Australia" | "New Zealand" | "United Arab Emirates" | "United Kingdom" | "Canada";
   address: string;
 }
 
 export const offices: OfficeLocation[] = [
   {
+    city: "Dubai",
+    country: "United Arab Emirates",
+    address: "Meydan Grandstand, 6th Floor, Meydan Road, Nad Al Sheba, Dubai, United Arab Emirates",
+  },
+  {
     city: "Melbourne",
     country: "Australia",
-    address: "Tower 5, Collins Square, 727 Collins Street, VIC 3008",
+    address: "Level 23, Tower 5, Collins Square, 727 Collins Street, Docklands VIC 3008",
   },
   {
     city: "Sydney",
     country: "Australia",
-    address: "Three International Towers, 300 Barangaroo Ave, NSW 2000",
+    address: "Three International Towers, Tower Three, 300 Barangaroo Avenue, Sydney NSW 2000",
   },
   {
     city: "Perth",
     country: "Australia",
-    address: "108 St Georges Terrace, WA 6000",
+    address: "108 St Georges Terrace, Perth WA 6000",
   },
   {
     city: "Auckland",
     country: "New Zealand",
-    address: "110 Carlton Gore Road, New Market, 1023",
+    address: "110 Carlton Gore Road, Newmarket, Auckland 1023",
   },
   {
-    city: "Dubai",
-    country: "United Arab Emirates",
-    // No street address supplied (only the legal entity name) — shown in
-    // the same slot every other office uses for its building/street line.
-    address: "Geoporte Middle East L.L.C-FZ",
+    city: "Grantham",
+    country: "United Kingdom",
+    address: "156 Barrowby Road, Grantham, England NG31 8AF",
+  },
+  {
+    city: "Oakville",
+    country: "Canada",
+    address: "3275 Stalybridge Drive, Oakville, Ontario L6M 0L2",
   },
 ];
 
 /**
- * "Geoporte in the Middle East" content — About page section (see
- * `views/about/MiddleEastSection.tsx`). Sourced from the Geoporte Middle
- * East capability statement, not derived/invented — unlike `StatsSection`'s
- * homepage counters (deliberately computed from the real project list),
- * these are the capability statement's own published figures, so they stay
- * as given rather than being backed into project-list math.
+ * Middle East specific content for the About page and home page sections.
+ * Source: Brief Section 3, 6, 11.
  */
 export const middleEast = {
   tagline: "Global Expertise, Local Commitment",
   subheading: "Specialist ground engineering for the Gulf",
   description:
-    "Geoporte is an international engineering consultancy providing geotechnical, civil and structural design. We serve Middle East clients through Geoporte Middle East L.L.C-FZ in Dubai, backed by our technical teams in Melbourne, Sydney, Perth and Auckland.",
+    "Geoporte is an international engineering consultancy providing geotechnical, civil and structural design. We serve Middle East clients through Geoporte Middle East L.L.C-FZ in Dubai, backed by our technical teams in Melbourne, Sydney, Perth and Auckland and registered entities in Australia, New Zealand, the United Kingdom, Canada and the UAE.",
   stats: [
-    { value: "200+", label: "Projects" },
-    { value: "200+", label: "Years Experience" },
-    { value: "6", label: "Countries" },
-    { value: "ISO", label: "Certified" },
+    { value: "25+", label: "Years Gulf Experience" },
+    { value: "7", label: "Countries Active" },
+    { value: "ISO", label: "9001 · 14001 · 45001" },
+    { value: "8", label: "Senior Specialists" },
   ],
   sectors: [
     "Rail and metro",
@@ -79,21 +85,35 @@ export const middleEast = {
     "Investigation and forensics",
   ],
   whoWeWorkFor: [
-    "Government authorities",
-    "Master developers",
-    "Lead consultants",
-    "Design & build contractors",
+    "Government authorities and utilities",
+    "Master developers and private developers",
+    "Lead consultants and design teams",
+    "Design and build contractors",
   ],
 } as const;
 
 export const contact = {
-  email: "enquiries@geoporte.com.au",
-  responseTime: "24-hour response",
+  email: "enquiries@geoporte.com",
+  directEmail: "qaiser.hayat@geoporte.com",
+  responseTime: "We reply within one business day.",
+  businessHours: "Monday to Friday, 8:30 am to 5:30 pm Gulf Standard Time",
   phones: [
+    { region: "Middle East", number: "+971 55 195 5797" },
     { region: "Australia", number: "+61 (0) 431 55 4626" },
-    { region: "Australia (alt)", number: "+61 (0) 388 21 7758" },
     { region: "New Zealand", number: "+64 (0) 212 87 0714" },
   ],
+  primaryContact: {
+    name: "Qaiser Hayat",
+    title: "Managing Director",
+    phone: "+971 55 195 5797",
+    phoneLink: "tel:+971551955797",
+  },
+  address: {
+    company: "Geoporte Middle East L.L.C-FZ",
+    street: "Meydan Grandstand, 6th Floor, Meydan Road, Nad Al Sheba",
+    city: "Dubai",
+    country: "United Arab Emirates",
+  },
 } as const;
 
 export const cultureValues = [
@@ -104,18 +124,22 @@ export const cultureValues = [
 ] as const;
 
 export const teamComposition = [
-  "Civil Engineers",
   "Geotechnical Engineers",
-  "Numerical Analysts",
+  "Tunnel Engineers",
+  "Structural Engineers",
   "Engineering Geologists",
-  "Hydrogeologists",
+  "Numerical Analysts",
   "Foundation Design Specialists",
 ] as const;
 
 export const experienceRegions = [
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Qatar",
+  "Kuwait",
+  "Oman",
+  "Bahrain",
   "Australia",
   "New Zealand",
-  "Europe",
-  "Middle East",
-  "Asia",
+  "United Kingdom",
 ] as const;
