@@ -28,7 +28,7 @@ export const WhoWeWorkForSection = () => {
     <section
       id="who-we-work-for"
       aria-labelledby="clients-heading"
-      className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
+      className="bg-background relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
     >
       <SectionHeading
         id="clients-heading"

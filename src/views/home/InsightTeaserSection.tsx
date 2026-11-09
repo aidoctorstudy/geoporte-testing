@@ -5,7 +5,7 @@ export const InsightTeaserSection = () => {
     <section
       id="insight-teaser"
       aria-label="Technical insight"
-      className="bg-background-alt/40 border-line border-y py-20 md:py-28"
+      className="bg-background-alt border-line relative z-10 border-y py-20 md:py-28"
     >
       <div className="mx-auto max-w-4xl px-6 md:px-8">
         <div className="flex items-start gap-4">

@@ -17,7 +17,7 @@ export const TeamExperienceSection = () => {
     <section
       id="team-experience"
       aria-labelledby="team-experience-heading"
-      className="bg-background-alt/40 border-line border-y py-24 md:py-32"
+      className="bg-background-alt border-line relative z-10 border-y py-24 md:py-32"
     >
       <div className="mx-auto max-w-6xl px-6 md:px-8">
         <SectionHeading

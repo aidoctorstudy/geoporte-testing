@@ -67,7 +67,7 @@ export const baseProjects: Project[] = [
     sector: "Water; Tunnelling",
     description:
       "Geotechnical design and advisory for secant pile shafts and a 4 m diameter microtunnel drive at about 14 m depth. PLAXIS 2D and 3D modelling of staged excavation and dewatering, settlement troughs for 0.5, 1 and 2 per cent volume loss, and impact checks on an adjacent building and 17 buried utilities. Ground models and rock mass parameters in variable rock and soil. Performance specifications for secant piles, dewatering, pipe jacking and monitoring.",
-    image: { src: "/assets/projects/GI-1.jpg", alt: "Urban wadi flood mitigation Riyadh" },
+    image: { src: "/assets/projects/MicroTBM-1.png", alt: "Urban wadi flood mitigation Riyadh" },
   },
   {
     _ref: "C2",
@@ -79,7 +79,7 @@ export const baseProjects: Project[] = [
     sector: "Roads and Bridges; Investigation and Forensics",
     description:
       "Construction impact assessment and monitoring design to protect an operating bridge during a deep excavation immediately adjacent to its foundations. Ground investigation scoping, PLAXIS modelling of excavation-induced movement, monitoring plan with trigger and response levels, and construction-phase advice.",
-    image: { src: "/assets/projects/Senior-1.jpg", alt: "Live bridge protection during deep excavation Riyadh" },
+    image: { src: "/assets/projects/WhatsApp-Image-2023-07-23-at-4.07.09-PM-4-1.jpeg", alt: "Live bridge protection during deep excavation Riyadh" },
   },
   {
     _ref: "C3",
@@ -115,7 +115,7 @@ export const baseProjects: Project[] = [
     sector: "Buildings; Independent Checking",
     description:
       "Third-party geotechnical checking of a piled raft foundation design for a high-rise development in Dubai. Independent ground model, PLAXIS 3D piled raft analysis, settlement and differential settlement assessment, and pile spring derivation for the structural model. Check certificate and report issued.",
-    image: { src: "/assets/projects/Plaxis-3D-C.png", alt: "Independent piled raft check Dubai" },
+    image: { src: "/assets/projects/Plaxis-3D-D.png", alt: "Independent piled raft check Dubai" },
   },
   {
     _ref: "C6",
@@ -127,7 +127,7 @@ export const baseProjects: Project[] = [
     sector: "Water; Investigation and Forensics",
     description:
       "Independent technical review of post-construction settlement beneath a large-diameter water pipeline with recurring joint leaks. Review of design, construction and monitoring records, back-analysis of observed movement, root cause assessment, and remediation options appraisal.",
-    image: { src: "/assets/projects/Plaxis-3D-D.png", alt: "Settlement review leaking pipeline Qatar" },
+    image: { src: "/assets/projects/Plaxis-3D-A.png", alt: "Settlement review leaking pipeline Qatar" },
   },
   {
     _ref: "C7",
@@ -154,7 +154,7 @@ export const baseProjects: Project[] = [
     sector: "Rail and Metro; Tunnelling",
     description:
       "Geotechnical design lead for a 15 km metro extension including bored tunnels, cut-and-cover stations and elevated viaduct sections. Ground investigation scoping, PLAXIS modelling of tunnelling settlement, foundation design for stations and viaducts, dewatering and monitoring.",
-    image: { src: "/assets/projects/MicroTBM-1.png", alt: "Dubai Metro Route 2020" },
+    image: { src: "/assets/projects/Plaxis-3D-C.png", alt: "Dubai Metro Route 2020" },
   },
   {
     _ref: "T2",
@@ -190,7 +190,7 @@ export const baseProjects: Project[] = [
     sector: "Water; Tunnelling",
     description:
       "Geotechnical design input to a 100 km deep sewer tunnel network beneath Abu Dhabi, including a 100 m deep pumping station shaft. TBM drive design, shaft stability, dewatering and groundwater control, and construction impact assessment.",
-    image: { src: "/assets/projects/Yarraman-5.jpg", alt: "Strategic Tunnel Enhancement Programme STEP Abu Dhabi" },
+    image: { src: "/assets/projects/WhatsApp-Image-2023-07-23-at-4.07.08-PM-9-1.jpeg", alt: "Strategic Tunnel Enhancement Programme STEP Abu Dhabi" },
   },
   {
     _ref: "T5",
@@ -226,7 +226,7 @@ export const baseProjects: Project[] = [
     sector: "Ports, Marine and Reclamation",
     description:
       "Led the geotechnical design of reclaimed artificial islands for offshore oil and gas production facilities in Abu Dhabi. Reclamation design, ground improvement specification, settlement and liquefaction assessment, and quay wall and marine structure foundations.",
-    image: { src: "/assets/projects/Yarraman-1.jpg", alt: "Sarb artificial islands Abu Dhabi" },
+    image: { src: "/assets/projects/g21.png", alt: "Sarb artificial islands Abu Dhabi" },
   },
   {
     _ref: "T8",
@@ -238,7 +238,7 @@ export const baseProjects: Project[] = [
     sector: "Ports, Marine and Reclamation",
     description:
       "Geotechnical design lead for a 3.2 km waterway extension creating the Dubai Water Canal. Excavation support, dewatering, retaining wall design, bridge foundation design and marine geotechnical assessment along the canal corridor.",
-    image: { src: "/assets/projects/Yarraman-3.jpg", alt: "Dubai Water Canal" },
+    image: { src: "/assets/projects/WhatsApp-Image-2023-07-23-at-4.07.08-PM-8-1.jpeg", alt: "Dubai Water Canal" },
   },
   {
     _ref: "T9",
@@ -310,7 +310,7 @@ export const baseProjects: Project[] = [
     sector: "Roads and Bridges",
     description:
       "Led tender foundation design for the 36 km Sheikh Jaber Causeway linking Kuwait City to Subiyah, the longest marine bridge in the world. Pile design for marine bridge foundations, ground improvement for the artificial island and seismic design for the causeway structures.",
-    image: { src: "/assets/projects/Senior-2.jpg", alt: "Sheikh Jaber Causeway Kuwait" },
+    image: { src: "/assets/projects/g22-1.png", alt: "Sheikh Jaber Causeway Kuwait" },
   },
   {
     _ref: "T15",
@@ -370,7 +370,7 @@ export const baseProjects: Project[] = [
     sector: "Buildings; Tunnelling",
     description:
       "Deep basement, dewatering and construction support for the Etihad Museum and the adjacent Marsa Al Seef waterfront development on Dubai Creek. Foundation design, secant pile wall design, dewatering strategy and monitoring during construction adjacent to heritage structures.",
-    image: { src: "/assets/projects/WhatsApp-Image-2023-07-23-at-4.07.09-PM-4-1.jpeg", alt: "Etihad Museum and Marsa Al Seef Dubai" },
+    image: { src: "/assets/projects/Senior-4.jpg", alt: "Etihad Museum and Marsa Al Seef Dubai" },
   },
   {
     _ref: "T20",
