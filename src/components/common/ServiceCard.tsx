@@ -40,6 +40,8 @@ const DEDICATED_CARD_SCENES: Record<string, (container: HTMLElement) => HeroScen
   "ground-improvement-reclamation": createNegentropySpiralCardScene,
   "independent-checking": createAureoleCardScene,
   "tunnelling-underground": createEinsteinRosenLatticeCardScene,
+  "forensic-investigation": createSpiralGalaxyCardScene,
+  "construction-support": createGoldenParthenonCardScene,
 };
 
 // Mobile/tablet (`< MOBILE_WEBGL_SKIP_WIDTH`) never mounts any of the
@@ -72,6 +74,8 @@ const DEDICATED_CARD_GRADIENTS: Record<string, string> = {
   "ground-improvement-reclamation": "var(--raw-gradient-fallback-negentropy)",
   "independent-checking": "var(--raw-gradient-fallback-aureole)",
   "tunnelling-underground": "var(--raw-gradient-fallback-wormhole)",
+  "forensic-investigation": "var(--raw-gradient-fallback-spiral-galaxy)",
+  "construction-support": "var(--raw-gradient-fallback-golden-parthenon)",
 };
 
 // The one card with a full-bleed background *video* instead of a WebGL
