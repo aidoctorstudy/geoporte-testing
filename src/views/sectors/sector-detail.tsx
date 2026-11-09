@@ -12,22 +12,24 @@ export function generateStaticParams() {
   return sectorSlugs.map((slug) => ({ slug }));
 }
 
-export function generateSectorMetadata({
+export async function generateSectorMetadata({
   params,
 }: {
-  params: { slug: string };
-}): Metadata {
-  const sector = sectors.find((s) => s.slug === params.slug);
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const sector = sectors.find((s) => s.slug === slug);
   if (!sector) return {};
   return buildMetadata({
     title: sector.metaTitle,
     description: sector.metaDescription,
-    url: `/sectors/${sector.slug}`,
+    url: `/sectors/${slug}`,
   });
 }
 
-export function SectorDetailPage({ params }: { params: { slug: string } }) {
-  const sector = sectors.find((s) => s.slug === params.slug);
+export async function SectorDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const sector = sectors.find((s) => s.slug === slug);
   if (!sector) notFound();
 
   const relatedProjects = baseProjects.filter(

@@ -10,22 +10,24 @@ export function generateArticleStaticParams() {
   return articles.map((a) => ({ slug: a.slug }));
 }
 
-export function generateArticleMetadata({
+export async function generateArticleMetadata({
   params,
 }: {
-  params: { slug: string };
-}): Metadata {
-  const article = articles.find((a) => a.slug === params.slug);
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const article = articles.find((a) => a.slug === slug);
   if (!article) return {};
   return buildMetadata({
     title: article.metaTitle,
     description: article.metaDescription,
-    url: `/insights/${article.slug}`,
+    url: `/insights/${slug}`,
   });
 }
 
-export function InsightArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles.find((a) => a.slug === params.slug);
+export async function InsightArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = articles.find((a) => a.slug === slug);
   if (!article) notFound();
 
   return (

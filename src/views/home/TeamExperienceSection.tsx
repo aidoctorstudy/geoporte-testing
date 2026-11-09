@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { TierInview as Inview } from "@/components/common/TierInview";
 import { baseProjects } from "@/data/mocks/projects";
@@ -35,12 +36,16 @@ export const TeamExperienceSection = () => {
               delayIn={index * 80}
             >
               <div className="border-line bg-surface flex h-full flex-col rounded-2xl border overflow-hidden">
-                <div
-                  className="h-36 w-full bg-cover bg-center flex-shrink-0"
-                  style={{ backgroundImage: `url(${project.image.src})` }}
-                  role="img"
-                  aria-label={project.image.alt}
-                />
+                <div className="relative h-36 w-full flex-shrink-0 overflow-hidden">
+                  <Image
+                    src={project.image.src}
+                    alt={project.image.alt}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="flex flex-1 flex-col justify-between p-5">
                   <div>
                     <span className="border-line text-label mt-1 inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-medium tracking-[0.12em] uppercase">

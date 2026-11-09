@@ -26,6 +26,7 @@ export const TeamCtaSection = () => {
                 fill
                 sizes="64px"
                 className="object-cover"
+                loading="lazy"
               />
             </div>
             <span className="text-foreground max-w-[80px] text-[11px] font-medium leading-tight">
