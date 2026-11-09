@@ -8,8 +8,9 @@ export interface NavLink {
 }
 
 export const primaryNavLinks: NavLink[] = [
+  { label: "Sectors", href: "/sectors" },
+  { label: "Projects", href: "/projects" },
+  { label: "Insights", href: "/insights" },
   { label: "About", href: "/about" },
   { label: "Our Team", href: "/about/team" },
-  { label: "Projects", href: "/projects" },
-  { label: "Publications", href: "/publications" },
 ];

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { services } from "@/data/mocks/services";
+import { sectors } from "@/data/mocks/sectors";
 import { brand, contact, offices } from "@/lib/company";
 import { primaryNavLinks } from "@/components/common/Nav/nav-links";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
@@ -52,7 +53,7 @@ export const Footer = () => {
           </Link>
         </div>
 
-        <div className="border-line grid grid-cols-1 gap-x-8 gap-y-10 border-b py-12 sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="border-line grid grid-cols-1 gap-x-8 gap-y-10 border-b py-12 sm:grid-cols-2 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div>
             <p className="text-foreground text-sm font-semibold tracking-[0.18em]">
               {brand.wordmark}
@@ -111,6 +112,24 @@ export const Footer = () => {
 
           <div>
             <h3 className="text-label text-xs uppercase tracking-[0.2em]">
+              Sectors
+            </h3>
+            <ul className="mt-4 flex flex-col gap-2.5 text-sm">
+              {sectors.map((sector) => (
+                <li key={sector.slug}>
+                  <Link
+                    href={`/sectors/${sector.slug}`}
+                    className="text-foreground/80 hover:text-foreground transition-colors duration-[var(--duration-fast)] ease-entrance"
+                  >
+                    {sector.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-label text-xs uppercase tracking-[0.2em]">
               Company
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm">
@@ -152,11 +171,14 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="text-foreground-muted flex flex-col gap-2 pt-8 text-xs md:flex-row md:items-center md:justify-between">
+        <div className="text-foreground-muted flex flex-col gap-3 pt-8 text-xs">
           <p>
-            © {year} Geoporte Middle East L.L.C-FZ. All rights reserved.
+            Geoporte&apos;s management systems are certified to ISO 9001:2015 (quality), ISO 14001:2015 (environment) and ISO 45001:2018 (occupational health and safety) by Global Compliance Certification, accredited by JAS-ANZ.
           </p>
-          <p>{brand.philosophy}</p>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <p>© {year} Geoporte Middle East L.L.C-FZ. All rights reserved.</p>
+            <p>{brand.philosophy}</p>
+          </div>
         </div>
       </div>
     </footer>

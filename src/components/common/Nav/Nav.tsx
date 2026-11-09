@@ -12,10 +12,11 @@ import { MobileMenu } from "./MobileMenu";
 import { isGlassBackgroundRoute } from "@/lib/scene/glass-background-routes";
 
 const secondaryLinks = [
+  { href: "/sectors", label: "Sectors" },
+  { href: "/projects", label: "Projects" },
+  { href: "/insights", label: "Insights" },
   { href: "/about", label: "About Us" },
   { href: "/about/team", label: "Our Team" },
-  { href: "/projects", label: "Projects" },
-  { href: "/publications", label: "Publications" },
 ];
 
 export const Nav = () => {
