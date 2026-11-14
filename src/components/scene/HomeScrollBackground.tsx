@@ -11,18 +11,6 @@ import { createHomeSonarScene } from "./build-home-scene-3-sonar";
 import { createHomePileMatrixScene } from "./build-home-scene-4-pilemat";
 import { createHomeDunesScene } from "./build-home-scene-5-dunes";
 
-/**
- * Homepage scroll-triggered background — 6 custom geo-engineering 3D scenes.
- *
- * Scene map:
- *   0 "hero"              → Soil Strata cross-section     (Hero + About)
- *   1 "services"          → TBM Tunnel bore               (Services + Sectors)
- *   2 "digital-twin"      → FEA stress mesh               (GeoPlexus + HowWeWork + ProjectExp)
- *   3 "recent-commissions"→ Sonar / bathymetric sweep     (RecentCommissions + TeamExp + Stats)
- *   4 "who-we-work-for"   → Pile matrix                   (WhoWeWorkFor + Insight + Projects)
- *   5 "team-cta"          → Desert dune particles         (TeamCTA + Contact)
- */
-
 const HOMEPAGE_ROUTE = "/";
 
 const SCENE_SENTINELS = [
@@ -54,10 +42,15 @@ const SCENE_FACTORIES = [
 
 export const HomeScrollBackground = () => {
   const pathname = usePathname();
+  // Start at -1 so ALL scenes are opacity-0 until the observer fires,
+  // EXCEPT we immediately fire scene 0 on mount via useEffect below.
   const [activeScene, setActiveScene] = useState(0);
   const observersRef = useRef<IntersectionObserver[]>([]);
 
   useEffect(() => {
+    // Immediately show scene 0 — prevents the black flash at page top
+    setActiveScene(0);
+
     observersRef.current.forEach((obs) => obs.disconnect());
     observersRef.current = [];
 
@@ -69,7 +62,9 @@ export const HomeScrollBackground = () => {
         ([entry]) => {
           if (entry.isIntersecting) setActiveScene(i);
         },
-        { threshold: 0.15 },
+        // rootMargin: triggers a bit BEFORE the section hits 15% visibility
+        // so the crossfade is already underway when user reaches the section.
+        { threshold: 0.1, rootMargin: "0px 0px -5% 0px" },
       );
       obs.observe(el);
       observersRef.current.push(obs);
