@@ -14,7 +14,7 @@ export const ProjectsSection = ({ headingTag = "h2" }: ProjectsSectionProps = {}
     <section
       id="projects"
       aria-labelledby="projects-heading"
-      className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
+      className="bg-background/50 backdrop-blur-sm relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
     >
       <SectionHeading
         id="projects-heading"

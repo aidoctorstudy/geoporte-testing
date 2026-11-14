@@ -8,7 +8,7 @@ export const SectorsSection = () => {
     <section
       id="sectors"
       aria-labelledby="sectors-heading"
-      className="bg-background relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
+      className="bg-background/50 backdrop-blur-sm relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
     >
       <SectionHeading
         id="sectors-heading"

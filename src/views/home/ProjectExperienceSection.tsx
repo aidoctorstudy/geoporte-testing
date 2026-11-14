@@ -16,7 +16,7 @@ export const ProjectExperienceSection = () => {
     <section
       id="project-experience"
       aria-labelledby="project-experience-heading"
-      className="relative z-10 py-16 md:py-24"
+      className="bg-background/50 backdrop-blur-sm relative z-10 py-16 md:py-24"
     >
       <div className="glass-panel mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-20">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 md:items-center">

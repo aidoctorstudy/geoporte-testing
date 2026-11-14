@@ -8,7 +8,7 @@ export const TeamCtaSection = () => {
     <section
       id="team-cta"
       aria-labelledby="team-cta-heading"
-      className="bg-background relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
+      className="bg-background/50 backdrop-blur-sm relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
     >
       {/* Portrait row */}
       <div className="flex flex-wrap justify-center gap-6 md:justify-start">

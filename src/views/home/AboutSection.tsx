@@ -14,7 +14,7 @@ export const AboutSection = ({ headingTag = "h2" }: AboutSectionProps = {}) => {
     <section
       id="about"
       aria-labelledby="about-heading"
-      className="mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
+      className="bg-background/50 backdrop-blur-sm relative z-10 mx-auto max-w-6xl px-6 py-24 md:px-8 md:py-32"
     >
       <div className="grid grid-cols-1 gap-16 md:grid-cols-[1.2fr_1fr]">
         <div>

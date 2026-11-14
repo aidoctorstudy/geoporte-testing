@@ -24,7 +24,7 @@ const STATS = [
 
 export const StatsSection = () => {
   return (
-    <section aria-label="Track record" className="relative overflow-hidden py-20">
+    <section aria-label="Track record" className="bg-background/50 backdrop-blur-sm relative z-10 overflow-hidden py-20">
       <StatsGlobe />
       <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-2 gap-10 px-6 md:grid-cols-4 md:gap-12 md:px-8">
         {STATS.map((stat) => (

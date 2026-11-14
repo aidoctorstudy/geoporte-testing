@@ -34,7 +34,7 @@ export const HowWeWorkSection = () => {
     <section
       id="how-we-work"
       aria-labelledby="how-we-work-heading"
-      className="border-line border-y py-24 md:py-32"
+      className="bg-background/50 backdrop-blur-sm border-line relative z-10 border-y py-24 md:py-32"
     >
       <div className="mx-auto max-w-6xl px-6 md:px-8">
         <SectionHeading

@@ -32,7 +32,7 @@ export const GeotechnicalPlexusSection = () => {
     <section
       id="digital-twin"
       aria-labelledby="geotechnical-plexus-heading"
-      className="bg-surface-engineering [--ink-engineering-muted:var(--raw-color-white)] [--ink-engineering:var(--raw-color-white)] [--surface-engineering:var(--raw-color-navy-925)] relative overflow-hidden py-20 md:py-28"
+      className="bg-surface-engineering/70 [--ink-engineering-muted:var(--raw-color-white)] [--ink-engineering:var(--raw-color-white)] [--surface-engineering:var(--raw-color-navy-925)] relative z-10 overflow-hidden py-20 md:py-28"
     >
       <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-[1fr_1.2fr] lg:gap-16 md:px-8">
         <div>
