@@ -14,8 +14,9 @@ import { SceneFallbackGradient } from "./SceneFallbackGradient";
 // Every route with its own fixed full-page WebGL background
 // (`glass-background-routes.ts`) gets the globe stepping aside instead —
 // two heavy fixed WebGL backgrounds competing on one page reads as a
-// mistake, not a choice. Every other route (the homepage and the remaining
-// 6 service pages) keeps it.
+// mistake, not a choice. The homepage (`/`) uses `HomeScrollBackground`
+// (a scroll-triggered crossfade of four lightweight geo-themed scenes),
+// which replaces the globe there. All remaining routes keep the globe.
 
 /**
  * Mounts the cinematic Earth globe (ported from GetLayers' "Ascend"
@@ -40,15 +41,19 @@ export const PlanetBackground = () => {
   const tier = getDeviceTier(width);
   const budget = getTierBudget(width);
   const skipWebgl = width > 0 && isLowPowerDevice();
+  // The homepage uses `HomeScrollBackground` instead — a scroll-triggered
+  // crossfade of four lightweight scenes. The planet is intentionally excluded
+  // from `/` to avoid running two competing background systems simultaneously.
+  const isHomepage = pathname === "/";
   const enabled =
-    width > 0 && !skipWebgl && !isReducedMotion() && !isGlassBackgroundRoute(pathname);
+    width > 0 && !skipWebgl && !isReducedMotion() && !isGlassBackgroundRoute(pathname) && !isHomepage;
 
   useEffect(() => {
     if (!enabled) return;
     return startPlanetBackground({ dprClamp: budget.dprClamp, tier, particleScale: budget.particleScale });
   }, [enabled, tier, budget.dprClamp, budget.particleScale]);
 
-  if (skipWebgl && !isGlassBackgroundRoute(pathname)) {
+  if (skipWebgl && !isGlassBackgroundRoute(pathname) && !isHomepage) {
     return (
       <SceneFallbackGradient
         gradient="var(--raw-gradient-fallback-planet)"

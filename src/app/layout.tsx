@@ -28,6 +28,7 @@ import { EinsteinRosenLatticeBackground } from "@/components/scene/EinsteinRosen
 import { GoldenParthenonBackground } from "@/components/scene/GoldenParthenonBackground";
 import { NegentropyBackground } from "@/components/scene/NegentropyBackground";
 import { PinwheelGalaxyBackground } from "@/components/scene/PinwheelGalaxyBackground";
+import { HomeScrollBackground } from "@/components/scene/HomeScrollBackground";
 import { PlanetBackground } from "@/components/scene/PlanetBackground";
 import { ProjectControlBackground } from "@/components/scene/ProjectControlBackground";
 import { PurplePlanetBackground } from "@/components/scene/PurplePlanetBackground";
@@ -84,6 +85,9 @@ export default function RootLayout({
                 order documents the intended stack: planet furthest back,
                 AmbientBackground's wireframe shapes in front of it, both
                 behind real page content. */}
+            {/* Homepage scroll-triggered scene crossfader — replaces the
+                planet on `/`; PlanetBackground itself excludes `/`. */}
+            <HomeScrollBackground />
             <PlanetBackground />
             <SolarisBackground />
             <AetherFluxBackground />

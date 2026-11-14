@@ -182,6 +182,7 @@
      present in ADR-0056's list — see that ADR and ADR-0058) — its accent
      (#0aff7f) is Negentropy's own card palette, carried over unchanged,
      just reshaped into the new 3-stop form for consistency. */
+  --raw-gradient-fallback-geotechnical-plexus: radial-gradient(ellipse at 30% 70%, #0a3d2e 0%, #040d1a 55%, #010408 100%);
   --raw-gradient-fallback-solaris: radial-gradient(ellipse at 70% 50%, #ff4500 0%, #1a0000 60%, #000000 100%);
   --raw-gradient-fallback-aether-flux: radial-gradient(ellipse at 30% 50%, #c0c0c0 0%, #1a1a2e 60%, #000000 100%);
   --raw-gradient-fallback-wormhole: radial-gradient(ellipse at 50% 50%, #ffffff 0%, #0a0a1a 50%, #000000 100%);
@@ -271,6 +272,7 @@
    so a plain unlayered override here is both correct AND sufficient — no
    attribute-selector catch-all needed. */
 :root[data-perf-tier="low"] {
+  --raw-gradient-fallback-geotechnical-plexus: #0a3d2e;
   --raw-gradient-fallback-solaris: #ff4500;
   --raw-gradient-fallback-aether-flux: #c0c0c0;
   --raw-gradient-fallback-wormhole: #ffffff;
