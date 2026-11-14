@@ -2,14 +2,16 @@ import Link from "next/link";
 import { Magnetic } from "@/components/common/Magnetic";
 import { brand } from "@/lib/company";
 import { getHeroHeading } from "@/lib/content-overrides";
+import { HeroScene } from "@/components/scene/HeroScene";
 import { HeroHeading, HeroSubtext } from "./HeroHeading";
 import { ProjectTicker } from "./ProjectTicker";
 import { ScrollCue } from "./ScrollCue";
 
 /**
- * Hero section — background is provided by HomeScrollBackground (scene 0:
- * soil strata). The old per-section HeroScene (particle GEOPORTE wordmark)
- * was removed; HomeScrollBackground's fixed canvas shows through.
+ * Hero section.
+ * Background: HomeScrollBackground scene 0 (Strata) shows through as the
+ * fixed -z-20 layer. The particle GEOPORTE emblem (bloom composer) renders
+ * here as a transparent overlay on top of that background.
  */
 export const HeroSection = () => {
   return (
@@ -18,6 +20,14 @@ export const HeroSection = () => {
       aria-labelledby="hero-heading"
       className="relative z-0 flex min-h-screen items-center overflow-hidden"
     >
+      {/* Particle GEOPORTE emblem — transparent canvas, sits above strata */}
+      <div
+        data-cursor="canvas"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+      >
+        <HeroScene className="h-full w-full" fallback={null} />
+      </div>
+
       <div className="relative z-10 w-full max-w-xl px-6 md:px-12 lg:px-20">
         <p className="text-label [text-shadow:0_2px_16px_rgba(0,0,0,.8)] mb-4 text-xs tracking-[0.3em] uppercase">
           Geoporte Middle East · Dubai, UAE
