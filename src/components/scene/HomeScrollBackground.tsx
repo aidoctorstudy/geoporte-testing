@@ -1,64 +1,55 @@
 "use client";
 
-// 📖 Docs: obsidian/architecture/tech-stack.md → "3D — scroll-triggered homepage scenes"
-
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { HeroScene } from "./HeroScene";
 import { SceneFallbackGradient } from "./SceneFallbackGradient";
-import { createGeotechnicalPlexusScene } from "./build-geotechnical-plexus-scene";
-import { createSolarisHeroScene } from "./build-solaris-scene";
-import { createTeamStarfieldScene } from "./build-team-starfield-scene";
-import { createSpiralGalaxyHeroScene } from "./build-spiral-galaxy-scene";
+import { createHomeStrataScene } from "./build-home-scene-0-strata";
+import { createHomeTunnelScene } from "./build-home-scene-1-tunnel";
+import { createHomeFEAScene } from "./build-home-scene-2-fea";
+import { createHomeSonarScene } from "./build-home-scene-3-sonar";
+import { createHomePileMatrixScene } from "./build-home-scene-4-pilemat";
+import { createHomeDunesScene } from "./build-home-scene-5-dunes";
 
 /**
- * Homepage-only scroll-triggered background system — replaces the cinematic
- * Earth globe (`PlanetBackground`) on the homepage with four lightweight
- * geo-themed scenes that crossfade as the user scrolls through the page.
+ * Homepage scroll-triggered background — 6 custom geo-engineering 3D scenes.
  *
- * **Why four scenes instead of one?**
- * The planet canvas was destroying devices — a Draco GLB, custom day/night
- * shaders, three `EffectComposer` bloom passes, three cloud shells, a
- * starfield, and radar pings. Four lightweight scenes crossfaded via CSS
- * `opacity` are significantly cheaper in total than the planet: no GLB load,
- * no Draco decompression, no bloom composers, no cloud shells.
- *
- * **Scene assignments** (chosen for geotechnical brand fit):
- *   0 — GeotechnicalPlexus  → hero, about, services, sectors
- *       The underground digital-twin mesh. Earns the hero's first impression.
- *   1 — Solaris             → how-we-work, project experience, commissions
- *       Warm amber-orange particle sun — engineering warmth.
- *   2 — TeamStarfield       → team experience, stats, who we work for
- *       Calm deep-navy starfield — authority without noise.
- *   3 — SpiralGalaxy        → insight, projects, team CTA, contact
- *       Gold-violet spiral — a premium close to the page.
- *
- * Mounted once at the app root (in `layout.tsx`) but only renders on `/`.
- * `PlanetBackground` excludes `/` via its own updated guard so the two
- * never render together.
+ * Scene map:
+ *   0 "hero"              → Soil Strata cross-section     (Hero + About)
+ *   1 "services"          → TBM Tunnel bore               (Services + Sectors)
+ *   2 "digital-twin"      → FEA stress mesh               (GeoPlexus + HowWeWork + ProjectExp)
+ *   3 "recent-commissions"→ Sonar / bathymetric sweep     (RecentCommissions + TeamExp + Stats)
+ *   4 "who-we-work-for"   → Pile matrix                   (WhoWeWorkFor + Insight + Projects)
+ *   5 "team-cta"          → Desert dune particles         (TeamCTA + Contact)
  */
 
 const HOMEPAGE_ROUTE = "/";
 
-// IDs of the first section in each scene group.
-// Group 0: GeotechnicalPlexus — hero through sectors
-// Group 1: Solaris — how-we-work through recent-commissions
-// Group 2: TeamStarfield — team-experience through who-we-work-for
-// Group 3: SpiralGalaxy — insight-teaser through contact
-const SCENE_SENTINELS = ["hero", "how-we-work", "team-experience", "who-we-work-for"] as const;
+const SCENE_SENTINELS = [
+  "hero",
+  "services",
+  "digital-twin",
+  "recent-commissions",
+  "who-we-work-for",
+  "team-cta",
+] as const;
 
 const SCENE_FALLBACKS = [
-  "var(--raw-gradient-fallback-geotechnical-plexus)",
-  "var(--raw-gradient-fallback-solaris)",
-  "var(--raw-gradient-fallback-team-starfield)",
-  "var(--raw-gradient-fallback-spiral-galaxy)",
+  "radial-gradient(ellipse at 30% 70%, #0a3d2e 0%, #040d1a 55%, #010408 100%)",
+  "radial-gradient(ellipse at 50% 60%, #0a1a3d 0%, #040d1a 55%, #010408 100%)",
+  "radial-gradient(ellipse at 60% 40%, #003344 0%, #040d1a 55%, #010408 100%)",
+  "radial-gradient(ellipse at 40% 60%, #001a3d 0%, #040d1a 55%, #010408 100%)",
+  "radial-gradient(ellipse at 50% 50%, #001533 0%, #040d1a 55%, #010408 100%)",
+  "radial-gradient(ellipse at 50% 70%, #3d2a0a 0%, #1a0d04 55%, #010408 100%)",
 ] as const;
 
 const SCENE_FACTORIES = [
-  createGeotechnicalPlexusScene,
-  createSolarisHeroScene,
-  createTeamStarfieldScene,
-  createSpiralGalaxyHeroScene,
+  createHomeStrataScene,
+  createHomeTunnelScene,
+  createHomeFEAScene,
+  createHomeSonarScene,
+  createHomePileMatrixScene,
+  createHomeDunesScene,
 ] as const;
 
 export const HomeScrollBackground = () => {
@@ -76,9 +67,7 @@ export const HomeScrollBackground = () => {
       if (!el) return;
       const obs = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) {
-            setActiveScene(i);
-          }
+          if (entry.isIntersecting) setActiveScene(i);
         },
         { threshold: 0.15 },
       );
